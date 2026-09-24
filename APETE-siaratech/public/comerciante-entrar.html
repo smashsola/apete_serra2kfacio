@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123c31">
+  <meta name="description" content="APETÊ — delivery local com restaurantes, padarias e produtores da região.">
+  <title>Entrar — APETÊ</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js?v=sabia-etapa1"></script>
+</head>
+<body class="auth-screen">
+  <div class="auth-top"><a href="index.html#inicio" class="auth-brand-link"><span class="auth-brand-icon"><img src="favicon.svg" alt="" width="44" height="44"></span><span>APETÊ <small>DA SERRA PRA SUA MESA</small></span></a><a href="index.html#inicio" class="auth-back">← Voltar ao início</a></div>
+  <div class="shell">
+    <div id="scrim" class="scrim" hidden></div>
+
+    <aside id="sidebar" class="sidebar" aria-label="Menu principal">
+      <div class="brand-row">
+        <a href="#inicio" class="brand" data-page="inicio" aria-label="APETÊ, início">
+          <span class="brand-mark">
+            <svg viewBox="0 0 48 48" aria-hidden="true">
+              <defs>
+                <linearGradient id="apeteLogo" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#f0b26d"/>
+                  <stop offset="100%" stop-color="#d97b3e"/>
+                </linearGradient>
+              </defs>
+              <path d="M12 29c1-12 9-19 20-20-1 10-8 18-20 20Z" fill="url(#apeteLogo)"/>
+              <path d="M12 29c6-6 12-10 20-14" stroke="#fff7e9" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <path d="M10 21c-3 11 3 20 14 19 8-1 13-8 12-15" stroke="#fff7e9" stroke-width="3.8" fill="none" stroke-linecap="round"/>
+              <path d="M8 39h26" stroke="#fff7e9" stroke-width="3.3" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="brand-type">APETÊ<small>DA SERRA PRA SUA MESA</small></span>
+        </a>
+        <button class="icon-btn sidebar-close" id="sidebar-close" aria-label="Fechar menu">✕</button>
+      </div>
+
+      <span class="side-label">DESCUBRA</span>
+      <nav id="nav-main" class="side-nav">
+        <a href="#inicio" data-page="inicio" class="active">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          </span>Início
+        </a>
+        <a href="#estabelecimentos" data-page="estabelecimentos">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v14H4zM4 10h16M9 6v14" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span>Estabelecimentos
+        </a>
+        <a href="#cardapio" data-page="cardapio">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M7 4h10a2 2 0 0 1 2 2v14H5V6a2 2 0 0 1 2-2Zm0 4h10" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span>Cardápio
+        </a>
+        <a href="#fornada" data-page="fornada">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3c1.5 2 3 4 3 6a3 3 0 0 1-6 0c0-2 1.5-4 3-6Zm-6 9.5c2 .3 4 1.5 5 3.5a4.5 4.5 0 0 1-8 3.5A4.8 4.8 0 0 1 6 12.5Zm12 0c2 .3 4 1.5 5 3.5a4.5 4.5 0 0 1-8 3.5A4.8 4.8 0 0 1 18 12.5ZM12 11.5c2.3 0 4.5 1.8 4.5 4.4A4.6 4.6 0 0 1 12 20.5a4.6 4.6 0 0 1-4.5-4.6c0-2.6 2.2-4.4 4.5-4.4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>Última Fornada
+        </a>
+        <a href="#produtores" data-page="produtores">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 20c5-3 7-7 7-11-2.5 0-5.5.5-7 2.5C10.5 9.5 7.5 9 5 9c0 4 2 8 7 11Zm0 0V8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Do produtor
+        </a>
+        <a href="#sabia" data-page="sabia">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M3 12h4M17 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>Sabiá
+        </a>
+      </nav>
+
+      <span class="side-label">SUA CONTA</span>
+      <nav id="nav-secondary" class="side-nav">
+        <a href="#pedidos" data-page="pedidos">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 7v6l4 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+          Meus pedidos
+        </a>
+        <a id="customer-nav-link" href="entrar.html" data-page="entrar">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 4h6a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-6M10 8l4 4-4 4M14 12H4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="customer-nav-label">Entrar</span>
+        </a>
+      </nav>
+
+      <div class="side-location">
+        <span class="location-dot"></span>
+        <div>
+          <strong>Entrega local</strong>
+          <small>Consulte a cidade selecionada</small>
+        </div>
+      </div>
+    </aside>
+
+    <div class="app-area">
+      <header class="topbar">
+        <div class="top-left">
+          <button id="menu-toggle" class="icon-btn menu-toggle" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1 id="page-title">Início</h1>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button id="locate" class="location-btn" title="Usar minha localização">
+            <span class="btn-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 4v2M12 18v2M4 12H2M22 12h-2M18.36 5.64l-1.41 1.41M7.05 16.95l-1.41 1.41M18.36 18.36l-1.41-1.41M7.05 7.05 5.64 5.64M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </span>
+            <span id="location-label">Definir entrega</span>
+          </button>
+
+          <button id="user-button" class="user-button" aria-label="Minha conta">
+            <span class="btn-icon"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm-7 9a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+            <span id="customer-name">Minha conta</span>
+          </button>
+
+          <button id="cart-button" class="cart-button" aria-label="Abrir sacola">
+            <span class="btn-icon"><svg viewBox="0 0 24 24"><path d="M6 7h14l-1.4 7.4A2 2 0 0 1 16.6 16H9.1a2 2 0 0 1-2-1.6L5.3 4H3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/></svg></span>
+            <span class="cart-text">Sacola</span>
+            <b id="cart-count">0</b>
+          </button>
+        </div>
+      </header>
+
+      <div class="etapa-demo-note">Demonstração · Estabelecimentos, preços e operações fictícios. Pedidos e cadastros continuam locais.</div>
+      <main id="content" tabindex="-1"></main>
+      <footer class="site-footer"><span>APETÊ</span><span>Guaraciaba do Norte · Ceará</span></footer>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div id="modal" class="modal" hidden>
+    <div class="modal-shade" data-action="close"></div>
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <header class="modal-head">
+        <div><h2 id="modal-title"></h2></div>
+        <button class="icon-btn" data-action="close" aria-label="Fechar">✕</button>
+      </header>
+      <div id="modal-body" class="modal-body"></div>
+    </section>
+  </div>
+</body>
+</html>

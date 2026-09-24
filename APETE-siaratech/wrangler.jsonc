@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "apete-serra",
+  "name": "APETE-siaratech",
   "main": "src/worker.js",
   "compatibility_date": "2026-09-24",
   "assets": {

@@ -610,7 +610,7 @@ function renderSabiaHistory() {
       </article>`;
     }).join('')}</div>`:''}
     ${entry.stores?.length?`<div class="sabia-results">${entry.stores.map(store=>`<button class="sabia-result" data-action="goto-store" data-id="${store.id}"><span><b>${esc(store.name)}</b><small>${esc(store.city)} · estabelecimento demonstrativo</small></span></button>`).join('')}</div>`:''}
-    ${entry.role==='assistant'?'<small class="sabia-attribution">Resposta de IA · dados comerciais consultados no servidor</small>':''}
+    ${entry.role==='assistant'?'<small class="sabia-attribution">A Sabiá pode errar. Confira itens, valores e disponibilidade antes de finalizar.</small>':''}
   </div>`).join('');
 }
 

@@ -60,24 +60,27 @@ function isAlternativeFollowup(text){
 }
 function currentIntent(query){
  const text=normalizedText(query);
+ const hasMeal=/\b(almoco|refeicao|jantar|pratos?|comida)\b/.test(text);
+ const hasDrink=/\b(bebidas?|sucos?|cafe)\b/.test(text);
  let kind='any';
  if(/\b(sobremesas?|doces?)\b/.test(text))kind='dessert';
- else if(/\bcafe da manha\b|\bcafe e (?:algo|alguma coisa) (?:para|pra) comer\b/.test(text))kind='breakfast';
+ else if(/\bcafe da manha\b|\bcafe e (?:algo|alguma coisa) (?:para|pra) comer\b|\bcomecar (?:bem )?o dia\b/.test(text))kind='breakfast';
+ else if(hasMeal)kind='meal';
  else if(/\b(bebidas?|sucos?)\b/.test(text))kind='drink';
- else if(/\b(almoco|refeicao|jantar|pratos?|comida)\b/.test(text))kind='meal';
  else if(/\b(?:lanches?|lanchinhos?)\b/.test(text))kind='snack';
  const vegetarian=/\bvegetarian[oa]s?\b/.test(text),healthy=/\bsaudave(?:l|is)\b/.test(text),producer=/\b(produtor(?:es)?|horta|organicos?|organicas?)\b/.test(text);
- return {kind,vegetarian,healthy,producer,completeBreakfast:kind==='breakfast'&&/\b(complet[oa]|combo|refeicao completa)\b|\bcafe e (?:algo|alguma coisa) (?:para|pra) comer\b/.test(text),completeSnack:kind==='snack'&&/\b(complet[oa]s?|combos?|refeicao completa)\b/.test(text),organic:/\borganic[oa]s?\b/.test(text),garden:/\bhorta\b/.test(text),juice:/\bsucos?\b/.test(text),another:isAlternativeFollowup(text)||/\b(outr[oa]s?|diferentes?|alternativas?)\b/.test(text)};
+ return {kind,vegetarian,healthy,producer,withDrink:hasMeal&&hasDrink,completeBreakfast:kind==='breakfast'&&/\b(complet[oa]|combo|refeicao completa)\b|\bcafe e (?:algo|alguma coisa) (?:para|pra) comer\b/.test(text),completeSnack:kind==='snack'&&/\b(complet[oa]s?|combos?|refeicao completa)\b/.test(text),organic:/\borganic[oa]s?\b/.test(text),garden:/\bhorta\b/.test(text),juice:/\bsucos?\b/.test(text),another:isAlternativeFollowup(text)||/\b(outr[oa]s?|diferentes?|alternativas?)\b/.test(text)};
 }
 function isSearchModifier(text,constraints=requestConstraints(text)){
-  // Only a budget/delivery modifier can inherit. A new subject clears prior intent.
+  // Budget/delivery followups may contain harmless conversational filler.
   const remainder=normalizedText(text)
    .replace(/\b(?:sem(?:\s+(?:contar|incluir|considerar))?|nao\s+(?:contar|incluir|considerar))\s+(?:(?:a|o)\s+)?(?:taxa(?: de entrega)?|entrega|frete)\b/g,'')
    .replace(/\b(?:so|somente|apenas)\s+(?:(?:a|o|os)\s+)?(?:comida|produtos?|itens)\b/g,'')
    .replace(/\b(?:com|incluindo)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa)\b/g,'')
    .replace(/\b(?:fora|excluindo)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa)\b/g,'')
    .replace(/\b(?:pode ser|pode ficar|pode custar|ate|no maximo|orcamento(?: de)?|limite de|pode passar(?: de)?|nao precisa ser ate|sem limite|sem teto)\b/g,'')
-   .replace(/r\$|\d+(?:[.,]\d{1,2})?|\b(?:reais|e|mas|entao|agora)\b|[\s,.;!?]/g,'');
+   .replace(/r\$|\d+(?:[.,]\d{1,2})?/g,'')
+   .replace(/\b(?:quero|queria|um|uma|algo|alguma|coisa|opcao|item|reais|e|mas|entao|agora|cara|mano|ai|so|somente|apenas)\b|[\s,.;!?]/g,'');
  return !remainder&&(constraints.budgetChanged||constraints.budgetScope!==null);
 }
 function conversationIntent(question,prior){
@@ -97,14 +100,19 @@ function conversationIntent(question,prior){
 function intentScore(item,intent,query){
  const name=normalizedText(item.name),category=item.category;
  let score=0;
+ const mealCategory=['Regional','Caseiro','Vegetariano'].includes(category);
  const scores={
-  meal:['Regional','Caseiro','Vegetariano'].includes(category)?100:0,
+  meal:mealCategory?100:0,
   dessert:category==='Doces'?120:/\b(bolo|geleia|doce|pudim|chocolate|sorvete|mel)\b/.test(name)?100:0,
   drink:category==='Bebidas'&&(!intent.juice||/\bsuco\b/.test(name))?100:0,
   snack:category==='Padaria'?110:category==='Doces'?80:0,
   breakfast:category==='Padaria'?110:category==='Doces'||category==='Bebidas'&&/\bcafe\b/.test(name)?80:0
  };
- if(intent.kind!=='any'){score=scores[intent.kind];if(!score)return 0;}
+ if(intent.withDrink){
+  if(mealCategory)score=130;
+  else if(category==='Bebidas')score=110;
+  else return 0;
+ }else if(intent.kind!=='any'){score=scores[intent.kind];if(!score)return 0;}
  if((intent.completeBreakfast||intent.completeSnack)&&isCatalogCombo(item))score+=1000;
  if(intent.vegetarian){if(category!=='Vegetariano'&&!item.preferences.includes('vegetariano'))return 0;score+=100;}
  if(intent.producer){if(!item.producer)return 0;if(intent.organic&&!/organic/.test(normalizedText(item.name+' '+item.store)))return 0;if(intent.garden&&!/horta|hortalica|alface|tomate|cenoura|legume|verdura/.test(normalizedText(item.name+' '+item.description)))return 0;score+=100;}
@@ -226,6 +234,14 @@ function validatedRecommendations(text,catalog,intent={}){
   const without=picked.filter(item=>item.id!==combo.id);
   picked.splice(0,picked.length,{...combo},...without.slice(0,2));
  }
+ if(intent.withDrink){
+  const meal=catalog.find(item=>['Regional','Caseiro','Vegetariano'].includes(item.category));
+  const drink=catalog.find(item=>item.category==='Bebidas');
+  if(meal&&drink){
+   const extras=picked.filter(item=>item.id!==meal.id&&item.id!==drink.id);
+   picked.splice(0,picked.length,{...meal},{...drink},...extras.slice(0,1));
+  }
+ }
  picked.message=data&&typeof data.message==='string'
   ?safeExplanation(data.message,picked)
   :safeExplanation(text,picked);
@@ -240,7 +256,8 @@ function catalogAnswer(options,mode,constraints,basic=false,another=false){
   return (index+1)+'. '+item.name+' — 1 unidade por R$ '+money(item.priceReais)+', '+delivery+'; total de R$ '+money(item.totalReais)+'.'+(!basic&&item.reason?' '+item.reason:'');
  });
  const budgetNote=constraints.budget!==null&&constraints.budgetScope==='products'?' O limite considera só o produto; a entrega está discriminada à parte.':'';
- return {text:prefix+(!basic&&options.message?options.message+' ':'')+'Estas são opções individuais, para escolher uma.'+budgetNote+'\n'+lines.join('\n'),productIds:options.map(item=>item.id)};
+ const intro=constraints.intent?.withDrink?'Separei um prato e uma bebida compatíveis com o pedido.':'Estas são opções individuais, para escolher uma.';
+ return {text:prefix+(!basic&&options.message?options.message+' ':'')+intro+budgetNote+'\n'+lines.join('\n'),productIds:options.map(item=>item.id)};
 }
 function providerText(data){
  const candidates=[
@@ -332,6 +349,29 @@ function reserveAnswer(catalog,mode,query,prior,constraints){
   .filter(({score})=>score>0).sort((a,b)=>b.score-a.score||a.item.id-b.item.id).slice(0,3).map(({item})=>item);
  return {...catalogAnswer(options,mode,constraints,true,intent.another),provider:'reserve',model:'deterministic-v1'};
 }
+function catalogFactRequest(text){
+ const clean=normalizedText(text);
+ return {
+  mostExpensive:/\b(?:mais car[oa]|maior preco)\b/.test(clean),
+  cheapest:/\b(?:mais barat[oa]|menor preco)\b/.test(clean),
+  mostOrdered:/\b(?:mais pedid[oa]|mais vendid[oa]|mais popular)\b/.test(clean)
+ };
+}
+function catalogFactAnswer(city,mode,text){
+ const fact=catalogFactRequest(text);
+ if(!fact.mostExpensive&&!fact.cheapest&&!fact.mostOrdered)return null;
+ const items=CATALOG.products.map(product=>productInfo(product,city,mode)).filter(item=>item&&item.available);
+ const money=value=>'R$ '+(value/100).toFixed(2).replace('.',',');
+ const parts=[];const productIds=[];
+ if(items.length&&(fact.mostExpensive||fact.cheapest)){
+  const sorted=[...items].sort((a,b)=>a.price-b.price||a.id-b.id);
+  const item=fact.mostExpensive?sorted[sorted.length-1]:sorted[0];
+  parts.push('Pelo preço do produto, a opção '+(fact.mostExpensive?'mais cara':'mais barata')+' disponível é '+item.name+': '+money(item.price)+'. '+(mode==='pickup'?'Na retirada não há taxa de entrega.':'Com a entrega cadastrada, o total fica '+money(item.total)+'.'));
+  productIds.push(item.id);
+ }
+ if(fact.mostOrdered)parts.push('O catálogo demonstrativo ainda não registra quantidade de pedidos ou vendas, então não dá para afirmar qual item é o mais pedido.');
+ return {text:parts.join(' '),provider:'rules',model:'catalog-facts-v1',productIds};
+}
 async function route(req,env){const url=new URL(req.url);const path=url.pathname;
  if(path==='/api/sabia/status'&&req.method==='GET'){const providers=[env.GROQ_API_KEY?'Groq':null,env.AI?'Cloudflare Workers AI':null,env.GEMINI_API_KEY?'Gemini':null].filter(Boolean);return response({mode:providers.length?'generative':'unavailable',configured:providers.length>0,providers,message:providers.length?'Sabiá online: '+providers.join(' → '):'Sabiá ainda não configurada. Catálogo disponível.'});}
  if(path==='/api/catalog'&&req.method==='GET')return response({...CATALOG,demo:true});
@@ -347,6 +387,12 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  const csrf=(await sign('csrf:'+sid,secret)).slice(0,32);if(req.headers.get('X-CSRF-Token')!==csrf)return failure('csrf','Sessão inválida. Reabra a Sabiá.',403);
  if(path==='/api/sabia/product'){const p=productById.get(body.productId);const info=validCity(body.city)&&['delivery','pickup'].includes(body.mode)?productInfo(p||{},body.city,body.mode):null;if(!info||!info.available)return failure('unavailable','Produto indisponível para esta cidade.',409);return response(info);}
  if(!safeId(body.conversationId)||typeof body.question!=='string'||!body.question.trim()||body.question.length>1200||!validCity(body.city)||!['delivery','pickup'].includes(body.mode))return failure('invalid_request','Pergunta ou cidade inválida.',400);
+ const factAnswer=catalogFactAnswer(body.city,body.mode,body.question);
+ if(factAnswer){
+  const products=factAnswer.productIds.map(id=>productInfo(productById.get(id),body.city,body.mode)).filter(Boolean);
+  const {productIds,...publicAnswer}=factAnswer;
+  return response({...publicAnswer,products,stores:[],demo:true});
+ }
  const prior=messagesFor(body),constraints={...conversationConstraints(body.question,prior),intent:conversationIntent(body.question,prior)};
  const catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
  const noRecognizedIntent=constraints.intent.kind==='any'&&!constraints.intent.vegetarian&&!constraints.intent.healthy&&!constraints.intent.producer&&!constraints.intent.another;

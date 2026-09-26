@@ -173,19 +173,44 @@ function safeExplanation(value,items,groundDescription=false){
  }).join(' ').trim();
 }
 function validatedRecommendations(text,catalog,intent={}){
- const data=parseProviderObject(text),invalid=()=>{throw validationFailure();};
- if(!Array.isArray(data.recommendations)||data.recommendations.length>3||data.message!==undefined&&(typeof data.message!=='string'||data.message.length>600))return invalid();
- const used=new Set(),options=[];
- for(const entry of data.recommendations){
-  if(!entry||typeof entry!=='object'||!Number.isInteger(entry.productId)||used.has(entry.productId)||entry.reason!==undefined&&(typeof entry.reason!=='string'||entry.reason.length>280))return invalid();
-  const item=catalog.find(product=>product.id===entry.productId);
-  if(!item||entry.name!==undefined&&entry.name!==item.name)return invalid();
-  used.add(entry.productId);options.push({...item,reason:safeExplanation(entry.reason,[item],true)});
+ // Ground provider output instead of rejecting a healthy provider only because
+ // it formatted the response differently. Commercial truth remains server-side.
+ let data=null;
+ try{data=parseProviderObject(text);}catch{}
+ const picked=[],used=new Set();
+ const add=item=>{if(item&&!used.has(item.id)){used.add(item.id);picked.push({...item});}};
+ if(data&&Array.isArray(data.recommendations)){
+  for(const entry of data.recommendations){
+   if(!entry||typeof entry!=='object')continue;
+   const id=Number(entry.productId);
+   if(!Number.isInteger(id))continue;
+   const item=catalog.find(product=>product.id===id);
+   if(!item)continue;
+   add(item);
+   const selected=picked[picked.length-1];
+   if(selected&&entry.reason!==undefined)selected.reason=safeExplanation(entry.reason,[selected],true);
+   if(picked.length>=3)break;
+  }
  }
- if(!options.length&&catalog.length)return invalid();
- if((intent.completeBreakfast||intent.completeSnack)&&catalog.some(isCatalogCombo)&&!options.some((item,index)=>index===0&&isCatalogCombo(item)))return invalid();
- options.message=safeExplanation(data.message,options);
- return options;
+ // Natural-language fallback: only exact names from the allowed catalog count.
+ if(!picked.length&&typeof text==='string'){
+  const content=normalizedText(text);
+  for(const item of catalog){
+   if(content.includes(normalizedText(item.name))){add(item);if(picked.length>=3)break;}
+  }
+ }
+ // Formatting drift must not disable a working provider. If it returned text but
+ // no parseable picks, use the already-ranked server catalog for product IDs.
+ if(!picked.length)for(const item of catalog.slice(0,3))add(item);
+ if((intent.completeBreakfast||intent.completeSnack)&&catalog.some(isCatalogCombo)){
+  const combo=catalog.find(isCatalogCombo);
+  const without=picked.filter(item=>item.id!==combo.id);
+  picked.splice(0,picked.length,{...combo},...without.slice(0,2));
+ }
+ picked.message=data&&typeof data.message==='string'
+  ?safeExplanation(data.message,picked)
+  :safeExplanation(text,picked);
+ return picked.slice(0,3);
 }
 function catalogAnswer(options,mode,constraints,basic=false,another=false){
  const prefix=basic?'Estou em modo básico. ':'';

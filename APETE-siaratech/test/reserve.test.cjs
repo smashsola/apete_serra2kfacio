@@ -42,6 +42,42 @@ test('another option excludes products in the latest assistant reply and is dete
  assert.ok(next.cards.every(p=>!first.cards.some(old=>old.id===p.id)));
  assert.equal(next.text,answer('quero outra coisa',{history}).text);
 });
+test('a new search with a new budget resets delivery scope while modifiers preserve it',()=>{
+ const history=[user('quero um almoço até 40 sem contar entrega')];
+ const dessert=answer('quero uma sobremesa até 25',{history});
+ assert.equal(dessert.constraints.budgetScope,'total');
+ assert.equal(dessert.constraints.budget,2500);
+ assert.ok(dessert.cards.every(p=>p.total<=2500));
+ assert.equal(answer('pode ser até 25',{history}).constraints.budgetScope,'products');
+ assert.equal(answer('quero uma sobremesa até 25 só o produto',{history}).constraints.budgetScope,'products');
+ const next=[...history,user('quero uma sobremesa até 25')];
+ assert.equal(answer('pode ser até 30',{history:next}).constraints.budgetScope,'total');
+ const breakfast=answer('quero café da manhã completo até 35',{history});
+ assert.equal(breakfast.constraints.budgetScope,'total');
+ assert.ok(!breakfast.cards.some(p=>p.id===10)); // R$32 + R$4.50 exceeds the new total cap.
+});
+test('complete breakfast ranks a real combo first, including after budget-only follow-ups',()=>{
+ for(const query of ['quero café da manhã completo','quero um combo de café da manhã','quero café e algo para comer','quero café da manhã como refeição completa']){
+  const result=answer(query);
+  assert.equal(result.cards[0].id,10,query);
+  assert.equal(result.cards[0].name,'Combo café da manhã');
+ }
+ assert.equal(answer('pode ser até 40',{history:[user('quero café da manhã completo')]}).cards[0].id,10);
+ assert.ok(!answer('café da manhã completo até 30').cards.some(p=>p.id===10));
+ assert.equal(answer('café da manhã completo até 32 só o produto').cards[0].id,10);
+ assert.equal(answer('café da manhã completo até 32',{mode:'pickup'}).cards[0].id,10);
+ assert.equal(answer('café da manhã completo',{town:'São Benedito'}).cards.length,0);
+});
+test('generative breakfast selection must also prioritize a compatible real combo',()=>{
+ const query='quero café da manhã completo',intent=api.conversationIntent(query,[]);
+ const constraints={...api.conversationConstraints(query,[]),intent};
+ const catalog=api.summary(city,'delivery',query,constraints);
+ const combo=catalog.find(p=>p.id===10),single=catalog.find(p=>p.id!==10);
+ const json=items=>JSON.stringify({recommendations:items.map(p=>({productId:p.id,name:p.name}))});
+ assert.throws(()=>api.validatedRecommendations(json([single]),catalog,intent));
+ assert.equal(api.validatedRecommendations(json([combo,single]),catalog,intent)[0].id,10);
+ assert.equal(api.validatedRecommendations(json([single]),catalog.filter(p=>p.id!==10),intent)[0].id,single.id);
+});
 test('delivery is included by default, excluded explicitly, and pickup has no fee',()=>{
  assert.equal(answer('almoço até 30',{town:'São Benedito'}).cards.length,1);
  const only=answer('almoço até 30 sem contar entrega',{town:'São Benedito'});

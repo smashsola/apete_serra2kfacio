@@ -45,6 +45,8 @@ function conversationConstraints(question,prior){
  let budget=null,budgetScope='total';
  for(const text of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
   const next=requestConstraints(text);
+  const intent=currentIntent(text);
+  if(next.budgetChanged&&next.budget!==null&&next.budgetScope===null&&!isSearchModifier(text,next)&&(intent.kind!=='any'||intent.vegetarian||intent.healthy||intent.producer||intent.another))budgetScope='total';
   if(next.budgetChanged)budget=next.budget;
   if(next.budgetScope!==null)budgetScope=next.budgetScope;
  }
@@ -54,17 +56,14 @@ function currentIntent(query){
  const text=normalizedText(query);
  let kind='any';
  if(/\b(sobremesas?|doces?)\b/.test(text))kind='dessert';
- else if(/\bcafe da manha\b/.test(text))kind='breakfast';
+ else if(/\bcafe da manha\b|\bcafe e (?:algo|alguma coisa) para comer\b/.test(text))kind='breakfast';
  else if(/\b(bebidas?|sucos?)\b/.test(text))kind='drink';
  else if(/\b(almoco|refeicao|jantar|pratos?|comida)\b/.test(text))kind='meal';
  else if(/\blanches?\b/.test(text))kind='snack';
  const vegetarian=/\bvegetarian[oa]s?\b/.test(text),healthy=/\bsaudave(?:l|is)\b/.test(text),producer=/\b(produtor(?:es)?|horta|organicos?|organicas?)\b/.test(text);
- return {kind,vegetarian,healthy,producer,organic:/\borganic[oa]s?\b/.test(text),garden:/\bhorta\b/.test(text),juice:/\bsucos?\b/.test(text),another:/\b(outr[oa]s?|diferentes?|alternativas?)\b/.test(text)};
+ return {kind,vegetarian,healthy,producer,completeBreakfast:kind==='breakfast'&&/\b(complet[oa]|combo|refeicao completa)\b|\bcafe e (?:algo|alguma coisa) para comer\b/.test(text),organic:/\borganic[oa]s?\b/.test(text),garden:/\bhorta\b/.test(text),juice:/\bsucos?\b/.test(text),another:/\b(outr[oa]s?|diferentes?|alternativas?)\b/.test(text)};
 }
-function conversationIntent(question,prior){
- let intent=currentIntent('');
- for(const text of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
-  const next=currentIntent(text),constraints=requestConstraints(text);
+function isSearchModifier(text,constraints=requestConstraints(text)){
   // Only a budget/delivery modifier can inherit. A new subject clears prior intent.
   const remainder=normalizedText(text)
    .replace(/\b(?:sem(?:\s+(?:contar|incluir|considerar))?|nao\s+(?:contar|incluir|considerar))\s+(?:(?:a|o)\s+)?(?:taxa(?: de entrega)?|entrega|frete)\b/g,'')
@@ -72,8 +71,12 @@ function conversationIntent(question,prior){
    .replace(/\b(?:com|incluindo)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa)\b/g,'')
    .replace(/\b(?:pode ser|pode ficar|pode custar|ate|no maximo|orcamento(?: de)?|limite de|pode passar(?: de)?|nao precisa ser ate|sem limite|sem teto)\b/g,'')
    .replace(/r\$|\d+(?:[.,]\d{1,2})?|\b(?:reais|e|mas|entao|agora)\b|[\s,.;!?]/g,'');
-  const modifier=!remainder&&(constraints.budgetChanged||constraints.budgetScope!==null);
-  if(!modifier)intent=next;
+ return !remainder&&(constraints.budgetChanged||constraints.budgetScope!==null);
+}
+function conversationIntent(question,prior){
+ let intent=currentIntent('');
+ for(const text of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
+  if(!isSearchModifier(text))intent=currentIntent(text);
  }
  return intent;
 }
@@ -88,6 +91,7 @@ function intentScore(item,intent,query){
   breakfast:category==='Padaria'?110:category==='Doces'||category==='Bebidas'&&/\bcafe\b/.test(name)?80:0
  };
  if(intent.kind!=='any'){score=scores[intent.kind];if(!score)return 0;}
+ if(intent.completeBreakfast&&isBreakfastCombo(item))score+=1000;
  if(intent.vegetarian){if(category!=='Vegetariano'&&!item.preferences.includes('vegetariano'))return 0;score+=100;}
  if(intent.producer){if(!item.producer)return 0;if(intent.organic&&!/organic/.test(normalizedText(item.name+' '+item.store)))return 0;if(intent.garden&&!/horta|hortalica|alface|tomate|cenoura|legume|verdura/.test(normalizedText(item.name+' '+item.description)))return 0;score+=100;}
  if(intent.healthy){if(category!=='Vegetariano'&&!/\b(banana|hortalicas|tomate|alface|cenoura|legumes|verduras)\b/.test(name))return 0;score+=100;}
@@ -110,7 +114,8 @@ function summary(city,mode,query,constraints){
  }
  return items.sort((a,b)=>b.score-a.score||a.data.id-b.data.id).map(item=>item.data);
 }
-function validatedRecommendations(text,catalog){
+function isBreakfastCombo(item){return /\bcombo\b|\b(?:cafe da manha|refeicao) complet[oa]\b/.test(normalizedText(item.name));}
+function validatedRecommendations(text,catalog,intent={}){
  let data;try{data=JSON.parse(text);}catch{throw {retryable:true,status:502};}
  const invalid=()=>{throw {retryable:true,status:502};};
  if(!data||Array.isArray(data)||Object.keys(data).join(',')!=='recommendations'||!Array.isArray(data.recommendations)||data.recommendations.length>3)return invalid();
@@ -122,6 +127,7 @@ function validatedRecommendations(text,catalog){
   used.add(entry.productId);options.push(item);
  }
  if(!options.length&&catalog.length)return invalid();
+ if(intent.completeBreakfast&&catalog.some(isBreakfastCombo)&&!options.some((item,index)=>index===0&&isBreakfastCombo(item)))return invalid();
  return options;
 }
 function catalogAnswer(options,mode,constraints,basic=false,another=false){
@@ -137,7 +143,7 @@ function catalogAnswer(options,mode,constraints,basic=false,another=false){
 }
 async function callProvider(name,env,messages){if(name==='cloudflare'){const model=env.CLOUDFLARE_AI_MODEL||'@cf/qwen/qwen3-30b-a3b-fp8';let timer;try{const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject({retryable:true,timeout:true,retryAfter:30}),18000);});const data=await Promise.race([env.AI.run(model,{messages,temperature:0.2,max_tokens:550}),timeout]);let text=typeof data==='string'?data:(data?.response??data?.choices?.[0]?.message?.content);if(typeof text!=='string'||!text.trim())throw {retryable:true,status:502,retryAfter:30};return {text:text.slice(0,2300),provider:name,model};}catch(e){if(e?.retryable)throw e;const status=Number(e?.status||e?.cause?.status)||0;if(status===429||status>=500)throw {retryable:true,status,retryAfter:30};throw {retryable:false,status};}finally{clearTimeout(timer);}}const isGroq=name==='groq';const key=isGroq?env.GROQ_API_KEY:env.GEMINI_API_KEY;const model=isGroq?(env.GROQ_MODEL||'openai/gpt-oss-20b'):(env.GEMINI_MODEL||'gemini-3.5-flash-lite');const endpoint=isGroq?'https://api.groq.com/openai/v1/chat/completions':'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),18000);try{const r=await fetch(endpoint,{method:'POST',headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model,messages,temperature:0.2,max_completion_tokens:550,stream:false,...(isGroq?{reasoning_effort:'low'}:{})}),signal:controller.signal});if(!r.ok){if(r.status===429||r.status>=500)throw {retryable:true,status:r.status,retryAfter:Math.min(180,Math.max(15,parseInt(r.headers.get('retry-after')||'30',10)||30))};throw {retryable:false,status:r.status};}const data=await r.json();let text=data?.choices?.[0]?.message?.content;if(typeof text!=='string'||!text.trim())throw {retryable:true,status:502,retryAfter:30};return {text:text.slice(0,2300),provider:name,model};}catch(e){if(e?.name==='AbortError')throw {retryable:true,timeout:true,retryAfter:30};throw e;}finally{clearTimeout(timer);}}
 const blocked=new Map(); // Best-effort per-isolate cooldown; no global quota promise.
-async function generate(env,messages,catalog,mode,constraints){const choices=[['groq',env.GROQ_API_KEY],['cloudflare',env.AI],['gemini',env.GEMINI_API_KEY]].filter(([,binding])=>Boolean(binding));if(!choices.length)throw {code:'not_configured',message:'A Sabiá ainda não tem uma IA configurada. O catálogo continua disponível.',status:503};let last=null;for(const [name] of choices){if((blocked.get(name)||0)>Date.now())continue;try{const answer=await callProvider(name,env,messages);const options=validatedRecommendations(answer.text,catalog);return {...answer,...catalogAnswer(options,mode,constraints)};}catch(e){last=e;console.warn('sabia_provider_failure',{provider:name,status:Number(e?.status)||0,retryable:Boolean(e?.retryable),timeout:Boolean(e?.timeout)});if(e?.retryable)blocked.set(name,Date.now()+(e.retryAfter||30)*1000);}}throw {code:'providers_unavailable',message:'As IAs estão temporariamente indisponíveis. Você ainda pode explorar o catálogo.',status:429,retryAfter:last?.retryAfter||60};}
+async function generate(env,messages,catalog,mode,constraints){const choices=[['groq',env.GROQ_API_KEY],['cloudflare',env.AI],['gemini',env.GEMINI_API_KEY]].filter(([,binding])=>Boolean(binding));if(!choices.length)throw {code:'not_configured',message:'A Sabiá ainda não tem uma IA configurada. O catálogo continua disponível.',status:503};let last=null;for(const [name] of choices){if((blocked.get(name)||0)>Date.now())continue;try{const answer=await callProvider(name,env,messages);const options=validatedRecommendations(answer.text,catalog,constraints.intent);return {...answer,...catalogAnswer(options,mode,constraints)};}catch(e){last=e;console.warn('sabia_provider_failure',{provider:name,status:Number(e?.status)||0,retryable:Boolean(e?.retryable),timeout:Boolean(e?.timeout)});if(e?.retryable)blocked.set(name,Date.now()+(e.retryAfter||30)*1000);}}throw {code:'providers_unavailable',message:'As IAs estão temporariamente indisponíveis. Você ainda pode explorar o catálogo.',status:429,retryAfter:last?.retryAfter||60};}
 function alternativeCatalog(catalog,intent,prior){
  if(!intent.another)return catalog;
  const last=[...prior].reverse().find(message=>message.role==='assistant')?.content||'';
@@ -167,7 +173,7 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  if(!safeId(body.conversationId)||typeof body.question!=='string'||!body.question.trim()||body.question.length>1200||!validCity(body.city)||!['delivery','pickup'].includes(body.mode))return failure('invalid_request','Pergunta ou cidade inválida.',400);
  const prior=messagesFor(body),constraints={...conversationConstraints(body.question,prior),intent:conversationIntent(body.question,prior)};
  const catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
- const context='Você é Sabiá, assistente do APETÊ. Selecione até 3 opções individuais compatíveis com a intenção atual. Responda SOMENTE JSON no formato {"recommendations":[{"productId":1,"name":"nome exato do catálogo"}]}. Use exclusivamente pares ID/nome do catálogo enviado. Categorias nunca são nomes de produtos. Não inclua texto livre, valores, quantidades nem campos adicionais. Se o catálogo estiver vazio, retorne {"recommendations":[]}. As constraints atuais substituem regras antigas do histórico. Dados demonstrativos, não são estabelecimentos reais confirmados. Cidade: '+body.city+'; modalidade: '+body.mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo: '+JSON.stringify(catalog);
+ const context='Você é Sabiá, assistente do APETÊ. Selecione até 3 opções individuais compatíveis com a intenção atual. Responda SOMENTE JSON no formato {"recommendations":[{"productId":1,"name":"nome exato do catálogo"}]}. Use exclusivamente pares ID/nome do catálogo enviado. Categorias nunca são nomes de produtos. Quando completeBreakfast for true, priorize como primeira opção um combo/refeição completa já cadastrado e compatível, se houver. Não inclua texto livre, valores, quantidades nem campos adicionais. Se o catálogo estiver vazio, retorne {"recommendations":[]}. As constraints atuais substituem regras antigas do histórico. Dados demonstrativos, não são estabelecimentos reais confirmados. Cidade: '+body.city+'; modalidade: '+body.mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo: '+JSON.stringify(catalog);
  let answer;try{answer=await generate(env,[{role:'system',content:context},...prior,{role:'user',content:body.question.trim()}],catalog,body.mode,constraints);}catch(e){if(!['not_configured','providers_unavailable'].includes(e?.code))throw e;answer=reserveAnswer(catalog,body.mode,body.question,prior,constraints);}
  const {productIds,...publicAnswer}=answer;
  const products=productIds.filter(id=>catalog.some(item=>item.id===id)).map(id=>productInfo(productById.get(id),body.city,body.mode));

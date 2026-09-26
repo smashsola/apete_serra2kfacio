@@ -38,6 +38,20 @@ test('current intent selects only compatible categories, even after an earlier b
  assert.equal(answer('quero orgânico').cards.length,0);
  assert.ok(answer('quero orgânico',{town:'Ibiapina'}).cards.length>0);
 });
+test('producer and garden intent survive more-options followups',()=>{
+ const first=answer('quero algo da horta');
+ assert.ok(first.cards.length>0);
+ assert.ok(first.constraints.intent.producer);
+ assert.ok(first.constraints.intent.garden);
+ const history=[user('quero algo da horta'),{role:'assistant',content:first.text}];
+ const next=answer('tem mais opções',{history});
+ assert.ok(next.constraints.intent.producer);
+ assert.ok(next.constraints.intent.garden);
+ assert.ok(next.constraints.intent.another);
+ assert.ok(next.cards.every(p=>p.category==='Do produtor'));
+ assert.ok(next.cards.every(p=>/hortaliças|horta/i.test(p.name+' '+p.description)));
+});
+
 test('another option excludes products in the latest assistant reply and is deterministic',()=>{
  const first=answer('quero uma sobremesa');
  const history=[user('quero uma sobremesa'),{role:'assistant',content:first.text}];

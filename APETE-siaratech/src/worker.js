@@ -45,11 +45,18 @@ function conversationConstraints(question,prior){
  let budget=null,budgetScope='total';
  for(const text of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
   const next=requestConstraints(text);
-  if(!isSearchModifier(text,next)){budget=null;budgetScope='total';}
+  const followup=isSearchModifier(text,next)||isAlternativeFollowup(text);
+  if(!followup){budget=null;budgetScope='total';}
   if(next.budgetChanged)budget=next.budget;
   if(next.budgetScope!==null)budgetScope=next.budgetScope;
  }
  return {...requestConstraints(question),budget,budgetScope};
+}
+function isAlternativeFollowup(text){
+ const clean=normalizedText(text);
+ return /\b(?:quero|manda|mostra|mostre|tem|ha|existem?)\s+mais(?:\s+(?:opcoes?|alternativas?|sugestoes?))?(?:\s+ou\s+nao)?\b/.test(clean)
+  ||/\bmais\s+(?:opcoes?|alternativas?|sugestoes?)\b/.test(clean)
+  ||/\b(?:outr[oa]s?|diferentes?|alternativas?)\s+(?:opcoes?|sugestoes?)?\b/.test(clean);
 }
 function currentIntent(query){
  const text=normalizedText(query);
@@ -60,7 +67,7 @@ function currentIntent(query){
  else if(/\b(almoco|refeicao|jantar|pratos?|comida)\b/.test(text))kind='meal';
  else if(/\b(?:lanches?|lanchinhos?)\b/.test(text))kind='snack';
  const vegetarian=/\bvegetarian[oa]s?\b/.test(text),healthy=/\bsaudave(?:l|is)\b/.test(text),producer=/\b(produtor(?:es)?|horta|organicos?|organicas?)\b/.test(text);
- return {kind,vegetarian,healthy,producer,completeBreakfast:kind==='breakfast'&&/\b(complet[oa]|combo|refeicao completa)\b|\bcafe e (?:algo|alguma coisa) (?:para|pra) comer\b/.test(text),completeSnack:kind==='snack'&&/\b(complet[oa]s?|combos?|refeicao completa)\b/.test(text),organic:/\borganic[oa]s?\b/.test(text),garden:/\bhorta\b/.test(text),juice:/\bsucos?\b/.test(text),another:/\b(outr[oa]s?|diferentes?|alternativas?)\b/.test(text)};
+ return {kind,vegetarian,healthy,producer,completeBreakfast:kind==='breakfast'&&/\b(complet[oa]|combo|refeicao completa)\b|\bcafe e (?:algo|alguma coisa) (?:para|pra) comer\b/.test(text),completeSnack:kind==='snack'&&/\b(complet[oa]s?|combos?|refeicao completa)\b/.test(text),organic:/\borganic[oa]s?\b/.test(text),garden:/\bhorta\b/.test(text),juice:/\bsucos?\b/.test(text),another:isAlternativeFollowup(text)||/\b(outr[oa]s?|diferentes?|alternativas?)\b/.test(text)};
 }
 function isSearchModifier(text,constraints=requestConstraints(text)){
   // Only a budget/delivery modifier can inherit. A new subject clears prior intent.
@@ -76,7 +83,13 @@ function isSearchModifier(text,constraints=requestConstraints(text)){
 function conversationIntent(question,prior){
  let intent=currentIntent('');
  for(const text of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
-  if(!isSearchModifier(text))intent=currentIntent(text);
+  if(isSearchModifier(text))continue;
+  const next=currentIntent(text);
+  if(isAlternativeFollowup(text)&&intent.kind!=='any'){
+   intent={...intent,another:true};
+   continue;
+  }
+  intent=next;
  }
  return intent;
 }
@@ -98,6 +111,11 @@ function intentScore(item,intent,query){
  const words=new Set(normalizedWords(query));
  score+=normalizedWords(item.name+' '+item.category).filter(word=>words.has(word)).length*5;
  score+=normalizedWords(item.description+' '+item.store+' '+item.preferences.join(' ')).filter(word=>words.has(word)).length;
+ if(intent.kind==='any'&&!intent.vegetarian&&!intent.healthy&&!intent.producer){
+  if(score>0)return score;
+  if(/\b(quero|procuro|mostra|mostre|opcoes?|sugestoes?|recomenda|recomende|algo|comer|pedido)\b/.test(normalizedText(query)))return 1;
+  return 0;
+ }
  return score||1;
 }
 function summary(city,mode,query,constraints){
@@ -291,7 +309,7 @@ async function generate(env,messages,catalog,mode,constraints){
   try{
    const answer=await callProvider(name,env,messages);stage='validation';
    const options=validatedRecommendations(answer.text,catalog,constraints.intent);
-   return {...answer,...catalogAnswer(options,mode,constraints)};
+   return {...answer,...catalogAnswer(options,mode,constraints,false,Boolean(constraints.intent?.another))};
   }catch(error){
    last=error;stage=error?.stage||stage;
    const status=Number(error?.status)||0,timeout=Boolean(error?.timeout),retryable=stage!=='validation'&&Boolean(error?.retryable);
@@ -330,6 +348,10 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  if(!safeId(body.conversationId)||typeof body.question!=='string'||!body.question.trim()||body.question.length>1200||!validCity(body.city)||!['delivery','pickup'].includes(body.mode))return failure('invalid_request','Pergunta ou cidade inválida.',400);
  const prior=messagesFor(body),constraints={...conversationConstraints(body.question,prior),intent:conversationIntent(body.question,prior)};
  const catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
+ const noRecognizedIntent=constraints.intent.kind==='any'&&!constraints.intent.vegetarian&&!constraints.intent.healthy&&!constraints.intent.producer&&!constraints.intent.another;
+ if(!catalog.length&&noRecognizedIntent){
+  return response({text:'Não entendi bem o que você procura. Posso ajudar com almoço, lanche, café da manhã, sobremesa, bebida ou produtos locais.',provider:'rules',model:'deterministic-v1',products:[],stores:[],demo:true});
+ }
  const context='Você é Sabiá, assistente do APETÊ. Ajude a escolher até 3 opções individuais do catálogo permitido, considerando a intenção atual e o histórico. Responda JSON: {"message":"texto curto e natural", "recommendations":[{"productId":2,"reason":"motivo curto e personalizado"}]}. Explique sua escolha de forma breve em português brasileiro, relacionando-a ao pedido, à praticidade, ao gosto ou à variedade. A mensagem e os motivos não devem incluir preços, taxas, quantidades, estoque, estabelecimentos, promoções nem alegações nutricionais. O servidor acrescentará todos os nomes e dados comerciais verdadeiros. Se mencionar um produto, use o nome exato de um ID selecionado; nunca transforme categorias em nomes. Não invente produtos, ingredientes ou combos. Pode citar literalmente a descrição cadastrada para explicar a escolha. Não retorne campos extras de preço ou nome. Quando completeBreakfast ou completeSnack for true, priorize como primeira opção um combo/refeição completa já cadastrado e compatível, se houver. Se o catálogo estiver vazio, retorne {"message":"", "recommendations":[]}. As constraints atuais substituem regras antigas. Dados demonstrativos. Cidade: '+body.city+'; modalidade: '+body.mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo permitido: '+JSON.stringify(catalog);
 
  let answer;try{answer=await generate(env,[{role:'system',content:context},...prior,{role:'user',content:body.question.trim()}],catalog,body.mode,constraints);}catch(e){if(!['not_configured','providers_unavailable'].includes(e?.code))throw e;answer=reserveAnswer(catalog,body.mode,body.question,prior,constraints);}

@@ -115,19 +115,76 @@ function summary(city,mode,query,constraints){
  return items.sort((a,b)=>b.score-a.score||a.data.id-b.data.id).map(item=>item.data);
 }
 function isCatalogCombo(item){return /\bcombos?\b|\b(?:cafe da manha|refeicao|lanche|lanchinho) complet[oa]s?\b/.test(normalizedText(item.name));}
+function validationFailure(){return {stage:'validation',retryable:false,status:0,timeout:false};}
+function parseProviderObject(text){
+ if(typeof text!=='string'||text.length>6000)throw validationFailure();
+ let input=text.trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
+ try{const data=JSON.parse(input);if(data&&typeof data==='object'&&!Array.isArray(data))return data;throw validationFailure();}catch(error){if(error.stage)throw error;}
+ // Bounded, quote-aware scanning: never eval or repair malformed JSON.
+ if(input.startsWith('['))throw validationFailure();
+ for(let start=0;start<input.length&&start<=160;start++){
+  if(input[start]!=='{')continue;
+  let depth=0,quoted=false,escaped=false;
+  for(let end=start;end<input.length;end++){
+   const char=input[end];
+   if(quoted){if(escaped)escaped=false;else if(char==='\\')escaped=true;else if(char==='"')quoted=false;continue;}
+   if(char==='"'){quoted=true;continue;}
+   if(char==='{')depth++;
+   if(char==='}'&&--depth===0){
+    let data;try{data=JSON.parse(input.slice(start,end+1));}catch{break;}
+    if(input.slice(end+1).trim().length>160)throw validationFailure();
+    return data;
+   }
+  }
+ }
+ throw validationFailure();
+}
+// Only non-commercial conversational language is free-form. Exact selected product
+// names/descriptions may be quoted; unknown claims are omitted, not sent to clients.
+const explanationWords=new Set(normalizedText(`
+ a o as os um uma uns umas de da do das dos em na no nas nos
+ para pra por pelo pela pelos pelas com sem e ou mas que se seu sua seus suas
+ voce voces te lhe eu minha meu ao aos esta este estas estes essa esse essas esses isso
+ isto aqui agora tambem ja ainda mais bem muito pouco pode podem poderia quer queria quiser procura busca
+ pediu pedido preferencia preferencias vontade fome momento hoje manha tarde noite almoco jantar refeicao cafe lanche lanchinho sobremesa
+ bebida saudavel vegetariano vegetariana completo completa combina combinam combinar atende atendem atender encaixa encaixam encaixar escolhi escolher selecionei
+ pensei sugiro sugerir recomendo recomendar preferi priorizei priorizar considero considerar alternativa alternativas opcao opcoes sugestao sugestoes escolha escolhas
+ proposta propostas pratica pratico praticas praticos simples variedade variar experimentar aproveitar acompanhar compartilhar individual individuais principal principais diferente
+ diferentes sabor sabores textura texturas contraste leve leveza doce salgado aconchegante acolhedora pausa rotina praticidade equilibrio equilibrar desejo
+ estilo gosto gostos gostoso gostosa agradavel interessante prefere preferir deseja desejar buscando fazer ter ser estar sao vez
+ como quando porque assim entao caso conforme pensando vale pena funciona funcionar junto juntas juntos abaixo seguinte seguintes
+ disponiveis entre delas deles bem-vindo ola bom boa dia obrigado obrigada entendi claro certo sim vamos posso ajudar
+ ajuda olhar conferir explorar encontrar encontrei selecionadas selecionados indicada indicado indicadas indicados nesta neste nesse nessa dentro respeitando
+ respeita restricoes intencao contexto foco perfil priorizando pois reune inclui tem traz oferece oferecer junta permite saboroso saborosa
+ rapida rapido satisfazer apetite saciar pequena pequeno tamanho seja tanto quanto ate so nao especialmente destaca destaque combinacao
+ forma maneira servir servido fresca fresco feitas feita feito feitos
+`).trim().split(/\s+/));
+function safeExplanation(value,items,groundDescription=false){
+ if(typeof value!=='string')return '';
+ const vocabulary=new Set(explanationWords);
+ if(groundDescription)for(const item of items)for(const word of normalizedWords(item.description))vocabulary.add(word);
+ return value.split(/(?<=[.!?])\s+/).filter(sentence=>{
+  let remaining=sentence;
+  for(const item of items)for(const literal of [item.name,item.description])if(literal)remaining=remaining.split(literal).join(' ');
+  if(/[^a-z\s.,!?;:()—–-]/i.test(normalizedText(remaining)))return false;
+  const words=normalizedText(remaining).match(/[a-z]+/g)||[];
+  if(/\b(preco|precos|reais|custa|custam|gratis|gratuito|gratuita|taxa|estoque|desconto|promocao|calorias|proteina|garantido|garantida)\b/.test(normalizedText(remaining)))return false;
+  return words.length>0&&words.every(word=>vocabulary.has(word));
+ }).join(' ').trim();
+}
 function validatedRecommendations(text,catalog,intent={}){
- let data;try{data=JSON.parse(text);}catch{throw {retryable:true,status:502};}
- const invalid=()=>{throw {retryable:true,status:502};};
- if(!data||Array.isArray(data)||Object.keys(data).join(',')!=='recommendations'||!Array.isArray(data.recommendations)||data.recommendations.length>3)return invalid();
+ const data=parseProviderObject(text),invalid=()=>{throw validationFailure();};
+ if(!Array.isArray(data.recommendations)||data.recommendations.length>3||data.message!==undefined&&(typeof data.message!=='string'||data.message.length>600))return invalid();
  const used=new Set(),options=[];
  for(const entry of data.recommendations){
-  if(!entry||typeof entry!=='object'||Object.keys(entry).sort().join(',')!=='name,productId'||!Number.isInteger(entry.productId)||used.has(entry.productId))return invalid();
-  const item=catalog.find(product=>product.id===entry.productId&&product.name===entry.name);
-  if(!item)return invalid();
-  used.add(entry.productId);options.push(item);
+  if(!entry||typeof entry!=='object'||!Number.isInteger(entry.productId)||used.has(entry.productId)||entry.reason!==undefined&&(typeof entry.reason!=='string'||entry.reason.length>280))return invalid();
+  const item=catalog.find(product=>product.id===entry.productId);
+  if(!item||entry.name!==undefined&&entry.name!==item.name)return invalid();
+  used.add(entry.productId);options.push({...item,reason:safeExplanation(entry.reason,[item],true)});
  }
  if(!options.length&&catalog.length)return invalid();
  if((intent.completeBreakfast||intent.completeSnack)&&catalog.some(isCatalogCombo)&&!options.some((item,index)=>index===0&&isCatalogCombo(item)))return invalid();
+ options.message=safeExplanation(data.message,options);
  return options;
 }
 function catalogAnswer(options,mode,constraints,basic=false,another=false){
@@ -136,14 +193,63 @@ function catalogAnswer(options,mode,constraints,basic=false,another=false){
  const money=v=>Number(v).toFixed(2).replace('.',',');
  const lines=options.map((item,index)=>{
   const delivery=mode==='pickup'?'retirada sem taxa':'taxa de entrega de R$ '+money(item.feeReais);
-  return (index+1)+'. '+item.name+' — 1 unidade por R$ '+money(item.priceReais)+', '+delivery+'; total de R$ '+money(item.totalReais)+'.';
+  return (index+1)+'. '+item.name+' — 1 unidade por R$ '+money(item.priceReais)+', '+delivery+'; total de R$ '+money(item.totalReais)+'.'+(!basic&&item.reason?' '+item.reason:'');
  });
  const budgetNote=constraints.budget!==null&&constraints.budgetScope==='products'?' O limite considera só o produto; a entrega está discriminada à parte.':'';
- return {text:prefix+'Estas são opções individuais, para escolher uma.'+budgetNote+'\n'+lines.join('\n'),productIds:options.map(item=>item.id)};
+ return {text:prefix+(!basic&&options.message?options.message+' ':'')+'Estas são opções individuais, para escolher uma.'+budgetNote+'\n'+lines.join('\n'),productIds:options.map(item=>item.id)};
 }
-async function callProvider(name,env,messages){if(name==='cloudflare'){const model=env.CLOUDFLARE_AI_MODEL||'@cf/qwen/qwen3-30b-a3b-fp8';let timer;try{const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject({retryable:true,timeout:true,retryAfter:30}),18000);});const data=await Promise.race([env.AI.run(model,{messages,temperature:0.2,max_tokens:550}),timeout]);let text=typeof data==='string'?data:(data?.response??data?.choices?.[0]?.message?.content);if(typeof text!=='string'||!text.trim())throw {retryable:true,status:502,retryAfter:30};return {text:text.slice(0,2300),provider:name,model};}catch(e){if(e?.retryable)throw e;const status=Number(e?.status||e?.cause?.status)||0;if(status===429||status>=500)throw {retryable:true,status,retryAfter:30};throw {retryable:false,status};}finally{clearTimeout(timer);}}const isGroq=name==='groq';const key=isGroq?env.GROQ_API_KEY:env.GEMINI_API_KEY;const model=isGroq?(env.GROQ_MODEL||'openai/gpt-oss-20b'):(env.GEMINI_MODEL||'gemini-3.5-flash-lite');const endpoint=isGroq?'https://api.groq.com/openai/v1/chat/completions':'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),18000);try{const r=await fetch(endpoint,{method:'POST',headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model,messages,temperature:0.2,max_completion_tokens:550,stream:false,...(isGroq?{reasoning_effort:'low'}:{})}),signal:controller.signal});if(!r.ok){if(r.status===429||r.status>=500)throw {retryable:true,status:r.status,retryAfter:Math.min(180,Math.max(15,parseInt(r.headers.get('retry-after')||'30',10)||30))};throw {retryable:false,status:r.status};}const data=await r.json();let text=data?.choices?.[0]?.message?.content;if(typeof text!=='string'||!text.trim())throw {retryable:true,status:502,retryAfter:30};return {text:text.slice(0,2300),provider:name,model};}catch(e){if(e?.name==='AbortError')throw {retryable:true,timeout:true,retryAfter:30};throw e;}finally{clearTimeout(timer);}}
+async function callProvider(name,env,messages){
+ if(name==='cloudflare'){
+  const model=env.CLOUDFLARE_AI_MODEL||'@cf/qwen/qwen3-30b-a3b-fp8';let timer;
+  try{
+   const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject({stage:'network',retryable:true,timeout:true,status:0,retryAfter:30}),18000);});
+   const data=await Promise.race([env.AI.run(model,{messages,temperature:0.2,max_tokens:900}),timeout]);
+   const text=typeof data==='string'?data:(data?.response??data?.choices?.[0]?.message?.content);
+   if(typeof text!=='string'||!text.trim())throw validationFailure();
+   return {text,provider:name,model};
+  }catch(error){
+   if(error?.stage)throw error;
+   const status=Number(error?.status||error?.cause?.status)||0;
+   throw {stage:status?'provider':'network',status,retryable:status===429||status>=500||!status,timeout:false,retryAfter:30};
+  }finally{clearTimeout(timer);}
+ }
+ const isGroq=name==='groq',key=isGroq?env.GROQ_API_KEY:env.GEMINI_API_KEY;
+ const model=isGroq?(env.GROQ_MODEL||'openai/gpt-oss-20b'):(env.GEMINI_MODEL||'gemini-3.5-flash-lite');
+ const endpoint=isGroq?'https://api.groq.com/openai/v1/chat/completions':'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),18000);
+ try{
+  const r=await fetch(endpoint,{method:'POST',headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model,messages,temperature:0.2,max_completion_tokens:900,stream:false,...(isGroq?{reasoning_effort:'low'}:{})}),signal:controller.signal});
+  if(!r.ok)throw {stage:'provider',status:r.status,retryable:r.status===429||r.status>=500,timeout:false,retryAfter:Math.min(180,Math.max(15,parseInt(r.headers.get('retry-after')||'30',10)||30))};
+  let data;try{data=await r.json();}catch(error){if(error?.name==='AbortError')throw error;throw validationFailure();}
+  const text=data?.choices?.[0]?.message?.content;
+  if(typeof text!=='string'||!text.trim())throw validationFailure();
+  return {text,provider:name,model};
+ }catch(error){
+  if(error?.stage)throw error;
+  throw {stage:'network',status:0,retryable:true,timeout:error?.name==='AbortError',retryAfter:30};
+ }finally{clearTimeout(timer);}
+}
 const blocked=new Map(); // Best-effort per-isolate cooldown; no global quota promise.
-async function generate(env,messages,catalog,mode,constraints){const choices=[['groq',env.GROQ_API_KEY],['cloudflare',env.AI],['gemini',env.GEMINI_API_KEY]].filter(([,binding])=>Boolean(binding));if(!choices.length)throw {code:'not_configured',message:'A Sabiá ainda não tem uma IA configurada. O catálogo continua disponível.',status:503};let last=null;for(const [name] of choices){if((blocked.get(name)||0)>Date.now())continue;try{const answer=await callProvider(name,env,messages);const options=validatedRecommendations(answer.text,catalog,constraints.intent);return {...answer,...catalogAnswer(options,mode,constraints)};}catch(e){last=e;console.warn('sabia_provider_failure',{provider:name,status:Number(e?.status)||0,retryable:Boolean(e?.retryable),timeout:Boolean(e?.timeout)});if(e?.retryable)blocked.set(name,Date.now()+(e.retryAfter||30)*1000);}}throw {code:'providers_unavailable',message:'As IAs estão temporariamente indisponíveis. Você ainda pode explorar o catálogo.',status:429,retryAfter:last?.retryAfter||60};}
+async function generate(env,messages,catalog,mode,constraints){
+ const choices=[['groq',env.GROQ_API_KEY],['cloudflare',env.AI],['gemini',env.GEMINI_API_KEY]].filter(([,binding])=>Boolean(binding));
+ if(!choices.length)throw {code:'not_configured',status:503};
+ let last=null;
+ for(const [name] of choices){
+  if((blocked.get(name)||0)>Date.now())continue;
+  let stage='network';
+  try{
+   const answer=await callProvider(name,env,messages);stage='validation';
+   const options=validatedRecommendations(answer.text,catalog,constraints.intent);
+   return {...answer,...catalogAnswer(options,mode,constraints)};
+  }catch(error){
+   last=error;stage=error?.stage||stage;
+   const status=Number(error?.status)||0,timeout=Boolean(error?.timeout),retryable=stage!=='validation'&&Boolean(error?.retryable);
+   console.warn('sabia_provider_failure',{provider:name,stage,status,timeout,retryable});
+   if(stage!=='validation'&&retryable&&(timeout||status===429||status>=500))blocked.set(name,Date.now()+(error.retryAfter||30)*1000);
+  }
+ }
+ throw {code:'providers_unavailable',status:429,retryAfter:last?.retryAfter||60};
+}
 function alternativeCatalog(catalog,intent,prior){
  if(!intent.another)return catalog;
  const last=[...prior].reverse().find(message=>message.role==='assistant')?.content||'';
@@ -173,7 +279,8 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  if(!safeId(body.conversationId)||typeof body.question!=='string'||!body.question.trim()||body.question.length>1200||!validCity(body.city)||!['delivery','pickup'].includes(body.mode))return failure('invalid_request','Pergunta ou cidade inválida.',400);
  const prior=messagesFor(body),constraints={...conversationConstraints(body.question,prior),intent:conversationIntent(body.question,prior)};
  const catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
- const context='Você é Sabiá, assistente do APETÊ. Selecione até 3 opções individuais compatíveis com a intenção atual. Responda SOMENTE JSON no formato {"recommendations":[{"productId":1,"name":"nome exato do catálogo"}]}. Use exclusivamente pares ID/nome do catálogo enviado. Categorias nunca são nomes de produtos. Quando completeBreakfast ou completeSnack for true, priorize como primeira opção um combo/refeição completa já cadastrado e compatível, se houver. Não inclua texto livre, valores, quantidades nem campos adicionais. Se o catálogo estiver vazio, retorne {"recommendations":[]}. As constraints atuais substituem regras antigas do histórico. Dados demonstrativos, não são estabelecimentos reais confirmados. Cidade: '+body.city+'; modalidade: '+body.mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo: '+JSON.stringify(catalog);
+ const context='Você é Sabiá, assistente do APETÊ. Ajude a escolher até 3 opções individuais do catálogo permitido, considerando a intenção atual e o histórico. Responda JSON: {"message":"texto curto e natural", "recommendations":[{"productId":2,"reason":"motivo curto e personalizado"}]}. Explique sua escolha de forma breve em português brasileiro, relacionando-a ao pedido, à praticidade, ao gosto ou à variedade. A mensagem e os motivos não devem incluir preços, taxas, quantidades, estoque, estabelecimentos, promoções nem alegações nutricionais. O servidor acrescentará todos os nomes e dados comerciais verdadeiros. Se mencionar um produto, use o nome exato de um ID selecionado; nunca transforme categorias em nomes. Não invente produtos, ingredientes ou combos. Pode citar literalmente a descrição cadastrada para explicar a escolha. Não retorne campos extras de preço ou nome. Quando completeBreakfast ou completeSnack for true, priorize como primeira opção um combo/refeição completa já cadastrado e compatível, se houver. Se o catálogo estiver vazio, retorne {"message":"", "recommendations":[]}. As constraints atuais substituem regras antigas. Dados demonstrativos. Cidade: '+body.city+'; modalidade: '+body.mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo permitido: '+JSON.stringify(catalog);
+
  let answer;try{answer=await generate(env,[{role:'system',content:context},...prior,{role:'user',content:body.question.trim()}],catalog,body.mode,constraints);}catch(e){if(!['not_configured','providers_unavailable'].includes(e?.code))throw e;answer=reserveAnswer(catalog,body.mode,body.question,prior,constraints);}
  const {productIds,...publicAnswer}=answer;
  const products=productIds.filter(id=>catalog.some(item=>item.id===id)).map(id=>productInfo(productById.get(id),body.city,body.mode));

@@ -6,7 +6,7 @@ const {webcrypto}=require('node:crypto');
 const source=fs.readFileSync(require('node:path').join(__dirname,'../src/worker.js'),'utf8');
 function load(overrides={}){
  const context=vm.createContext({Response,Request,URL,TextEncoder,AbortController,crypto:webcrypto,setTimeout,clearTimeout,console:{warn(){}},...overrides});
- vm.runInContext(source.replace('export default','const worker =')+'\nthis.api={conversationConstraints,conversationIntent,summary,reserveAnswer,validatedRecommendations,productInfo,productById,generate,worker};',context);
+ vm.runInContext(source.replace('export default','const worker =')+'\nthis.api={conversationConstraints,conversationIntent,summary,reserveAnswer,validatedRecommendations,parseProviderObject,catalogAnswer,productInfo,productById,generate,worker};',context);
  return context.api;
 }
 const api=load(),city='Guaraciaba do Norte';
@@ -167,8 +167,8 @@ test('unknown IDs, invented names, injected prose and invalid recommendation str
  for(const name of ['Prato Regional','Prato Caseiro','Prato Vegetariano'])assert.throws(()=>api.validatedRecommendations(JSON.stringify({recommendations:[{productId:catalog[0].id,name}]}),catalog));
  for(const response of [
   {recommendations:[{productId:999,name:'Prato Regional'}]},
-  {recommendations:[{productId:catalog[0].id,name:catalog[0].name}],text:'Recomendo Prato Regional'},
-  {recommendations:[{productId:catalog[0].id,name:catalog[0].name,price:1}]},
+  {message:42,recommendations:[{productId:catalog[0].id}]},
+  {recommendations:[{productId:catalog[0].id,reason:{text:'inválido'}}]},
   {recommendations:Array(4).fill({productId:catalog[0].id,name:catalog[0].name})},
   {recommendations:[{productId:String(catalog[0].id),name:catalog[0].name}]}
  ])assert.throws(()=>api.validatedRecommendations(JSON.stringify(response),catalog));
@@ -206,7 +206,8 @@ test('provider order, failure fallback and safe logging remain intact',async()=>
  const env={GROQ_API_KEY:'test',GEMINI_API_KEY:'test',AI:{run:async()=>{calls.push('cloudflare');throw {status:503};}}};
  await assert.rejects(local.generate(env,[]),e=>e.code==='providers_unavailable');
  assert.deepEqual(calls,['groq','cloudflare','gemini']);
- assert.ok(logs.every(log=>Object.keys(log.data).sort().join(',')==='provider,retryable,status,timeout'));
+ assert.ok(logs.every(log=>Object.keys(log.data).sort().join(',')==='provider,retryable,stage,status,timeout'));
+ assert.ok(logs.every(log=>log.data.stage==='provider'));
  await assert.rejects(local.generate(env,[]),e=>e.code==='providers_unavailable');
  assert.equal(calls.length,3);
 });
@@ -221,4 +222,58 @@ test('authenticated API uses reserve after provider failure and returns matching
  assert.equal(body.provider,'reserve');assert.equal(body.model,'deterministic-v1');
  assert.ok(body.products.length>0&&body.products.length<=3);
  assert.ok(body.products.every(p=>body.text.includes(p.name)&&['Doces','Do produtor'].includes(p.category)));
+});
+
+test('parser accepts fences, small surrounding text, reordered keys and escaped braces',()=>{
+ const c=api.conversationConstraints('sobremesa',[]),catalog=api.summary(city,'delivery','sobremesa',c),id=catalog[0].id;
+ const json=JSON.stringify({recommendations:[{reason:'Combina com sua vontade de sobremesa.',productId:id}],message:'Escolhi uma opção doce para sua pausa.'});
+ for(const text of [json,'```json\n'+json+'\n```','Aqui está:\n'+json+'\nEspero ajudar.','```\n'+json+'\n```']){
+  const items=api.validatedRecommendations(text,catalog);
+  assert.equal(items[0].id,id);assert.ok(items.message);assert.ok(items[0].reason);
+ }
+ assert.equal(api.parseProviderObject('Resposta: {"message":"brace } e \\"", "recommendations":[]}').recommendations.length,0);
+ for(const text of ['[]','null','{} trailing '+ 'x'.repeat(170),'x'.repeat(170)+json,'{"recommendations": [}',json.slice(0,-1)])assert.throws(()=>api.validatedRecommendations(text,catalog));
+ assert.throws(()=>api.validatedRecommendations('{"recommendations":[]} '+json,catalog));
+});
+test('natural explanation survives, while invented commerce and model prices never render',()=>{
+ const c=api.conversationConstraints('sobremesa',[]),catalog=api.summary(city,'delivery','sobremesa',c),item=catalog[0];
+ const items=api.validatedRecommendations(JSON.stringify({message:'Escolhi uma opção doce para sua pausa. Recomendo Prato Regional por R$ 1 no Restaurante Inventado.',text:'Prato Caseiro',recommendations:[{productId:item.id,reason:'Combina com seu pedido de sobremesa. Entrega grátis e estoque ilimitado.',price:1,fee:0,stock:999,store:'Inventada'}]}),catalog);
+ const result=api.catalogAnswer(items,'delivery',c);
+ assert.ok(result.text.includes('Escolhi uma opção doce para sua pausa.'));
+ assert.ok(result.text.includes('Combina com seu pedido de sobremesa.'));
+ assert.ok(result.text.includes(item.name));assert.ok(result.text.includes(item.totalReais.replace('.',',')));
+ assert.ok(!/Prato Regional|Prato Caseiro|Inventad|grátis|ilimitado/.test(result.text));
+ const unsafe=api.validatedRecommendations(JSON.stringify({message:'Preço de dez reais. Recomendo 寿司. Visite https://example.com',recommendations:[{productId:item.id,reason:'Recomendo Prato Vegetariano.'}]}),catalog);
+ assert.equal(unsafe.message,'');assert.equal(unsafe[0].reason,'');
+});
+test('format and ID failures try next providers without cooldown on subsequent calls',async()=>{
+ const c=api.conversationConstraints('sobremesa',[]),catalog=api.summary(city,'delivery','sobremesa',c),calls=[],logs=[];
+ const local=load({fetch:async url=>{const name=url.includes('groq')?'groq':'gemini';calls.push(name);return Response.json({choices:[{message:{content:name==='groq'?'not JSON':JSON.stringify({message:'Uma opção para sua pausa.',recommendations:[{productId:catalog[0].id,reason:'Combina com seu pedido.'}]})}}]});},console:{warn:(_label,data)=>logs.push(data)}});
+ const env={GROQ_API_KEY:'secret-test',GEMINI_API_KEY:'secret-test',AI:{run:async()=>{calls.push('cloudflare');return {response:'{"recommendations":[{"productId":999}]}'};}}};
+ for(let i=0;i<2;i++)assert.equal((await local.generate(env,[],catalog,'delivery',c)).provider,'gemini');
+ assert.deepEqual(calls,['groq','cloudflare','gemini','groq','cloudflare','gemini']);
+ assert.ok(logs.every(log=>log.stage==='validation'&&!log.retryable&&log.status===0));
+ assert.ok(!JSON.stringify(logs).includes('secret-test'));
+});
+test('empty and malformed envelopes are validation failures without cooldown',async()=>{
+ const c=api.conversationConstraints('sobremesa',[]),catalog=api.summary(city,'delivery','sobremesa',c);
+ for(const response of [()=>new Response('{'),()=>Response.json({choices:[{message:{content:''}}]})]){
+  let calls=0;const logs=[];
+  const local=load({fetch:async()=>{calls++;return response();},console:{warn:(_label,data)=>logs.push(data)}});
+  for(let i=0;i<2;i++)await assert.rejects(local.generate({GROQ_API_KEY:'test'},[],catalog,'delivery',c),e=>e.code==='providers_unavailable');
+  assert.equal(calls,2);assert.ok(logs.every(log=>log.stage==='validation'));
+ }
+});
+test('timeouts cool down, while ordinary network and nonretryable provider errors do not',async()=>{
+ for(const [response,stage,timeout,expectedCalls] of [
+  [()=>{throw Object.assign(new Error('timeout'),{name:'AbortError'});},'network',true,1],
+  [()=>{throw new TypeError('connection lost');},'network',false,2],
+  [()=>new Response('{}',{status:401}),'provider',false,2],
+  [()=>new Response('{}',{status:503}),'provider',false,1]
+ ]){
+  let calls=0;const logs=[];
+  const local=load({fetch:async()=>{calls++;return response();},console:{warn:(_label,data)=>logs.push(data)}});
+  for(let i=0;i<2;i++)await assert.rejects(local.generate({GROQ_API_KEY:'test'},[]),e=>e.code==='providers_unavailable');
+  assert.equal(calls,expectedCalls);assert.equal(logs[0].stage,stage);assert.equal(logs[0].timeout,timeout);
+ }
 });

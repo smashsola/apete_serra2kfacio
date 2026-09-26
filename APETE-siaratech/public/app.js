@@ -610,7 +610,6 @@ function renderSabiaHistory() {
       </article>`;
     }).join('')}</div>`:''}
     ${entry.stores?.length?`<div class="sabia-results">${entry.stores.map(store=>`<button class="sabia-result" data-action="goto-store" data-id="${store.id}"><span><b>${esc(store.name)}</b><small>${esc(store.city)} · estabelecimento demonstrativo</small></span></button>`).join('')}</div>`:''}
-    ${entry.role==='assistant'?'<small class="sabia-attribution">A Sabiá pode errar. Confira itens, valores e disponibilidade antes de finalizar.</small>':''}
   </div>`).join('');
 }
 
@@ -636,6 +635,7 @@ function sabiaPage() {
         <div id="chat-log" class="chat-log" role="log" aria-live="polite" aria-label="Conversa com a Sabiá">${renderSabiaHistory()}${sabiaBusy?'<div class="chat-bubble sabia-thinking" role="status">Sabiá está consultando e preparando sua resposta…</div>':''}</div>
         ${sabiaError?`<div class="sabia-error" role="alert"><p>${esc(sabiaError)}</p>${sabiaRetryAfter?`<small>Aguarde aproximadamente ${sabiaRetryAfter} segundo(s).</small>`:''}<button class="ghost-btn strong" data-action="sabia-retry" ${sabiaBusy?'disabled':''}>Tentar novamente</button></div>`:''}
         <form id="sabia-form" class="chat-send"><label class="sr-only" for="sabia-input">Sua mensagem para a Sabiá</label><input id="sabia-input" class="input" value="${esc(sabiaDraft)}" placeholder="Pergunte à Sabiá…" maxlength="1200" autocomplete="off" ${sabiaBusy?'disabled':''}><button class="primary-btn" type="submit" ${sabiaBusy?'disabled':''}>${sabiaBusy?'Aguarde…':'Enviar'}</button></form>
+        <small class="sabia-attribution sabia-attribution-fixed">A Sabiá pode cometer erros. Confira informações importantes.</small>
       </article>
     </section>`;
 }

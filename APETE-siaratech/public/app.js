@@ -381,7 +381,7 @@ function setPage(next, storeId = null) {
   if (location.hash !== `#${next}`) history.replaceState(null, '', `#${next}`);
   render();
   if(next==='sabia')detectSabiaMode();
-  window.scrollTo({ top: 0, behavior: 'instant' });
+  if(next!=='sabia')window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 function closeSidebar() {
@@ -849,6 +849,31 @@ function storeDetailPage() {
   return `${pageHead(store.name, store.hero)}<section class="store-detail"><article class="detail-hero ${store.producer ? 'producer-tone' : 'merchant-tone'}"><div class="detail-cover">${imgTag(store.cover, store.name, store.producer ? 'producer' : 'store')}<div class="cover-overlay ${store.producer ? 'producer' : ''}"></div><div class="cover-copy"><span class="cover-kicker">${esc(store.category)}</span><h4>${esc(store.name)}</h4><div class="cover-meta"><span>${esc(store.city)}</span><span>★ ${store.rating.toFixed(1)}</span><span>${esc(store.time)}</span></div></div></div><div class="detail-info"><div class="chip-row"><span class="chip ${store.producer ? 'producer-alt' : 'orange'}">Entrega ${money(store.fee)}</span>${instagramBadge(store)}</div><p>${esc(store.desc)}</p><div class="row detail-actions" style="margin-top:18px"><button class="primary-btn" data-action="filter-store" data-id="${store.id}">Ver tudo no catálogo</button><button class="ghost-btn strong" data-action="go-page" data-page="estabelecimentos">Voltar</button></div></div></article><div class="product-grid">${products.map(productCard).join('')}</div></section>`;
 }
 
+// Patch the existing Sabiá nodes so status updates never replace the active input.
+let renderedSabiaMessages=[];
+function updateSabiaView(html){
+ const template=document.createElement('template');template.innerHTML=html;
+ const oldLog=$('#chat-log'),newLog=template.content.querySelector('#chat-log');
+ const messages=sabiaChat.map(entry=>entry.role+'\0'+entry.content);
+ const added=messages.length>renderedSabiaMessages.length&&renderedSabiaMessages.every((entry,i)=>entry===messages[i]);
+ const previousScroll=oldLog.scrollTop;
+ if(oldLog.innerHTML!==newLog.innerHTML)oldLog.innerHTML=newLog.innerHTML;
+ oldLog.scrollTop=added?oldLog.scrollHeight:previousScroll;
+ renderedSabiaMessages=messages;
+ const input=$('#sabia-input');
+ if(input.value!==sabiaDraft)input.value=sabiaDraft;
+ input.disabled=sabiaBusy;
+ const formButton=$('#sabia-form button');formButton.disabled=sabiaBusy;formButton.textContent=sabiaBusy?'Aguarde…':'Enviar';
+ for(const selector of ['.sabia-mode','.sabia-error']){
+  const current=document.querySelector(selector),next=template.content.querySelector(selector);
+  if(current&&next){if(current.innerHTML!==next.innerHTML)current.innerHTML=next.innerHTML;}
+  else if(current)current.remove();
+  else if(next)$('#sabia-form').before(next);
+ }
+ const city=$('#sabia-city');city.value=state.city;city.disabled=sabiaBusy;
+ document.querySelectorAll('.sabia-suggest button,[data-action="sabia-new"]').forEach(button=>{button.disabled=sabiaBusy;});
+}
+
 function render() {
   const content = $('#content');
   const page = state.page;
@@ -876,7 +901,8 @@ function render() {
   else if (page === 'loja') html = storeDetailPage();
   else html = homePage();
 
-  content.innerHTML = html;
+  if(page==='sabia'&&$('#sabia-form'))updateSabiaView(html);
+  else {content.innerHTML = html;if(page==='sabia')renderedSabiaMessages=sabiaChat.map(entry=>entry.role+'\0'+entry.content);}
   const visualPage = ((page === 'entrar' || page === 'cadastro') && isCustomerLogged()) ? 'cliente' : (((page === 'comerciante-entrar' || page === 'comerciante-cadastro') && isMerchantLogged()) ? 'comerciante' : page);
   $('#page-title').textContent = visualPage === 'loja' ? getStore(state.storeViewId).name : (PAGE_TITLES[visualPage] || 'APETÊ');
   const enterLink = $('#customer-nav-link');
@@ -1219,7 +1245,7 @@ async function sendToSabia(text) {
     sabiaChat.push({role:'assistant',content:result.text,products:result.products||[],stores:result.stores||[]});sessionStorage.setItem('apete-sabia-history',JSON.stringify(sabiaChat.slice(-12)));
     sabiaMode='generative';sabiaStatusMessage='Conectada à '+result.provider+' · '+result.model;
   } catch(error) {sabiaError=error.message;sabiaRetryAfter=error.retryAfter||0;sabiaDraft=clean;if(error.status===401)sabiaSession=null;}
-  finally {sabiaBusy=false;if(state.page==='sabia'){render();const log=$('#chat-log');if(log)log.scrollTop=log.scrollHeight;$('#sabia-input')?.focus();}}
+  finally {sabiaBusy=false;if(state.page==='sabia'){render();$('#sabia-input')?.focus({preventScroll:true});}}
 }
 async function detectSabiaMode() {
   try {

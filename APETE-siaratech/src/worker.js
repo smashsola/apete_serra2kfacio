@@ -18,13 +18,138 @@ function productInfo(p,city,mode){let s=byStore.get(p.storeId);if(!s||!canServe(
 async function postBody(req){let raw=await req.text();if(raw.length>5000)throw {code:'size',message:'Mensagem muito grande.',status:413};let data;try{data=JSON.parse(raw);}catch{throw {code:'json',message:'Formato inválido.',status:400};}if(!data||Array.isArray(data)||typeof data!=='object')throw {code:'json',message:'Dados inválidos.',status:400};return data;}
 function messagesFor(body){const previous=Array.isArray(body.history)?body.history:[];return previous.slice(-6).filter(m=>m&&['user','assistant'].includes(m.role)&&typeof m.content==='string').map(m=>({role:m.role,content:m.content.slice(0,750)}));}
 function normalizedWords(text){return String(text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/\W+/).filter(word=>word.length>=3);}
-function requestConstraints(text){const clean=String(text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');let budget=null;for(const pattern of [/r\$\s*(\d+(?:[.,]\d{1,2})?)/g,/(?:orcamento|ate|no maximo|limite de)\s*(?:r\$\s*)?(\d+(?:[.,]\d{1,2})?)/g,/(\d+(?:[.,]\d{1,2})?)\s*reais/g]){for(const match of clean.matchAll(pattern))budget=Math.round(Number(match[1].replace(',','.'))*100);}const excluded=[];for(const match of clean.matchAll(/\bsem\s+(?:ser\s+)?(?:nada\s+)?(?:(?:da|de|do)\s+)?([a-z]+)/g))excluded.push(match[1]);return {budget,excluded:[...new Set(excluded)],meal:/\b(almoco|refeicao|prato feito|jantar|comida)\b/.test(clean)};}
-function summary(city,mode,query,constraints){const words=new Set(normalizedWords(query));let items=[];for(const p of CATALOG.products){const x=productInfo(p,city,mode);if(!x||!x.available||constraints.budget!==null&&x.total>constraints.budget)continue;const store=byStore.get(x.storeId);const searchable=normalizedWords(`${x.name} ${x.description} ${x.category} ${x.storeName} ${x.preferences.join(' ')} ${store?.producer?'horta produtor frutas verduras legumes organico':''}`);if(constraints.excluded.some(word=>searchable.includes(word)))continue;let score=searchable.reduce((total,word)=>total+(words.has(word)?1:0),0);if(constraints.meal&&['Regional','Caseiro','Vegetariano'].includes(x.category))score+=6;items.push({score,data:{id:x.id,name:x.name,description:x.description.slice(0,110),priceReais:(x.price/100).toFixed(2),store:x.storeName,storeId:x.storeId,city:x.city,feeReais:(x.fee/100).toFixed(2),totalReais:(x.total/100).toFixed(2),serves:x.serves,stock:x.stock,preferences:x.preferences}});}const relevant=items.filter(item=>item.score>0);return (relevant.length?relevant.sort((a,b)=>b.score-a.score):items).slice(0,12).map(item=>item.data);}
-function getSelection(text,city,mode){const content=normalizedWords(text).join(' ');let selected=[];for(const p of CATALOG.products){let x=productInfo(p,city,mode);if(x&&x.available&&content.includes(normalizedWords(x.name).join(' ')))selected.push(x);}return selected.slice(0,3);}
+function normalizedText(text){return String(text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function requestConstraints(text){
+ const clean=normalizedText(text);let budget=null,budgetChanged=false,budgetScope=null;
+ // Process budget events in sentence order; a relaxation must not become a new cap.
+ const events=[];
+ const removal=/\b(?:pode(?:m)?\s+(?:passar|ultrapassar|exceder)(?:\s+(?:de|dos?))?(?:\s+r\$)?(?:\s*\d+(?:[.,]\d{1,2})?)?(?:\s*reais)?|nao\s+precisa\s+(?:ser|ficar|custar)?\s*(?:ate|abaixo de|no maximo)(?:\s+r\$)?(?:\s*\d+(?:[.,]\d{1,2})?)?(?:\s*reais)?|sem\s+(?:limite|teto|restricao de (?:preco|orcamento))|(?:remov\w*|tir\w*|ignor\w*)\s+(?:o\s+)?(?:limite|teto|orcamento)|qualquer\s+preco|nao\s+(?:tenho|ha)\s+limite)\b/g;
+ const relaxations=[...clean.matchAll(removal)];
+ for(const match of relaxations)events.push({index:match.index,budget:null});
+ for(const pattern of [/r\$\s*(\d+(?:[.,]\d{1,2})?)/g,/(?:orcamento(?: de)?|ate|no maximo|limite de|teto de)\s*(?:r\$\s*)?(\d+(?:[.,]\d{1,2})?)/g,/(\d+(?:[.,]\d{1,2})?)\s*reais/g]){
+  for(const match of clean.matchAll(pattern)){
+   if(relaxations.some(removal=>match.index<removal.index+removal[0].length&&match.index+match[0].length>removal.index))continue;
+   events.push({index:match.index,budget:Math.round(Number(match[1].replace(',','.'))*100)});
+  }
+ }
+ for(const event of events.sort((a,b)=>a.index-b.index)){budget=event.budget;budgetChanged=true;}
+ const scopeEvents=[];
+ for(const match of clean.matchAll(/\b(?:(?:sem(?:\s+(?:contar|incluir|considerar))?|nao\s+(?:contar|incluir|considerar))\s+(?:(?:a|o)\s+)?(?:taxa(?: de entrega)?|entrega|frete)|(?:so|somente|apenas)\s+(?:(?:a|o|os)\s+)?(?:comida|produto[s]?|itens)|(?:fora|excluindo)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa))\b/g))scopeEvents.push({index:match.index,scope:'products'});
+ for(const match of clean.matchAll(/\b(?:(?:incluindo|com|contando)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa)|total|tudo junto)\b/g))scopeEvents.push({index:match.index,scope:'total'});
+ for(const event of scopeEvents.sort((a,b)=>a.index-b.index))budgetScope=event.scope;
+ const excluded=[];
+ for(const match of clean.matchAll(/\bsem\s+(?:ser\s+)?(?:nada\s+)?(?:(?:da|de|do)\s+)?([a-z]+)/g))if(!['contar','incluir','considerar','limite','teto','restricao','entrega','frete','taxa'].includes(match[1]))excluded.push(match[1]);
+ return {budget,budgetChanged,budgetScope,excluded:[...new Set(excluded)],meal:/\b(almoco|refeicao|pratos?|jantar|comida)\b/.test(clean)};
+}
+function conversationConstraints(question,prior){
+ let budget=null,budgetScope='total';
+ for(const text of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
+  const next=requestConstraints(text);
+  if(next.budgetChanged)budget=next.budget;
+  if(next.budgetScope!==null)budgetScope=next.budgetScope;
+ }
+ return {...requestConstraints(question),budget,budgetScope};
+}
+function currentIntent(query){
+ const text=normalizedText(query);
+ let kind='any';
+ if(/\b(sobremesas?|doces?)\b/.test(text))kind='dessert';
+ else if(/\bcafe da manha\b/.test(text))kind='breakfast';
+ else if(/\b(bebidas?|sucos?)\b/.test(text))kind='drink';
+ else if(/\b(almoco|refeicao|jantar|pratos?|comida)\b/.test(text))kind='meal';
+ else if(/\blanches?\b/.test(text))kind='snack';
+ const vegetarian=/\bvegetarian[oa]s?\b/.test(text),healthy=/\bsaudave(?:l|is)\b/.test(text),producer=/\b(produtor(?:es)?|horta|organicos?|organicas?)\b/.test(text);
+ return {kind,vegetarian,healthy,producer,organic:/\borganic[oa]s?\b/.test(text),garden:/\bhorta\b/.test(text),juice:/\bsucos?\b/.test(text),another:/\b(outr[oa]s?|diferentes?|alternativas?)\b/.test(text)};
+}
+function conversationIntent(question,prior){
+ let intent=currentIntent('');
+ for(const text of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
+  const next=currentIntent(text),constraints=requestConstraints(text);
+  // Only a budget/delivery modifier can inherit. A new subject clears prior intent.
+  const remainder=normalizedText(text)
+   .replace(/\b(?:sem(?:\s+(?:contar|incluir|considerar))?|nao\s+(?:contar|incluir|considerar))\s+(?:(?:a|o)\s+)?(?:taxa(?: de entrega)?|entrega|frete)\b/g,'')
+   .replace(/\b(?:so|somente|apenas)\s+(?:(?:a|o|os)\s+)?(?:comida|produtos?|itens)\b/g,'')
+   .replace(/\b(?:com|incluindo)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa)\b/g,'')
+   .replace(/\b(?:pode ser|pode ficar|pode custar|ate|no maximo|orcamento(?: de)?|limite de|pode passar(?: de)?|nao precisa ser ate|sem limite|sem teto)\b/g,'')
+   .replace(/r\$|\d+(?:[.,]\d{1,2})?|\b(?:reais|e|mas|entao|agora)\b|[\s,.;!?]/g,'');
+  const modifier=!remainder&&(constraints.budgetChanged||constraints.budgetScope!==null);
+  if(!modifier)intent=next;
+ }
+ return intent;
+}
+function intentScore(item,intent,query){
+ const name=normalizedText(item.name),category=item.category;
+ let score=0;
+ const scores={
+  meal:['Regional','Caseiro','Vegetariano'].includes(category)?100:0,
+  dessert:category==='Doces'?120:/\b(bolo|geleia|doce|pudim|chocolate|sorvete|mel)\b/.test(name)?100:0,
+  drink:category==='Bebidas'&&(!intent.juice||/\bsuco\b/.test(name))?100:0,
+  snack:category==='Padaria'?110:category==='Doces'?80:0,
+  breakfast:category==='Padaria'?110:category==='Doces'||category==='Bebidas'&&/\bcafe\b/.test(name)?80:0
+ };
+ if(intent.kind!=='any'){score=scores[intent.kind];if(!score)return 0;}
+ if(intent.vegetarian){if(category!=='Vegetariano'&&!item.preferences.includes('vegetariano'))return 0;score+=100;}
+ if(intent.producer){if(!item.producer)return 0;if(intent.organic&&!/organic/.test(normalizedText(item.name+' '+item.store)))return 0;if(intent.garden&&!/horta|hortalica|alface|tomate|cenoura|legume|verdura/.test(normalizedText(item.name+' '+item.description)))return 0;score+=100;}
+ if(intent.healthy){if(category!=='Vegetariano'&&!/\b(banana|hortalicas|tomate|alface|cenoura|legumes|verduras)\b/.test(name))return 0;score+=100;}
+ const words=new Set(normalizedWords(query));
+ score+=normalizedWords(item.name+' '+item.category).filter(word=>words.has(word)).length*5;
+ score+=normalizedWords(item.description+' '+item.store+' '+item.preferences.join(' ')).filter(word=>words.has(word)).length;
+ return score||1;
+}
+function summary(city,mode,query,constraints){
+ const intent=constraints.intent||currentIntent(query),items=[];
+ for(const p of CATALOG.products){
+  const x=productInfo(p,city,mode);
+  if(!x||!x.available||constraints.budget!==null&&(constraints.budgetScope==='products'?x.price:x.total)>constraints.budget)continue;
+  const store=byStore.get(x.storeId);
+  const searchable=normalizedWords(x.name+' '+x.description+' '+x.category+' '+x.storeName+' '+x.preferences.join(' '));
+  if(constraints.excluded.some(word=>searchable.includes(word)))continue;
+  const data={id:x.id,name:x.name,description:x.description.slice(0,110),category:x.category,producer:store.producer,priceReais:(x.price/100).toFixed(2),store:x.storeName,storeId:x.storeId,city:x.city,feeReais:(x.fee/100).toFixed(2),totalReais:(x.total/100).toFixed(2),serves:x.serves,stock:x.stock,preferences:x.preferences};
+  const score=intentScore(data,intent,query);
+  if(score)items.push({score,data});
+ }
+ return items.sort((a,b)=>b.score-a.score||a.data.id-b.data.id).map(item=>item.data);
+}
+function validatedRecommendations(text,catalog){
+ let data;try{data=JSON.parse(text);}catch{throw {retryable:true,status:502};}
+ const invalid=()=>{throw {retryable:true,status:502};};
+ if(!data||Array.isArray(data)||Object.keys(data).join(',')!=='recommendations'||!Array.isArray(data.recommendations)||data.recommendations.length>3)return invalid();
+ const used=new Set(),options=[];
+ for(const entry of data.recommendations){
+  if(!entry||typeof entry!=='object'||Object.keys(entry).sort().join(',')!=='name,productId'||!Number.isInteger(entry.productId)||used.has(entry.productId))return invalid();
+  const item=catalog.find(product=>product.id===entry.productId&&product.name===entry.name);
+  if(!item)return invalid();
+  used.add(entry.productId);options.push(item);
+ }
+ if(!options.length&&catalog.length)return invalid();
+ return options;
+}
+function catalogAnswer(options,mode,constraints,basic=false,another=false){
+ const prefix=basic?'Estou em modo básico. ':'';
+ if(!options.length)return {text:prefix+'Não encontrei '+(another?'outra opção':'produto')+' compatível com sua intenção, cidade, modalidade e restrições atuais.',productIds:[]};
+ const money=v=>Number(v).toFixed(2).replace('.',',');
+ const lines=options.map((item,index)=>{
+  const delivery=mode==='pickup'?'retirada sem taxa':'taxa de entrega de R$ '+money(item.feeReais);
+  return (index+1)+'. '+item.name+' — 1 unidade por R$ '+money(item.priceReais)+', '+delivery+'; total de R$ '+money(item.totalReais)+'.';
+ });
+ const budgetNote=constraints.budget!==null&&constraints.budgetScope==='products'?' O limite considera só o produto; a entrega está discriminada à parte.':'';
+ return {text:prefix+'Estas são opções individuais, para escolher uma.'+budgetNote+'\n'+lines.join('\n'),productIds:options.map(item=>item.id)};
+}
 async function callProvider(name,env,messages){if(name==='cloudflare'){const model=env.CLOUDFLARE_AI_MODEL||'@cf/qwen/qwen3-30b-a3b-fp8';let timer;try{const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject({retryable:true,timeout:true,retryAfter:30}),18000);});const data=await Promise.race([env.AI.run(model,{messages,temperature:0.2,max_tokens:550}),timeout]);let text=typeof data==='string'?data:(data?.response??data?.choices?.[0]?.message?.content);if(typeof text!=='string'||!text.trim())throw {retryable:true,status:502,retryAfter:30};return {text:text.slice(0,2300),provider:name,model};}catch(e){if(e?.retryable)throw e;const status=Number(e?.status||e?.cause?.status)||0;if(status===429||status>=500)throw {retryable:true,status,retryAfter:30};throw {retryable:false,status};}finally{clearTimeout(timer);}}const isGroq=name==='groq';const key=isGroq?env.GROQ_API_KEY:env.GEMINI_API_KEY;const model=isGroq?(env.GROQ_MODEL||'openai/gpt-oss-20b'):(env.GEMINI_MODEL||'gemini-3.5-flash-lite');const endpoint=isGroq?'https://api.groq.com/openai/v1/chat/completions':'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),18000);try{const r=await fetch(endpoint,{method:'POST',headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model,messages,temperature:0.2,max_completion_tokens:550,stream:false,...(isGroq?{reasoning_effort:'low'}:{})}),signal:controller.signal});if(!r.ok){if(r.status===429||r.status>=500)throw {retryable:true,status:r.status,retryAfter:Math.min(180,Math.max(15,parseInt(r.headers.get('retry-after')||'30',10)||30))};throw {retryable:false,status:r.status};}const data=await r.json();let text=data?.choices?.[0]?.message?.content;if(typeof text!=='string'||!text.trim())throw {retryable:true,status:502,retryAfter:30};return {text:text.slice(0,2300),provider:name,model};}catch(e){if(e?.name==='AbortError')throw {retryable:true,timeout:true,retryAfter:30};throw e;}finally{clearTimeout(timer);}}
 const blocked=new Map(); // Best-effort per-isolate cooldown; no global quota promise.
-async function generate(env,messages){const choices=[['groq',env.GROQ_API_KEY],['cloudflare',env.AI],['gemini',env.GEMINI_API_KEY]].filter(([,binding])=>Boolean(binding));if(!choices.length)throw {code:'not_configured',message:'A Sabiá ainda não tem uma IA configurada. O catálogo continua disponível.',status:503};let last=null;for(const [name] of choices){if((blocked.get(name)||0)>Date.now())continue;try{return await callProvider(name,env,messages);}catch(e){last=e;console.warn('sabia_provider_failure',{provider:name,status:Number(e?.status)||0,retryable:Boolean(e?.retryable),timeout:Boolean(e?.timeout)});if(e?.retryable)blocked.set(name,Date.now()+(e.retryAfter||30)*1000);}}throw {code:'providers_unavailable',message:'As IAs estão temporariamente indisponíveis. Você ainda pode explorar o catálogo.',status:429,retryAfter:last?.retryAfter||60};}
-function reserveAnswer(catalog,mode){const options=catalog.slice(0,3);if(!options.length)return {text:'Estou em modo básico. Não encontrei produto compatível com sua cidade, modalidade e restrições atuais.',provider:'reserve',model:'deterministic-v1'};const money=v=>Number(v).toFixed(2).replace('.',',');const lines=options.map((item,index)=>{const delivery=mode==='pickup'?'retirada sem taxa':`taxa de entrega de R$ ${money(item.feeReais)}`;return `${index+1}. ${item.name} — 1 unidade por R$ ${money(item.priceReais)}, ${delivery}; total de R$ ${money(item.totalReais)}.`;});return {text:`Estou em modo básico. Estas são as opções compatíveis que encontrei:\n${lines.join('\n')}`,provider:'reserve',model:'deterministic-v1'};}
+async function generate(env,messages,catalog,mode,constraints){const choices=[['groq',env.GROQ_API_KEY],['cloudflare',env.AI],['gemini',env.GEMINI_API_KEY]].filter(([,binding])=>Boolean(binding));if(!choices.length)throw {code:'not_configured',message:'A Sabiá ainda não tem uma IA configurada. O catálogo continua disponível.',status:503};let last=null;for(const [name] of choices){if((blocked.get(name)||0)>Date.now())continue;try{const answer=await callProvider(name,env,messages);const options=validatedRecommendations(answer.text,catalog);return {...answer,...catalogAnswer(options,mode,constraints)};}catch(e){last=e;console.warn('sabia_provider_failure',{provider:name,status:Number(e?.status)||0,retryable:Boolean(e?.retryable),timeout:Boolean(e?.timeout)});if(e?.retryable)blocked.set(name,Date.now()+(e.retryAfter||30)*1000);}}throw {code:'providers_unavailable',message:'As IAs estão temporariamente indisponíveis. Você ainda pode explorar o catálogo.',status:429,retryAfter:last?.retryAfter||60};}
+function alternativeCatalog(catalog,intent,prior){
+ if(!intent.another)return catalog;
+ const last=[...prior].reverse().find(message=>message.role==='assistant')?.content||'';
+ const mentioned=normalizedWords(last).join(' ');
+ return catalog.filter(item=>!mentioned.includes(normalizedWords(item.name).join(' ')));
+}
+function reserveAnswer(catalog,mode,query,prior,constraints){
+ const intent=constraints.intent||currentIntent(query);
+ const options=alternativeCatalog(catalog,intent,prior).map(item=>({item,score:intentScore(item,intent,query)}))
+  .filter(({score})=>score>0).sort((a,b)=>b.score-a.score||a.item.id-b.item.id).slice(0,3).map(({item})=>item);
+ return {...catalogAnswer(options,mode,constraints,true,intent.another),provider:'reserve',model:'deterministic-v1'};
+}
 async function route(req,env){const url=new URL(req.url);const path=url.pathname;
  if(path==='/api/sabia/status'&&req.method==='GET'){const providers=[env.GROQ_API_KEY?'Groq':null,env.AI?'Cloudflare Workers AI':null,env.GEMINI_API_KEY?'Gemini':null].filter(Boolean);return response({mode:providers.length?'generative':'unavailable',configured:providers.length>0,providers,message:providers.length?'Sabiá online: '+providers.join(' → '):'Sabiá ainda não configurada. Catálogo disponível.'});}
  if(path==='/api/catalog'&&req.method==='GET')return response({...CATALOG,demo:true});
@@ -40,7 +165,12 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  const csrf=(await sign('csrf:'+sid,secret)).slice(0,32);if(req.headers.get('X-CSRF-Token')!==csrf)return failure('csrf','Sessão inválida. Reabra a Sabiá.',403);
  if(path==='/api/sabia/product'){const p=productById.get(body.productId);const info=validCity(body.city)&&['delivery','pickup'].includes(body.mode)?productInfo(p||{},body.city,body.mode):null;if(!info||!info.available)return failure('unavailable','Produto indisponível para esta cidade.',409);return response(info);}
  if(!safeId(body.conversationId)||typeof body.question!=='string'||!body.question.trim()||body.question.length>1200||!validCity(body.city)||!['delivery','pickup'].includes(body.mode))return failure('invalid_request','Pergunta ou cidade inválida.',400);
- const prior=messagesFor(body);const currentConstraints=requestConstraints(body.question),previousBudget=[...prior].reverse().filter(message=>message.role==='user').map(message=>requestConstraints(message.content).budget).find(budget=>budget!==null)??null,constraints={...currentConstraints,budget:currentConstraints.budget??previousBudget},catalog=summary(body.city,body.mode,body.question,constraints);const context=`Você é Sabiá, assistente do APETÊ. Responda em português brasileiro de forma breve e útil. Catálogo a seguir é DEMONSTRATIVO, não são estabelecimentos reais confirmados. Cidade selecionada: ${body.city}; modalidade: ${body.mode}. Restrições detectadas: orçamento máximo ${constraints.budget===null?'não informado':`R$ ${(constraints.budget/100).toFixed(2)}`}; exclusões: ${constraints.excluded.join(', ')||'nenhuma'}; busca por refeição: ${constraints.meal?'sim':'não'}. Use APENAS preços, produtos, taxas e disponibilidade do catálogo listado. Respeite rigorosamente o orçamento e as exclusões; não mencione como recomendação nenhum item fora dos dados. Produtos são unidades inteiras: nunca sugira meia unidade, frações ou quantidades decimais. Em pedidos de almoço/refeição, priorize pratos das categorias Regional, Caseiro e Vegetariano. O totalReais já soma uma unidade e a taxa da loja. Em conjuntos, use quantidades inteiras, some todos os itens e UMA taxa da loja, e só sugira combinações cujo total inteiro caiba no orçamento. Nunca misture lojas num mesmo pedido sem explicar. Não invente estabelecimentos, estoques, valores nem opções de entrega. Para dúvidas sobre disponibilidade em outras cidades diga que esta demonstração só conhece os parceiros cadastrados. Não afirme que um pedido ou pagamento foi feito. Se não houver opção compatível, diga isso sem substituir por item proibido ou acima do orçamento. Dados: ${JSON.stringify(catalog)}`;
- let answer;try{answer=await generate(env,[{role:'system',content:context},...prior,{role:'user',content:body.question.trim()}]);}catch(e){if(!['not_configured','providers_unavailable'].includes(e?.code))throw e;answer=reserveAnswer(catalog,body.mode);}return response({...answer,products:getSelection(answer.text,body.city,body.mode),stores:[],demo:true});
+ const prior=messagesFor(body),constraints={...conversationConstraints(body.question,prior),intent:conversationIntent(body.question,prior)};
+ const catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
+ const context='Você é Sabiá, assistente do APETÊ. Selecione até 3 opções individuais compatíveis com a intenção atual. Responda SOMENTE JSON no formato {"recommendations":[{"productId":1,"name":"nome exato do catálogo"}]}. Use exclusivamente pares ID/nome do catálogo enviado. Categorias nunca são nomes de produtos. Não inclua texto livre, valores, quantidades nem campos adicionais. Se o catálogo estiver vazio, retorne {"recommendations":[]}. As constraints atuais substituem regras antigas do histórico. Dados demonstrativos, não são estabelecimentos reais confirmados. Cidade: '+body.city+'; modalidade: '+body.mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo: '+JSON.stringify(catalog);
+ let answer;try{answer=await generate(env,[{role:'system',content:context},...prior,{role:'user',content:body.question.trim()}],catalog,body.mode,constraints);}catch(e){if(!['not_configured','providers_unavailable'].includes(e?.code))throw e;answer=reserveAnswer(catalog,body.mode,body.question,prior,constraints);}
+ const {productIds,...publicAnswer}=answer;
+ const products=productIds.filter(id=>catalog.some(item=>item.id===id)).map(id=>productInfo(productById.get(id),body.city,body.mode));
+ return response({...publicAnswer,products,stores:[],demo:true});
 }
 export default {async fetch(request,env){try{if(new URL(request.url).pathname.startsWith('/api/'))return await route(request,env);return env.ASSETS.fetch(request);}catch(e){return failure(e.code||'internal',e.message&&e.code?e.message:'A Sabiá está temporariamente indisponível. O catálogo continua acessível.',e.status||503,e.retryAfter||0);}}};

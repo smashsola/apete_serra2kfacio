@@ -45,8 +45,7 @@ function conversationConstraints(question,prior){
  let budget=null,budgetScope='total';
  for(const text of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
   const next=requestConstraints(text);
-  const intent=currentIntent(text);
-  if(next.budgetChanged&&next.budget!==null&&next.budgetScope===null&&!isSearchModifier(text,next)&&(intent.kind!=='any'||intent.vegetarian||intent.healthy||intent.producer||intent.another))budgetScope='total';
+  if(!isSearchModifier(text,next)){budget=null;budgetScope='total';}
   if(next.budgetChanged)budget=next.budget;
   if(next.budgetScope!==null)budgetScope=next.budgetScope;
  }
@@ -56,12 +55,12 @@ function currentIntent(query){
  const text=normalizedText(query);
  let kind='any';
  if(/\b(sobremesas?|doces?)\b/.test(text))kind='dessert';
- else if(/\bcafe da manha\b|\bcafe e (?:algo|alguma coisa) para comer\b/.test(text))kind='breakfast';
+ else if(/\bcafe da manha\b|\bcafe e (?:algo|alguma coisa) (?:para|pra) comer\b/.test(text))kind='breakfast';
  else if(/\b(bebidas?|sucos?)\b/.test(text))kind='drink';
  else if(/\b(almoco|refeicao|jantar|pratos?|comida)\b/.test(text))kind='meal';
- else if(/\blanches?\b/.test(text))kind='snack';
+ else if(/\b(?:lanches?|lanchinhos?)\b/.test(text))kind='snack';
  const vegetarian=/\bvegetarian[oa]s?\b/.test(text),healthy=/\bsaudave(?:l|is)\b/.test(text),producer=/\b(produtor(?:es)?|horta|organicos?|organicas?)\b/.test(text);
- return {kind,vegetarian,healthy,producer,completeBreakfast:kind==='breakfast'&&/\b(complet[oa]|combo|refeicao completa)\b|\bcafe e (?:algo|alguma coisa) para comer\b/.test(text),organic:/\borganic[oa]s?\b/.test(text),garden:/\bhorta\b/.test(text),juice:/\bsucos?\b/.test(text),another:/\b(outr[oa]s?|diferentes?|alternativas?)\b/.test(text)};
+ return {kind,vegetarian,healthy,producer,completeBreakfast:kind==='breakfast'&&/\b(complet[oa]|combo|refeicao completa)\b|\bcafe e (?:algo|alguma coisa) (?:para|pra) comer\b/.test(text),completeSnack:kind==='snack'&&/\b(complet[oa]s?|combos?|refeicao completa)\b/.test(text),organic:/\borganic[oa]s?\b/.test(text),garden:/\bhorta\b/.test(text),juice:/\bsucos?\b/.test(text),another:/\b(outr[oa]s?|diferentes?|alternativas?)\b/.test(text)};
 }
 function isSearchModifier(text,constraints=requestConstraints(text)){
   // Only a budget/delivery modifier can inherit. A new subject clears prior intent.
@@ -69,6 +68,7 @@ function isSearchModifier(text,constraints=requestConstraints(text)){
    .replace(/\b(?:sem(?:\s+(?:contar|incluir|considerar))?|nao\s+(?:contar|incluir|considerar))\s+(?:(?:a|o)\s+)?(?:taxa(?: de entrega)?|entrega|frete)\b/g,'')
    .replace(/\b(?:so|somente|apenas)\s+(?:(?:a|o|os)\s+)?(?:comida|produtos?|itens)\b/g,'')
    .replace(/\b(?:com|incluindo)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa)\b/g,'')
+   .replace(/\b(?:fora|excluindo)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa)\b/g,'')
    .replace(/\b(?:pode ser|pode ficar|pode custar|ate|no maximo|orcamento(?: de)?|limite de|pode passar(?: de)?|nao precisa ser ate|sem limite|sem teto)\b/g,'')
    .replace(/r\$|\d+(?:[.,]\d{1,2})?|\b(?:reais|e|mas|entao|agora)\b|[\s,.;!?]/g,'');
  return !remainder&&(constraints.budgetChanged||constraints.budgetScope!==null);
@@ -91,7 +91,7 @@ function intentScore(item,intent,query){
   breakfast:category==='Padaria'?110:category==='Doces'||category==='Bebidas'&&/\bcafe\b/.test(name)?80:0
  };
  if(intent.kind!=='any'){score=scores[intent.kind];if(!score)return 0;}
- if(intent.completeBreakfast&&isBreakfastCombo(item))score+=1000;
+ if((intent.completeBreakfast||intent.completeSnack)&&isCatalogCombo(item))score+=1000;
  if(intent.vegetarian){if(category!=='Vegetariano'&&!item.preferences.includes('vegetariano'))return 0;score+=100;}
  if(intent.producer){if(!item.producer)return 0;if(intent.organic&&!/organic/.test(normalizedText(item.name+' '+item.store)))return 0;if(intent.garden&&!/horta|hortalica|alface|tomate|cenoura|legume|verdura/.test(normalizedText(item.name+' '+item.description)))return 0;score+=100;}
  if(intent.healthy){if(category!=='Vegetariano'&&!/\b(banana|hortalicas|tomate|alface|cenoura|legumes|verduras)\b/.test(name))return 0;score+=100;}
@@ -114,7 +114,7 @@ function summary(city,mode,query,constraints){
  }
  return items.sort((a,b)=>b.score-a.score||a.data.id-b.data.id).map(item=>item.data);
 }
-function isBreakfastCombo(item){return /\bcombo\b|\b(?:cafe da manha|refeicao) complet[oa]\b/.test(normalizedText(item.name));}
+function isCatalogCombo(item){return /\bcombos?\b|\b(?:cafe da manha|refeicao|lanche|lanchinho) complet[oa]s?\b/.test(normalizedText(item.name));}
 function validatedRecommendations(text,catalog,intent={}){
  let data;try{data=JSON.parse(text);}catch{throw {retryable:true,status:502};}
  const invalid=()=>{throw {retryable:true,status:502};};
@@ -127,7 +127,7 @@ function validatedRecommendations(text,catalog,intent={}){
   used.add(entry.productId);options.push(item);
  }
  if(!options.length&&catalog.length)return invalid();
- if(intent.completeBreakfast&&catalog.some(isBreakfastCombo)&&!options.some((item,index)=>index===0&&isBreakfastCombo(item)))return invalid();
+ if((intent.completeBreakfast||intent.completeSnack)&&catalog.some(isCatalogCombo)&&!options.some((item,index)=>index===0&&isCatalogCombo(item)))return invalid();
  return options;
 }
 function catalogAnswer(options,mode,constraints,basic=false,another=false){
@@ -173,7 +173,7 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  if(!safeId(body.conversationId)||typeof body.question!=='string'||!body.question.trim()||body.question.length>1200||!validCity(body.city)||!['delivery','pickup'].includes(body.mode))return failure('invalid_request','Pergunta ou cidade inválida.',400);
  const prior=messagesFor(body),constraints={...conversationConstraints(body.question,prior),intent:conversationIntent(body.question,prior)};
  const catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
- const context='Você é Sabiá, assistente do APETÊ. Selecione até 3 opções individuais compatíveis com a intenção atual. Responda SOMENTE JSON no formato {"recommendations":[{"productId":1,"name":"nome exato do catálogo"}]}. Use exclusivamente pares ID/nome do catálogo enviado. Categorias nunca são nomes de produtos. Quando completeBreakfast for true, priorize como primeira opção um combo/refeição completa já cadastrado e compatível, se houver. Não inclua texto livre, valores, quantidades nem campos adicionais. Se o catálogo estiver vazio, retorne {"recommendations":[]}. As constraints atuais substituem regras antigas do histórico. Dados demonstrativos, não são estabelecimentos reais confirmados. Cidade: '+body.city+'; modalidade: '+body.mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo: '+JSON.stringify(catalog);
+ const context='Você é Sabiá, assistente do APETÊ. Selecione até 3 opções individuais compatíveis com a intenção atual. Responda SOMENTE JSON no formato {"recommendations":[{"productId":1,"name":"nome exato do catálogo"}]}. Use exclusivamente pares ID/nome do catálogo enviado. Categorias nunca são nomes de produtos. Quando completeBreakfast ou completeSnack for true, priorize como primeira opção um combo/refeição completa já cadastrado e compatível, se houver. Não inclua texto livre, valores, quantidades nem campos adicionais. Se o catálogo estiver vazio, retorne {"recommendations":[]}. As constraints atuais substituem regras antigas do histórico. Dados demonstrativos, não são estabelecimentos reais confirmados. Cidade: '+body.city+'; modalidade: '+body.mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo: '+JSON.stringify(catalog);
  let answer;try{answer=await generate(env,[{role:'system',content:context},...prior,{role:'user',content:body.question.trim()}],catalog,body.mode,constraints);}catch(e){if(!['not_configured','providers_unavailable'].includes(e?.code))throw e;answer=reserveAnswer(catalog,body.mode,body.question,prior,constraints);}
  const {productIds,...publicAnswer}=answer;
  const products=productIds.filter(id=>catalog.some(item=>item.id===id)).map(id=>productInfo(productById.get(id),body.city,body.mode));

@@ -19,7 +19,11 @@ function answer(query,{history=[],town=city,mode='delivery'}={}){
 }
 test('current intent selects only compatible categories, even after an earlier budget',()=>{
  const history=[user('quero um almoço até 30 reais')];
- for(const query of ['quero almoço','quero uma refeição','quero jantar','quero um prato'])assert.equal(answer(query,{history}).cards.length,0);
+ for(const query of ['quero almoço','quero uma refeição','quero jantar','quero um prato']){
+  const result=answer(query,{history});
+  assert.equal(result.constraints.budget,null);
+  assert.ok(result.cards.length>0&&result.cards.every(p=>['Regional','Caseiro','Vegetariano'].includes(p.category)));
+ }
  const dessert=answer('quero uma sobremesa',{history});
  assert.ok(dessert.cards.length>0);
  assert.ok(dessert.cards.every(p=>p.category==='Doces'||/Geleia/.test(p.name)));
@@ -41,6 +45,41 @@ test('another option excludes products in the latest assistant reply and is dete
  assert.ok(next.cards.length>0);
  assert.ok(next.cards.every(p=>!first.cards.some(old=>old.id===p.id)));
  assert.equal(next.text,answer('quero outra coisa',{history}).text);
+});
+test('new explicit searches clear the old budget and reset scope even without a new price',()=>{
+ const history=[user('quero uma sobremesa até 25 reais sem contar entrega')];
+ for(const query of ['quero sobremesa','quero café da manhã','quero almoço','quero um lanche','quero um lanchinho']){
+  const c=answer(query,{history}).constraints;
+  assert.equal(c.budget,null,query);assert.equal(c.budgetScope,'total',query);
+ }
+ const breakfast=answer('quero um café da manhã completo com café e algo pra comer',{history});
+ assert.equal(breakfast.constraints.budget,null);
+ assert.equal(breakfast.cards[0].id,10);
+ const c=answer('quero um lanche só o produto',{history}).constraints;
+ assert.equal(c.budget,null);assert.equal(c.budgetScope,'products');
+ const followup=[user('quero um almoço até 40'),user('sem contar a entrega')];
+ assert.equal(answer('sem contar a entrega',{history:[followup[0]]}).constraints.budget,4000);
+ const changed=answer('pode ser até 50',{history:followup}).constraints;
+ assert.equal(changed.budget,5000);assert.equal(changed.budgetScope,'products');assert.equal(changed.intent.kind,'meal');
+ assert.equal(answer('sem contar entrega',{history:[...history,user('quero almoço')]}).constraints.budget,null);
+});
+test('snack variants recognize real combos, preserve follow-ups and respect restrictions',()=>{
+ for(const word of ['lanche','lanches','lanchinho','lanchinhos']){
+  const result=answer('quero '+word);
+  assert.equal(result.constraints.intent.kind,'snack');
+  assert.ok(result.cards.length>0&&result.cards.every(p=>['Padaria','Doces'].includes(p.category)));
+  for(const suffix of ['completo','combo'])assert.equal(answer('quero '+word+' '+suffix).cards[0].id,10);
+ }
+ assert.equal(answer('pode ser até 40',{history:[user('quero lanchinho completo')]}).cards[0].id,10);
+ assert.ok(!answer('quero lanchinho completo até 25').cards.some(p=>p.id===10));
+ assert.equal(answer('quero lanchinho completo',{town:'São Benedito'}).cards.length,0);
+ const query='quero lanchinho completo',intent=api.conversationIntent(query,[]);
+ const catalog=api.summary(city,'delivery',query,{...api.conversationConstraints(query,[]),intent});
+ const combo=catalog.find(p=>p.id===10),single=catalog.find(p=>p.id!==10);
+ const json=p=>JSON.stringify({recommendations:[{productId:p.id,name:p.name}]});
+ assert.throws(()=>api.validatedRecommendations(json(single),catalog,intent));
+ assert.equal(api.validatedRecommendations(json(combo),catalog,intent)[0].id,10);
+ assert.equal(api.validatedRecommendations(json(single),catalog.filter(p=>p.id!==10),intent)[0].id,single.id);
 });
 test('a new search with a new budget resets delivery scope while modifiers preserve it',()=>{
  const history=[user('quero um almoço até 40 sem contar entrega')];
@@ -104,7 +143,7 @@ test('budget and scope persist independently and can be replaced explicitly',()=
  for(const query of ['só a comida','só o produto','sem a entrega','sem incluir a entrega','apenas os produtos','fora o frete']){
   const c=api.conversationConstraints(query,history);
   assert.equal(c.budget,3000);assert.equal(c.budgetScope,'products',query);
-  assert.equal(api.conversationConstraints('quero sobremesa',[...history,user(query)]).budgetScope,'products');
+  assert.equal(api.conversationConstraints('pode ser até 35',[...history,user(query)]).budgetScope,'products');
  }
  const c=api.conversationConstraints('até 45 com entrega',[...history,user('só a comida')]);
  assert.equal(c.budget,4500);assert.equal(c.budgetScope,'total');

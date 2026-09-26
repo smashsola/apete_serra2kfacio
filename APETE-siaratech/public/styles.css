@@ -680,6 +680,7 @@ a.instagram-badge:hover { background: #e6dbe8; text-decoration: underline; }
 .sabia-error{margin:12px 20px;padding:16px;border:1px solid #ce9a7b;border-radius:12px;background:#fff2e6;color:#73391e;font-size:14px}
 .sabia-error p{margin:0 0 8px}.sabia-error small{display:block;margin-bottom:8px}
 .sabia-attribution{display:block;margin-top:12px;font-size:12px;color:#526c61}
+.sabia-attribution-fixed{margin:8px 4px 0;text-align:center;min-height:18px;line-height:1.4}
 .sabia-product-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
 .sabia-product-card .sabia-result{border:0;padding:0;background:transparent;width:100%}
 .sabia-product-card .row{flex-wrap:wrap;gap:8px}

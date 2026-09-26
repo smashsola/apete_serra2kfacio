@@ -223,14 +223,37 @@ function catalogAnswer(options,mode,constraints,basic=false,another=false){
  const budgetNote=constraints.budget!==null&&constraints.budgetScope==='products'?' O limite considera só o produto; a entrega está discriminada à parte.':'';
  return {text:prefix+(!basic&&options.message?options.message+' ':'')+'Estas são opções individuais, para escolher uma.'+budgetNote+'\n'+lines.join('\n'),productIds:options.map(item=>item.id)};
 }
+function providerText(data){
+ const candidates=[
+  data,
+  data?.response,
+  data?.result?.response,
+  data?.choices?.[0]?.message?.content,
+  data?.result?.choices?.[0]?.message?.content,
+  data?.text,
+  data?.result?.text
+ ];
+ for(const value of candidates){
+  if(typeof value==='string'&&value.trim())return value.trim();
+  if(Array.isArray(value)){
+   const joined=value.map(part=>{
+    if(typeof part==='string')return part;
+    if(part&&typeof part==='object')return typeof part.text==='string'?part.text:typeof part.content==='string'?part.content:'';
+    return '';
+   }).filter(Boolean).join('\n').trim();
+   if(joined)return joined;
+  }
+ }
+ return '';
+}
 async function callProvider(name,env,messages){
  if(name==='cloudflare'){
   const model=env.CLOUDFLARE_AI_MODEL||'@cf/qwen/qwen3-30b-a3b-fp8';let timer;
   try{
    const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject({stage:'network',retryable:true,timeout:true,status:0,retryAfter:30}),18000);});
-   const data=await Promise.race([env.AI.run(model,{messages,temperature:0.2,max_tokens:900}),timeout]);
-   const text=typeof data==='string'?data:(data?.response??data?.choices?.[0]?.message?.content);
-   if(typeof text!=='string'||!text.trim())throw validationFailure();
+   const data=await Promise.race([env.AI.run(model,{messages,temperature:0.2,max_tokens:900,stream:false}),timeout]);
+   const text=providerText(data);
+   if(!text)throw validationFailure();
    return {text,provider:name,model};
   }catch(error){
    if(error?.stage)throw error;
@@ -245,7 +268,7 @@ async function callProvider(name,env,messages){
  try{
   const payload=isGroq
    ?{model,messages,temperature:0.2,max_completion_tokens:900,stream:false,reasoning_effort:'low'}
-   :{model,messages,temperature:0.2,stream:false};
+   :{model,messages,stream:false};
   const r=await fetch(endpoint,{method:'POST',headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal});
   if(!r.ok)throw {stage:'provider',status:r.status,retryable:r.status===429||r.status>=500,timeout:false,retryAfter:Math.min(180,Math.max(15,parseInt(r.headers.get('retry-after')||'30',10)||30))};
   let data;try{data=await r.json();}catch(error){if(error?.name==='AbortError')throw error;throw validationFailure();}

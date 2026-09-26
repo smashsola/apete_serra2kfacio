@@ -243,7 +243,10 @@ async function callProvider(name,env,messages){
  const endpoint=isGroq?'https://api.groq.com/openai/v1/chat/completions':'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),18000);
  try{
-  const r=await fetch(endpoint,{method:'POST',headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model,messages,temperature:0.2,max_completion_tokens:900,stream:false,...(isGroq?{reasoning_effort:'low'}:{})}),signal:controller.signal});
+  const payload=isGroq
+   ?{model,messages,temperature:0.2,max_completion_tokens:900,stream:false,reasoning_effort:'low'}
+   :{model,messages,temperature:0.2,stream:false};
+  const r=await fetch(endpoint,{method:'POST',headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal});
   if(!r.ok)throw {stage:'provider',status:r.status,retryable:r.status===429||r.status>=500,timeout:false,retryAfter:Math.min(180,Math.max(15,parseInt(r.headers.get('retry-after')||'30',10)||30))};
   let data;try{data=await r.json();}catch(error){if(error?.name==='AbortError')throw error;throw validationFailure();}
   const text=data?.choices?.[0]?.message?.content;

@@ -85,7 +85,8 @@ function conversationIntent(question,prior){
  for(const text of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
   if(isSearchModifier(text))continue;
   const next=currentIntent(text);
-  if(isAlternativeFollowup(text)&&intent.kind!=='any'){
+  const hasPriorIntent=intent.kind!=='any'||intent.vegetarian||intent.healthy||intent.producer||intent.organic||intent.garden;
+  if(isAlternativeFollowup(text)&&hasPriorIntent){
    intent={...intent,another:true};
    continue;
   }

@@ -345,8 +345,17 @@ function alternativeCatalog(catalog,intent,prior){
 }
 function reserveAnswer(catalog,mode,query,prior,constraints){
  const intent=constraints.intent||currentIntent(query);
- const options=alternativeCatalog(catalog,intent,prior).map(item=>({item,score:intentScore(item,intent,query)}))
-  .filter(({score})=>score>0).sort((a,b)=>b.score-a.score||a.item.id-b.item.id).slice(0,3).map(({item})=>item);
+ const ranked=alternativeCatalog(catalog,intent,prior).map(item=>({item,score:intentScore(item,intent,query)}))
+  .filter(({score})=>score>0).sort((a,b)=>b.score-a.score||a.item.id-b.item.id).map(({item})=>item);
+ let options=ranked.slice(0,3);
+ if(intent.withDrink){
+  const meal=ranked.find(item=>['Regional','Caseiro','Vegetariano'].includes(item.category));
+  const drink=ranked.find(item=>item.category==='Bebidas');
+  if(meal&&drink){
+   const extras=ranked.filter(item=>item.id!==meal.id&&item.id!==drink.id);
+   options=[meal,drink,...extras].slice(0,3);
+  }
+ }
  return {...catalogAnswer(options,mode,constraints,true,intent.another),provider:'reserve',model:'deterministic-v1'};
 }
 function catalogFactRequest(text){

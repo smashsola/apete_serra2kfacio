@@ -636,6 +636,7 @@ function sabiaPage() {
         ${sabiaError?`<div class="sabia-error" role="alert"><p>${esc(sabiaError)}</p>${sabiaRetryAfter?`<small>Aguarde aproximadamente ${sabiaRetryAfter} segundo(s).</small>`:''}<button class="ghost-btn strong" data-action="sabia-retry" ${sabiaBusy?'disabled':''}>Tentar novamente</button></div>`:''}
         <form id="sabia-form" class="chat-send"><label class="sr-only" for="sabia-input">Sua mensagem para a Sabiá</label><input id="sabia-input" class="input" value="${esc(sabiaDraft)}" placeholder="Pergunte à Sabiá…" maxlength="1200" autocomplete="off" ${sabiaBusy?'disabled':''}><button class="primary-btn" type="submit" ${sabiaBusy?'disabled':''}>${sabiaBusy?'Aguarde…':'Enviar'}</button></form>
         <small class="sabia-attribution sabia-attribution-fixed">A Sabiá pode cometer erros. Confira informações importantes.</small>
+        <small class="sabia-attribution sabia-attribution-fixed">A Sabiá pode cometer erros. Confira informações importantes.</small>
       </article>
     </section>`;
 }

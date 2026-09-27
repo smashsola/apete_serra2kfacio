@@ -550,7 +550,8 @@ function semanticFactAnswer(city,mode,query,semantic,constraints,prior=[]){
  let terms=semantic.searchTerms||[];
  const lastAssistant=[...prior].reverse().find(message=>message.role==='assistant')?.content||'';
  if(terms.length&&semantic.keepPreviousContext&&semantic.topic!=='catalog'&&terms.some(term=>normalizedText(lastAssistant).includes(normalizedText(term))))terms=[];
- const scoped=(ranked.length?ranked:all).filter(item=>semanticTermMatch(item,terms));
+ const hasSemanticScope=semantic.topic!=='catalog'||semantic.preferences.length>0||semantic.modifiers.length>0||semantic.components.some(component=>component!=='catalog');
+ const scoped=(hasSemanticScope?ranked:all).filter(item=>semanticTermMatch(item,terms));
  if(semantic.fact==='availability'){
   if(!scoped.length)return {text:'Não encontrei esse item cadastrado como disponível para esta cidade e modalidade.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
   const picks=scoped.slice(0,3);
@@ -563,6 +564,7 @@ function semanticFactAnswer(city,mode,query,semantic,constraints,prior=[]){
   return {text:parts.join('. ')+'.',provider:'rules',model:'catalog-facts-v2',productIds:picks.map(item=>item.id)};
  }
  if(semantic.fact==='cheapest'||semantic.fact==='most_expensive'){
+  if(!scoped.length&&hasSemanticScope)return {text:'Não encontrei opção compatível com esse filtro para comparar.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
   const pool=scoped.length?scoped:all;
   const sorted=[...pool].sort((a,b)=>Number(a.priceReais)-Number(b.priceReais)||a.id-b.id);
   const item=semantic.fact==='most_expensive'?sorted.at(-1):sorted[0];

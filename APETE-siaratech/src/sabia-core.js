@@ -43,13 +43,14 @@ export function localIntent(current,previous=null){
  else if(/disponiv|tem no catalogo/.test(clean))fact='availability';
  let action=conversational?'chat':fact!=='none'?'fact':switching?'switch':alternative?'alternative':listing?'list':'recommend';
  if(!conversational&&/\bdieta\b|\bregime\b/.test(clean)&&!preferences.length)action='clarify';
- if(topic==='catalog'&&previous&&!switching&&(alternative||action==='recommend')){
+ const inherited=Boolean(topic==='catalog'&&previous&&!switching&&!conversational&&(alternative||action==='recommend'||action==='list'));
+ if(inherited){
   topic=previous.topic||topic;
   components=previous.components||components;
   if(!preferences.length)preferences=[...(previous.preferences||[])];
   if(!modifiers.length)modifiers.push(...(previous.modifiers||[]));
  }
- return {topic,action,fact,categories:[],preferences:unique(preferences),modifiers:unique(modifiers),exclusions:[],searchTerms:[],components,serves:null,keepPreviousContext:Boolean(previous&&!switching&&!conversational&&(alternative||topic==='catalog')),confidence:conversational||topic!=='catalog'||fact!=='none'?0.78:0.35};
+ return {topic,action,fact,categories:[],preferences:unique(preferences),modifiers:unique(modifiers),exclusions:[],searchTerms:[],components,serves:null,keepPreviousContext:inherited,confidence:conversational||topic!=='catalog'||fact!=='none'?0.78:0.35};
 }
 
 export function normalizeIntent(value,fallback=localIntent('')){

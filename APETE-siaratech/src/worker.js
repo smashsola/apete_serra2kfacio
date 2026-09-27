@@ -649,9 +649,9 @@ function bundleAnswer(bundle,mode,constraints,data,basic=false){
 
 function alternativeCatalog(catalog,intent,prior){
  if(!intent.another)return catalog;
- const last=[...prior].reverse().find(message=>message.role==='assistant')?.content||'';
- const mentioned=normalizedWords(last).join(' ');
- return catalog.filter(item=>!mentioned.includes(normalizedWords(item.name).join(' ')));
+ const assistantText=prior.filter(message=>message.role==='assistant').map(message=>normalizedText(message.content)).join(' ');
+ const unseen=catalog.filter(item=>!assistantText.includes(normalizedText(item.name)));
+ return unseen.length?unseen:catalog;
 }
 function reserveAnswer(catalog,mode,query,prior,constraints){
  const intent=constraints.intent||currentIntent(query);

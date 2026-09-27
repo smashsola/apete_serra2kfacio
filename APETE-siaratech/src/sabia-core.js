@@ -44,14 +44,14 @@ export function localIntent(current,previous=null){
  const clean=plain(current);
  const conversational=/^(?:(?:oi|ola|opa|e ai|ei|salve|bom dia|boa tarde|boa noite|tudo bem|blz|beleza|valeu|obrigad[oa])\b[\s,.!?]*)+$/.test(clean)
   ||tokens(clean).length<=4&&(hasNearWord(clean,['oi','ola','opa','salve'],1)||hasNearWord(clean,['bom','boa'],1)&&hasNearWord(clean,['dia','tarde','noite'],1));
- const switching=hasStem(clean,['agora','prefir','troca','esquec','verdade','mudei'])||hasNearWord(clean,['agora','prefiro','troca','esquece','verdade','mudei'])||/pensando melhor|deixa (?:isso|esse|essa)|outra coisa/.test(clean);
- const alternative=hasStem(clean,['outr','diferent','alternativ'])||/\btem mais\b|\bmais op(?:cao|coes)\b|nao gostei/.test(clean);
+ const switching=hasStem(clean,['agora','prefir','troca','esquec','verdade','mudei','melhor'])||hasNearWord(clean,['agora','prefiro','troca','esquece','verdade','mudei','melhor'])||/pensando melhor|deixa (?:isso|esse|essa)|outra coisa/.test(clean);
+ const alternative=hasStem(clean,['outr','diferent','alternativ'])||/\btem mais\b|\bmais op(?:cao|coes)\b|nao gostei/.test(clean)||(previous&&tokens(clean).length<=3&&tokens(clean).includes('mais'));
  const listing=hasStem(clean,['list'])||/\b(?:mostra|mostre|quais|ver)\b.*\b(?:opcoes|itens|produtos|doces|bebidas|lanches)\b|\btodos?\b|\btodas?\b|\b(?:so|somente|apenas)\s+(?:tem|existe)\b|\b(?:e|eh)\s+(?:so|somente|apenas)\s+(?:esse|essa|isso|esses|essas)\b/.test(clean);
  let preferences=[];
  if(hasStem(clean,['vegan']))preferences.push('vegano');
  if(hasStem(clean,['vegetarian']))preferences.push('vegetariano');
  const modifiers=[];
- if(hasStem(clean,['produtor','roca']))modifiers.push('producer');
+ if(hasStem(clean,['produtor','roca'])||hasNearWord(clean,['produtor','roca']))modifiers.push('producer');
  if(hasStem(clean,['horta','hortal','verdura','legume']))modifiers.push('garden','producer');
  if(hasStem(clean,['organic']))modifiers.push('organic','producer');
  if(hasStem(clean,['suco']))modifiers.push('juice');
@@ -63,11 +63,11 @@ export function localIntent(current,previous=null){
  if(hasStem(clean,['sobrem','doce','bolo','docinh'])||hasNearWord(clean,['sobremesa','doce','bolo','docinho']))components.push('dessert');
  if(hasStem(clean,['lanch','tapioca','sandu','pao','salgad','petisc'])||hasNearWord(clean,['lanche','tapioca','sanduiche','pao','salgado','petisco']))components.push('snack');
  if(hasStem(clean,['beb','sede','suco','refriger','agua','tomar'])||hasNearWord(clean,['bebida','beber','suco','refrigerante','agua','tomar'])||(/\bcafe\b/.test(clean)&&!components.includes('breakfast')))components.push('drink');
- if(hasStem(clean,['horta','hortal','verdura','legume','organic','produtor','roca']))components.push('produce');
+ if(hasStem(clean,['horta','hortal','verdura','legume','organic','produtor','roca'])||hasNearWord(clean,['horta','hortalica','verdura','legume','organico','produtor','roca']))components.push('produce');
  components=unique(components,3);
  let topic=components[0]||'catalog';
  let fact='none';
- if(/\b(?:quanto|qual|valor|custa|custam)\b.{0,18}\b(?:entrega|taxa|frete)\b|\b(?:entrega|taxa|frete)\b.{0,18}\b(?:quanto|qual|valor|custa|custam)\b|^(?:entrega|taxa|frete)\??$/.test(clean))fact='delivery_fee';
+ if(/\b(?:quanto|qual|valor|custa|custam)\b.{0,18}\b(?:entrega|taxa|frete)\b|\b(?:entrega|taxa|frete)\b.{0,18}\b(?:quanto|qual|valor|custa|custam)\b|^(?:e\s+(?:a|o)\s+)?(?:entrega|taxa|frete)\??$/.test(clean))fact='delivery_fee';
  else if(/mais barato|menor preco|mais em conta/.test(clean))fact='cheapest';
  else if(/mais caro|maior preco/.test(clean))fact='most_expensive';
  else if(/mais pedido|mais vendido|mais popular/.test(clean))fact='most_ordered';

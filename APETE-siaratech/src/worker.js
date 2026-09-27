@@ -386,7 +386,7 @@ async function callProvider(name,env,messages){
 const blocked=new Map(); // Best-effort per-isolate cooldown; no global quota promise.
 async function generate(env,messages,catalog,mode,constraints){
  // Cloudflare is the proven healthy primary in Preview. Reserve remains the last fallback.
- const choices=[['cloudflare',env.AI],['gemini',env.GEMINI_API_KEY],['groq',env.GROQ_API_KEY]].filter(([,binding])=>Boolean(binding));
+ const choices=[['groq',env.GROQ_API_KEY],['gemini',env.GEMINI_API_KEY],['cloudflare',env.AI]].filter(([,binding])=>Boolean(binding));
  if(!choices.length)throw {code:'not_configured',status:503};
  let last=null;
  for(const [name] of choices){
@@ -403,6 +403,7 @@ async function generate(env,messages,catalog,mode,constraints){
    }
    stage='validation';
    const options=validatedRecommendations(answer.text,catalog,constraints.intent);
+   console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
    return {...answer,...catalogAnswer(options,mode,constraints,false,Boolean(constraints.intent?.another))};
   }catch(error){
    last=error;stage=error?.stage||stage;

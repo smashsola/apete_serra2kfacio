@@ -14,7 +14,7 @@ export function localIntent(current,previous=null){
  const clean=plain(current);
  const switching=hasStem(clean,['agora','prefir','troca','esquec','verdade'])||/pensando melhor|deixa (?:isso|esse|essa)|outra coisa/.test(clean);
  const alternative=hasStem(clean,['outr','diferent','alternativ'])||/\btem mais\b|\bmais op(?:cao|coes)\b|nao gostei/.test(clean);
- const preferences=[];
+ let preferences=[];
  if(hasStem(clean,['vegan']))preferences.push('vegano');
  if(hasStem(clean,['vegetarian']))preferences.push('vegetariano');
  const modifiers=[];

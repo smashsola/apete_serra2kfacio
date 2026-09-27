@@ -91,7 +91,7 @@ export function normalizeIntent(value,fallback=localIntent('')){
  const topic=TOPICS.includes(raw.topic)?raw.topic:fallback.topic;
  const action=ACTIONS.includes(raw.action)?raw.action:fallback.action;
  const fact=FACTS.includes(raw.fact)?raw.fact:(fallback.fact||'none');
- const keepPreviousContext=Boolean(raw.keepPreviousContext)||['alternative','refine'].includes(action);
+ const keepPreviousContext=Boolean(raw.keepPreviousContext)||['alternative','refine','confirm'].includes(action);
  const list=(key,allowed=null,max=8)=>{
   let source=Array.isArray(raw[key])?raw[key]:fallback[key]||[];
   if(keepPreviousContext&&Array.isArray(raw[key])&&!raw[key].length&&Array.isArray(fallback[key])&&fallback[key].length)source=fallback[key];

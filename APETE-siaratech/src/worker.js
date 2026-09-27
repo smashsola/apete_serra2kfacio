@@ -601,7 +601,7 @@ function genericBundle(city,mode,query,prior,constraints,components,suggestedIds
  const lists=uniqueComponents.map(component=>{
   const intent=componentIntent(constraints.intent,component),part={...constraints,budget:null,intent};
   const full=summary(city,mode,query,part),alt=alternativeCatalog(full,intent,prior);
-  return (alt.length?alt:full).slice(0,8);
+  return alt.slice(0,8);
  });
  if(lists.some(list=>!list.length))return null;
  const bundles=[];
@@ -650,8 +650,7 @@ function bundleAnswer(bundle,mode,constraints,data,basic=false){
 function alternativeCatalog(catalog,intent,prior){
  if(!intent.another)return catalog;
  const assistantText=prior.filter(message=>message.role==='assistant').map(message=>normalizedText(message.content)).join(' ');
- const unseen=catalog.filter(item=>!assistantText.includes(normalizedText(item.name)));
- return unseen.length?unseen:catalog;
+ return catalog.filter(item=>!assistantText.includes(normalizedText(item.name)));
 }
 function reserveAnswer(catalog,mode,query,prior,constraints){
  const intent=constraints.intent||currentIntent(query);

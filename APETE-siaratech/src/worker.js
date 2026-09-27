@@ -553,7 +553,11 @@ function semanticFactAnswer(city,mode,query,semantic,constraints,prior=[]){
  const hasSemanticScope=semantic.topic!=='catalog'||semantic.preferences.length>0||semantic.modifiers.length>0||semantic.components.some(component=>component!=='catalog');
  const scoped=(hasSemanticScope?ranked:all).filter(item=>semanticTermMatch(item,terms));
  if(semantic.fact==='availability'){
-  if(!scoped.length)return {text:'Não encontrei esse item cadastrado como disponível para esta cidade e modalidade.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
+  if(!scoped.length){
+   if(semantic.preferences.includes('vegetariano'))return {text:'Não encontrei item cadastrado como vegetariano para esta cidade e modalidade.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
+   if(semantic.preferences.includes('vegano'))return {text:'Não encontrei item cadastrado como vegano para esta cidade e modalidade. Prefiro não presumir que um produto seja vegano sem essa informação no catálogo.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
+   return {text:'Não encontrei esse item cadastrado como disponível para esta cidade e modalidade.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
+  }
   const picks=scoped.slice(0,3);
   return {text:'Encontrei '+scoped.length+' '+(scoped.length===1?'opção compatível':'opções compatíveis')+' no catálogo para esta cidade e modalidade.',provider:'rules',model:'catalog-facts-v2',productIds:picks.map(item=>item.id)};
  }
@@ -577,17 +581,12 @@ function semanticChatAnswer(data){
  const message=safeExplanation(data?.message||'',[]);
  return {text:message||'Oi! Posso te ajudar a encontrar algo do catálogo, comparar opções ou montar um pedido.',productIds:[]};
 }
-function semanticListAnswer(city,mode,query,constraints,prior,data){
+function semanticListAnswer(city,mode,query,constraints,prior){
  let catalog=alternativeCatalog(summary(city,mode,query,constraints),constraints.intent,prior);
  if(!catalog.length)return null;
  const options=catalog.slice(0,3);
  options.message='Encontrei '+catalog.length+' '+(catalog.length===1?'opção compatível':'opções compatíveis')+' com o que você pediu.';
- const result=catalogAnswer(options,mode,constraints,false,Boolean(constraints.intent?.another));
- if(data?.message){
-  const natural=safeExplanation(data.message,options);
-  if(natural)result.text=result.text.replace(/^Encontrei[^\n]*/,natural);
- }
- return result;
+ return catalogAnswer(options,mode,constraints,false,Boolean(constraints.intent?.another));
 }
 function componentIntent(base,component){
  const kindMap={meal:'meal',drink:'drink',snack:'snack',breakfast:'breakfast',dessert:'dessert',produce:'any'};
@@ -760,7 +759,7 @@ async function generateSemantic(env,messages,city,mode,query,prior,baseConstrain
     return {...answer,text:fact.text,productIds:fact.productIds};
    }
    if(semantic.action==='list'){
-    const listed=semanticListAnswer(city,mode,query,constraints,prior,data);
+    const listed=semanticListAnswer(city,mode,query,constraints,prior);
     if(listed){
      console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
      return {...answer,...listed};

@@ -13,6 +13,15 @@ function cookie(req,key){return req.headers.get('Cookie')?.split(';').map(x=>x.t
 function randomHex(size=16){return bytesHex(crypto.getRandomValues(new Uint8Array(size)));}
 function safeId(v){return typeof v==='string'&&/^[0-9a-f]{32}$/.test(v);}
 function validCity(city){return typeof city==='string'&&CATALOG.cities.includes(city);}
+function authorizedOrigin(req,url){
+ const origin=req.headers.get('Origin');
+ if(origin===url.origin)return true;
+ if(!origin)return false;
+ try{
+  const parsed=new URL(origin);
+  return (parsed.hostname==='localhost'||parsed.hostname==='127.0.0.1'||parsed.hostname==='[::1]')&&['http:','https:'].includes(parsed.protocol);
+ }catch{return false;}
+}
 function canServe(store,city,mode){return mode==='pickup'?store.city===city&&store.pickup===true:store.delivery===true&&store.serviceAreas.includes(city);}
 function centsPrice(p){if(p.lastBatch&&p.oldPrice>p.price){let a=Date.parse(p.offer?.startsAt),b=Date.parse(p.offer?.endsAt),now=Date.now();if(!Number.isFinite(a)||!Number.isFinite(b)||now<a||now>=b)return p.oldPrice;}return p.price;}
 function productInfo(p,city,mode){let s=byStore.get(p.storeId);if(!s||!canServe(s,city,mode))return null;let fee=mode==='pickup'?0:s.fee, price=centsPrice(p);return {id:p.id,storeId:s.id,name:p.name,description:p.desc,category:p.cat,price,stock:p.stock,available:p.available!==false&&s.open===true&&p.stock>0,image:p.image,storeName:s.name,city:s.city,serviceAreas:s.serviceAreas,fee,total:price+fee,serves:p.serves,preferences:p.preferences||[],demo:true};}
@@ -852,7 +861,7 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  if(path==='/api/sabia/status'&&req.method==='GET'){const providers=[env.GROQ_API_KEY?'Groq':null,env.AI?'Cloudflare Workers AI':null,env.GEMINI_API_KEY?'Gemini':null].filter(Boolean);return response({mode:providers.length?'generative':'unavailable',configured:providers.length>0,providers,message:providers.length?'Sabiá online: '+providers.join(' → '):'Sabiá ainda não configurada. Catálogo disponível.'});}
  if(path==='/api/catalog'&&req.method==='GET')return response({...CATALOG,demo:true});
  if(!['/api/sabia/session','/api/sabia','/api/sabia/product','/api/sabia/diagnostic'].includes(path)||req.method!=='POST')return failure('not_found','Operação não encontrada.',404);
- if(req.headers.get('Origin')!==url.origin)return failure('origin','Origem não autorizada.',403);
+ if(!authorizedOrigin(req,url))return failure('origin','Origem não autorizada.',403);
  if(!req.headers.get('content-type')?.startsWith('application/json'))return failure('content_type','Envie JSON.',415);
  const body=await postBody(req);
  const secret=env.SABIA_SESSION_SECRET;

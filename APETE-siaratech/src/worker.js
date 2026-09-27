@@ -711,6 +711,43 @@ function sabiaContext(city,mode,constraints,catalog){
  return 'Você é Sabiá, assistente do APETÊ. Ajude a escolher até 3 opções do catálogo permitido, considerando a intenção atual e o histórico. Regras de conversa: "mais opções", "tem mais?" e "quero mais" continuam o assunto anterior e não devem repetir itens já mostrados; mensagens que só alteram orçamento ou entrega mantêm a intenção anterior; "almoço com bebida" significa escolher um prato e uma bebida, preferindo a mesma loja; quando a intenção estiver ambígua, peça esclarecimento em vez de chutar. Responda JSON: {"message":"uma frase curta, natural e específica para o pedido, sem repetir estas são opções", "recommendations":[{"productId":2,"reason":"motivo curto e personalizado"}]}. Explique sua escolha de forma breve em português brasileiro, relacionando-a ao pedido, à praticidade, ao gosto ou à variedade. A mensagem e os motivos não devem incluir preços, taxas, quantidades, estoque, estabelecimentos, promoções nem alegações nutricionais. O servidor acrescentará todos os nomes e dados comerciais verdadeiros. Se mencionar um produto, use o nome exato de um ID selecionado; nunca transforme categorias em nomes. Não invente produtos, ingredientes ou combos. Pode citar literalmente a descrição cadastrada para explicar a escolha. Não retorne campos extras de preço ou nome. Quando completeBreakfast ou completeSnack for true, priorize como primeira opção um combo/refeição completa já cadastrado e compatível, se houver. Se o catálogo estiver vazio, retorne {"message":"", "recommendations":[]}. As constraints atuais substituem regras antigas. Dados demonstrativos. Cidade: '+city+'; modalidade: '+mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo permitido: '+JSON.stringify(catalog);
 }
 
+
+function reserveSemanticAnswer(city,mode,query,prior,baseConstraints,fallbackIntent){
+ const semantic=semanticFallbackIntent(query,prior),intent=semanticToLegacy(semantic,fallbackIntent);
+ const currentHard=requestConstraints(query),carryContext=semantic.keepPreviousContext||['alternative','refine'].includes(semantic.action);
+ const historyHard=carryContext?conversationConstraints('tem mais opções',prior):null;
+ const carriedExcluded=carryContext?prior.filter(message=>message.role==='user').flatMap(message=>requestConstraints(message.content).excluded):[];
+ const hard={...baseConstraints};
+ if(carryContext&&historyHard){
+  if(!currentHard.budgetChanged&&hard.budget===null)hard.budget=historyHard.budget;
+  if(currentHard.budgetScope===null)hard.budgetScope=historyHard.budgetScope;
+ }
+ const constraints={...hard,excluded:[...new Set([...(hard.excluded||[]),...carriedExcluded,...(semantic.exclusions||[]).flatMap(value=>normalizedWords(value))])],intent};
+ if(semantic.action==='chat')return {text:'Oi! Posso te ajudar a encontrar algo do catálogo, comparar opções ou montar um pedido.',provider:'reserve',model:'deterministic-v2',productIds:[]};
+ if(semantic.action==='clarify')return {text:'Pode me dizer qual tipo de produto, preferência ou restrição você quer considerar?',provider:'reserve',model:'deterministic-v2',productIds:[]};
+ const fact=semanticFactAnswer(city,mode,query,semantic,constraints,prior);
+ if(fact)return {...fact,provider:'reserve',model:'deterministic-v2'};
+ if(semantic.action==='list'){
+  const listed=semanticListAnswer(city,mode,query,constraints,prior);
+  if(listed)return {...listed,provider:'reserve',model:'deterministic-v2'};
+ }
+ const components=(semantic.components||[]).filter(component=>component!=='catalog').slice(0,3);
+ if(components.length>1){
+  const bundle=genericBundle(city,mode,query,prior,constraints,components,[]);
+  if(bundle)return {...bundleAnswer(bundle,mode,constraints,{},true),provider:'reserve',model:'deterministic-v2'};
+ }
+ let catalog=alternativeCatalog(summary(city,mode,query,constraints),intent,prior);
+ if(!catalog.length&&constraints.budget!==null){
+  const budgetAnswer=budgetNoMatchAnswer(city,mode,query,constraints);
+  if(budgetAnswer)return {...budgetAnswer,provider:'reserve',model:'deterministic-v2'};
+ }
+ if(!catalog.length&&intent.vegan)return {text:'Não encontrei itens cadastrados como veganos para esta cidade e modalidade. Prefiro não presumir que um produto seja vegano sem essa informação no catálogo.',provider:'reserve',model:'deterministic-v2',productIds:[]};
+ if(!catalog.length&&intent.vegetarian)return {text:'Não encontrei item cadastrado como vegetariano para esta cidade e modalidade.',provider:'reserve',model:'deterministic-v2',productIds:[]};
+ if(!catalog.length&&intent.another)return {text:'Não encontrei outra opção compatível no catálogo para esse mesmo pedido.',provider:'reserve',model:'deterministic-v2',productIds:[]};
+ if(!catalog.length)return {text:'Não encontrei produto compatível com sua intenção, cidade, modalidade e restrições atuais.',provider:'reserve',model:'deterministic-v2',productIds:[]};
+ return {...reserveAnswer(catalog,mode,query,prior,constraints),provider:'reserve',model:'deterministic-v2'};
+}
+
 async function generateSemantic(env,messages,city,mode,query,prior,baseConstraints,fallbackIntent){
  const choices=[['groq',env.GROQ_API_KEY],['gemini',env.GEMINI_API_KEY],['cloudflare',env.AI]].filter(([,binding])=>Boolean(binding));
  if(!choices.length)throw {code:'not_configured',status:503};
@@ -867,29 +904,7 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
   answer=await generateSemantic(env,semanticMessages,body.city,body.mode,body.question,prior,baseConstraints,fallbackIntent);
  }catch(e){
   if(!['not_configured','providers_unavailable'].includes(e?.code))throw e;
-  const constraints={...baseConstraints,intent:fallbackIntent};
-  if(constraints.intent.dietAmbiguous){
-   answer={text:'“Dieta” pode significar coisas diferentes. Se você procura uma preferência alimentar específica, como vegetariana ou vegana, me diga qual para eu conferir apenas itens cadastrados com essa informação.',provider:'rules',model:'diet-clarifier-v1',productIds:[]};
-  }else{
-   let catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
-   if(constraints.intent.withDrink){
-    const pair=mealDrinkPair(catalog,constraints,body.mode);
-    if(pair)catalog=[pair.meal,pair.drink];
-    else if(constraints.budget!==null){
-     const broader=alternativeCatalog(summary(body.city,body.mode,body.question,{...constraints,budget:null}),constraints.intent,prior);
-     const pairBudgetAnswer=mealDrinkBudgetAnswer(broader,constraints,body.mode);
-     if(pairBudgetAnswer)answer=pairBudgetAnswer;
-    }
-   }
-   if(!answer&&!catalog.length&&constraints.budget!==null)answer=budgetNoMatchAnswer(body.city,body.mode,body.question,constraints);
-   if(!answer&&!catalog.length&&constraints.intent.vegan)answer={text:'Não encontrei itens cadastrados como veganos para esta cidade e modalidade. Prefiro não presumir que um produto seja vegano sem essa informação no catálogo.',provider:'rules',model:'dietary-grounding-v1',productIds:[]};
-   if(!answer&&!catalog.length&&constraints.intent.vegetarian)answer={text:'Não encontrei item cadastrado como vegetariano para esta cidade e modalidade.',provider:'rules',model:'dietary-grounding-v1',productIds:[]};
-   if(!answer){
-    const noRecognizedIntent=constraints.intent.kind==='any'&&!constraints.intent.vegetarian&&!constraints.intent.vegan&&!constraints.intent.healthy&&!constraints.intent.producer&&!constraints.intent.another;
-    if(!catalog.length&&noRecognizedIntent)answer={text:'Não entendi bem o que você procura. Posso ajudar com almoço, lanche, café da manhã, sobremesa, bebida ou produtos locais.',provider:'rules',model:'deterministic-v1',productIds:[]};
-    else answer=reserveAnswer(catalog,body.mode,body.question,prior,constraints);
-   }
-  }
+  answer=reserveSemanticAnswer(body.city,body.mode,body.question,prior,baseConstraints,fallbackIntent);
  }
  const {productIds,...publicAnswer}=answer;
  const products=productIds.map(id=>productInfo(productById.get(id)||{},body.city,body.mode)).filter(item=>item&&item.available);

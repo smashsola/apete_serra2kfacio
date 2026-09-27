@@ -499,20 +499,62 @@ function semanticToLegacy(semantic,fallback){
   another:semantic.action==='alternative'||(semantic.keepPreviousContext&&Boolean(fallback.another)),components,semanticAction:semantic.action,semanticFact:semantic.fact};
 }
 function semanticContext(city,mode,constraints,catalog,fallback){
- return 'Você é a camada de interpretação da Sabiá, assistente do APETÊ. Entenda português brasileiro natural: sinônimos, gírias, diminutivos, abreviações, pequenos erros de digitação, frases curtas, follow-ups e mudanças de assunto. Interprete a intenção FINAL do usuário considerando o histórico. Não dependa de uma frase literal. Um pedido por outra opção preserva o assunto e as restrições ainda válidas; uma mudança explícita de assunto substitui o pedido anterior. Pedidos compostos devem virar componentes, por exemplo almoço+bebida = ["meal","drink"], lanche+bebida = ["snack","drink"], prato+sobremesa = ["meal","dessert"]. Para "café e algo para comer", represente os componentes reais pedidos. "Dieta", "regime" ou saúde vaga sem restrição clara deve usar action "clarify". Retorne SOMENTE JSON válido no formato {"intent":{"topic":"meal|drink|snack|breakfast|dessert|produce|catalog","action":"recommend|alternative|refine|switch|fact|clarify","fact":"none|cheapest|most_expensive|most_ordered|price|availability","categories":[],"preferences":["vegano|vegetariano"],"modifiers":["producer|garden|organic|juice|healthy|complete"],"exclusions":[],"components":[],"serves":null,"keepPreviousContext":false,"confidence":0.0},"message":"frase curta e natural","recommendations":[{"productId":1,"reason":"motivo curto"}]}. Use no máximo 6 recomendações ranqueadas. Nunca invente IDs. Não calcule nem decida preço, taxa, estoque, disponibilidade, orçamento ou promoção: o servidor é a autoridade absoluta desses dados. Não faça alegações nutricionais, de emagrecimento ou ingredientes não cadastrados. Os motivos podem falar de gosto, praticidade, variedade e encaixe no pedido. Restrições duras já detectadas pelo servidor: '+JSON.stringify({budget:constraints.budget,budgetScope:constraints.budgetScope,excluded:constraints.excluded})+'. Fallback semântico local: '+JSON.stringify(fallback)+'. Catálogo real disponível para interpretação (sem autoridade comercial): '+JSON.stringify(semanticCatalog(catalog))+'. Cidade: '+city+'; modalidade: '+mode+'.';
+ return 'Você é a camada de interpretação da Sabiá, assistente do APETÊ. Entenda português brasileiro natural: sinônimos, gírias, diminutivos, abreviações, pequenos erros de digitação, frases curtas, follow-ups, elipses e mudanças de assunto. Interprete a intenção FINAL do usuário considerando o histórico, sem depender de frases literais. Se a mensagem atual não trouxer um novo tipo de produto, preserve o assunto anterior em vez de inventar uma troca. Saudações, agradecimentos e conversa casual sem pedido de produto usam action "chat" e zero recomendações. Pedidos para listar, mostrar opções ou saber quais itens existem usam action "list". Perguntas sobre existência, disponibilidade, preço, item mais barato/caro ou popularidade usam action "fact". Em fact availability, preencha searchTerms apenas com o conceito consultado; para perguntas do tipo "é só esse?" sobre um item já mostrado, preserve o tópico anterior e deixe searchTerms vazio para o servidor conferir o grupo inteiro. Preferências explícitas como vegetariano ou vegano NÃO precisam de esclarecimento: use recommend/list/fact conforme o pedido. "Dieta", "regime" ou saúde vaga sem restrição clara deve usar action "clarify". Pedidos compostos viram components, podendo ter até 3 conceitos. Retorne SOMENTE JSON válido no formato {"intent":{"topic":"meal|drink|snack|breakfast|dessert|produce|catalog","action":"recommend|list|alternative|refine|switch|fact|clarify|chat","fact":"none|cheapest|most_expensive|most_ordered|price|availability","categories":[],"preferences":["vegano|vegetariano"],"modifiers":["producer|garden|organic|juice|healthy|complete"],"exclusions":[],"searchTerms":[],"components":[],"serves":null,"keepPreviousContext":false,"confidence":0.0},"message":"frase curta, natural e sem fatos comerciais inventados","recommendations":[{"productId":1,"reason":"motivo curto"}]}. Use no máximo 6 recomendações ranqueadas. Nunca invente IDs. Não calcule nem decida preço, taxa, estoque, disponibilidade, orçamento, promoção ou quantidade de opções: o servidor é a autoridade absoluta desses dados. Não faça alegações nutricionais, de emagrecimento ou ingredientes não cadastrados. Os motivos podem falar de gosto, praticidade, variedade e encaixe no pedido. Restrições duras já detectadas pelo servidor: '+JSON.stringify({budget:constraints.budget,budgetScope:constraints.budgetScope,excluded:constraints.excluded})+'. Fallback semântico local: '+JSON.stringify(fallback)+'. Catálogo real disponível para interpretação (sem autoridade comercial): '+JSON.stringify(semanticCatalog(catalog))+'. Cidade: '+city+'; modalidade: '+mode+'.';
 }
-function semanticFactAnswer(city,mode,semantic){
+function semanticTermMatch(item,terms){
+ if(!terms?.length)return true;
+ const words=normalizedWords(item.name+' '+item.description+' '+item.category+' '+item.store);
+ return terms.every(term=>{
+  const wanted=normalizedWords(term);
+  return wanted.length&&wanted.every(target=>words.some(word=>word.startsWith(target)||target.startsWith(word)));
+ });
+}
+function semanticFactAnswer(city,mode,query,semantic,constraints,prior=[]){
  if(semantic.action!=='fact')return null;
- const items=availableCatalog(city,mode),money=cents=>'R$ '+(cents/100).toFixed(2).replace('.',',');
+ const money=cents=>'R$ '+(cents/100).toFixed(2).replace('.',',');
+ const all=availableCatalog(city,mode);
  if(semantic.fact==='most_ordered')return {text:'O catálogo demonstrativo ainda não registra quantidade de pedidos ou vendas, então não dá para afirmar qual item é o mais pedido, vendido ou popular.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
- if(!items.length)return {text:'Não encontrei produto disponível para comparar nesta cidade e modalidade.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
+ if(!all.length)return {text:'Não encontrei produto disponível para comparar nesta cidade e modalidade.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
+ const ranked=summary(city,mode,query,constraints);
+ let terms=semantic.searchTerms||[];
+ const lastAssistant=[...prior].reverse().find(message=>message.role==='assistant')?.content||'';
+ if(terms.length&&semantic.keepPreviousContext&&semantic.topic!=='catalog'&&terms.some(term=>normalizedText(lastAssistant).includes(normalizedText(term))))terms=[];
+ const scoped=(ranked.length?ranked:all).filter(item=>semanticTermMatch(item,terms));
+ if(semantic.fact==='availability'){
+  if(!scoped.length)return {text:'Não encontrei esse item cadastrado como disponível para esta cidade e modalidade.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
+  const picks=scoped.slice(0,3);
+  return {text:'Encontrei '+scoped.length+' '+(scoped.length===1?'opção compatível':'opções compatíveis')+' no catálogo para esta cidade e modalidade.',provider:'rules',model:'catalog-facts-v2',productIds:picks.map(item=>item.id)};
+ }
+ if(semantic.fact==='price'){
+  if(!scoped.length)return {text:'Não encontrei esse item cadastrado para consultar o preço.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
+  const picks=scoped.slice(0,3);
+  const parts=picks.map(item=>item.name+': '+money(Math.round(Number(item.priceReais)*100))+(mode==='pickup'?' na retirada':'; total com entrega '+money(Math.round(Number(item.totalReais)*100))));
+  return {text:parts.join('. ')+'.',provider:'rules',model:'catalog-facts-v2',productIds:picks.map(item=>item.id)};
+ }
  if(semantic.fact==='cheapest'||semantic.fact==='most_expensive'){
-  const sorted=[...items].sort((a,b)=>Number(a.priceReais)-Number(b.priceReais)||a.id-b.id);
+  const pool=scoped.length?scoped:all;
+  const sorted=[...pool].sort((a,b)=>Number(a.priceReais)-Number(b.priceReais)||a.id-b.id);
   const item=semantic.fact==='most_expensive'?sorted.at(-1):sorted[0];
   const price=Math.round(Number(item.priceReais)*100),total=Math.round(Number(item.totalReais)*100);
   return {text:'Pelo preço do produto, a opção '+(semantic.fact==='most_expensive'?'mais cara':'mais barata')+' disponível é '+item.name+': '+money(price)+'. '+(mode==='pickup'?'Na retirada não há taxa de entrega.':'Com a entrega cadastrada, o total fica '+money(total)+'.'),provider:'rules',model:'catalog-facts-v2',productIds:[item.id]};
  }
  return null;
+}
+function semanticChatAnswer(data){
+ const message=safeExplanation(data?.message||'',[]);
+ return {text:message||'Oi! Posso te ajudar a encontrar algo do catálogo, comparar opções ou montar um pedido.',productIds:[]};
+}
+function semanticListAnswer(city,mode,query,constraints,prior,data){
+ let catalog=alternativeCatalog(summary(city,mode,query,constraints),constraints.intent,prior);
+ if(!catalog.length)return null;
+ const options=catalog.slice(0,3);
+ options.message='Encontrei '+catalog.length+' '+(catalog.length===1?'opção compatível':'opções compatíveis')+' com o que você pediu.';
+ const result=catalogAnswer(options,mode,constraints,false,Boolean(constraints.intent?.another));
+ if(data?.message){
+  const natural=safeExplanation(data.message,options);
+  if(natural)result.text=result.text.replace(/^Encontrei[^\n]*/,natural);
+ }
+ return result;
 }
 function componentIntent(base,component){
  const kindMap={meal:'meal',drink:'drink',snack:'snack',breakfast:'breakfast',dessert:'dessert',produce:'any'};

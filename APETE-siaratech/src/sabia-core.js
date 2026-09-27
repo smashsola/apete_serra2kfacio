@@ -5,7 +5,7 @@ export const CONFIDENCE={low:0.42,medium:0.62,high:0.78};
 export const MODIFIERS=['producer','garden','organic','juice','healthy','complete'];
 
 export function plain(text){
- return String(text||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/([a-z])\1{2,}/g,'$1').replace(/[^a-z0-9$.,\s-]/g,' ').replace(/\s+/g,' ').trim();
+ return String(text||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/([aeiou])\1+/g,'$1').replace(/([b-df-hj-np-tv-z])\1{2,}/g,'$1').replace(/[^a-z0-9$.,\s-]/g,' ').replace(/\s+/g,' ').trim();
 }
 function tokens(text){return plain(text).split(/\s+/).filter(Boolean);}
 function hasStem(text,stems){const list=tokens(text);return stems.some(stem=>list.some(word=>word.startsWith(stem)));}
@@ -24,7 +24,7 @@ function hasNearWord(text,words,maxDistance=null){
  const list=tokens(text);
  return words.some(target=>list.some(word=>{
   if(word===target)return true;
-  const allowed=maxDistance??(target.length>=7?2:target.length>=3?1:0);
+  const allowed=maxDistance??(target.length>=7?2:target.length>=4?1:0);
   if(!allowed||word.length<3||Math.abs(word.length-target.length)>allowed)return false;
   if(word[0]!==target[0])return false;
   return editDistance(word,target)<=allowed;

@@ -29,7 +29,7 @@ export function localIntent(current,previous=null){
  if(hasStem(clean,['almoc','jantar','refeic','prato','comida','rango']))components.push('meal');
  if(hasStem(clean,['sobrem','doce','bolo']))components.push('dessert');
  if(hasStem(clean,['lanch','tapioca','sandu','pao']))components.push('snack');
- if(hasStem(clean,['bebid','sede','suco','refriger'])||(/\bcafe\b/.test(clean)&&!components.includes('breakfast')))components.push('drink');
+ if(hasStem(clean,['beb','sede','suco','refriger'])||(/\bcafe\b/.test(clean)&&!components.includes('breakfast')))components.push('drink');
  if(hasStem(clean,['horta','hortal','verdura','legume','organic','produtor','roca']))components.push('produce');
  components=unique(components,3);
  let topic=components[0]||'catalog';

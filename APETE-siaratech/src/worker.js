@@ -612,9 +612,8 @@ function semanticFactAnswer(city,mode,query,semantic,constraints,prior=[]){
  }
  return null;
 }
-function semanticChatAnswer(data){
- const message=safeExplanation(data?.message||'',[]);
- return {text:message||'Oi! Posso te ajudar a encontrar algo do catálogo, comparar opções ou montar um pedido.',productIds:[]};
+function semanticChatAnswer(){
+ return {text:'Oi! Posso te ajudar a encontrar algo do catálogo, comparar opções ou montar um pedido.',productIds:[]};
 }
 function semanticListAnswer(city,mode,query,constraints,prior){
  let catalog=alternativeCatalog(summary(city,mode,query,constraints),constraints.intent,prior);

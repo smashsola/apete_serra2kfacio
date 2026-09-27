@@ -1,5 +1,5 @@
 export const TOPICS=['meal','drink','snack','breakfast','dessert','produce','catalog'];
-export const ACTIONS=['recommend','list','alternative','refine','switch','fact','clarify','chat'];
+export const ACTIONS=['recommend','list','alternative','refine','switch','fact','clarify','confirm','chat'];
 export const FACTS=['none','cheapest','most_expensive','most_ordered','price','availability'];
 export const MODIFIERS=['producer','garden','organic','juice','healthy','complete'];
 
@@ -8,6 +8,33 @@ export function plain(text){
 }
 function tokens(text){return plain(text).split(/\s+/).filter(Boolean);}
 function hasStem(text,stems){const list=tokens(text);return stems.some(stem=>list.some(word=>word.startsWith(stem)));}
+function editDistance(a,b){
+ if(a===b)return 0;
+ if(!a.length)return b.length;if(!b.length)return a.length;
+ const prev=Array.from({length:b.length+1},(_,i)=>i),next=new Array(b.length+1);
+ for(let i=1;i<=a.length;i++){
+  next[0]=i;
+  for(let j=1;j<=b.length;j++)next[j]=Math.min(next[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+  for(let j=0;j<=b.length;j++)prev[j]=next[j];
+ }
+ return prev[b.length];
+}
+function hasNearWord(text,words,maxDistance=1){
+ const list=tokens(text);
+ return words.some(target=>list.some(word=>{
+  if(word===target)return true;
+  if(target.length<4||word.length<3||Math.abs(word.length-target.length)>maxDistance)return false;
+  return editDistance(word,target)<=maxDistance;
+ }));
+}
+function isAffirmative(text){
+ const list=tokens(text);
+ if(!list.length||list.length>5)return false;
+ const noise=new Set(['pode','podee','por','favor','pfv','sugere','sugerir','manda','mandar','quero','claro','isso','ai','aí','blz','beleza']);
+ const meaningful=list.filter(word=>!noise.has(word));
+ if(!meaningful.length&&list.some(word=>['pode','claro','manda','sugere','sugerir'].includes(word)))return true;
+ return meaningful.every(word=>word==='s'||word==='ss'||word==='yes'||word==='yep'||hasNearWord(word,['sim'],1));
+}
 function unique(list,max=8){return [...new Set(list)].slice(0,max);}
 
 export function localIntent(current,previous=null){
@@ -27,11 +54,11 @@ export function localIntent(current,previous=null){
  if(hasStem(clean,['saudav']))modifiers.push('healthy');
  if(hasStem(clean,['complet','combo']))modifiers.push('complete');
  let components=[];
- if(/\bcafe da manha\b|\bdesjejum\b|comec\w* (?:bem )?o dia/.test(clean))components.push('breakfast');
- if(hasStem(clean,['almoc','jantar','refeic','prato','comida','rango']))components.push('meal');
- if(hasStem(clean,['sobrem','doce','bolo']))components.push('dessert');
- if(hasStem(clean,['lanch','tapioca','sandu','pao']))components.push('snack');
- if(hasStem(clean,['beb','sede','suco','refriger'])||(/\bcafe\b/.test(clean)&&!components.includes('breakfast')))components.push('drink');
+ if(/\bcafe da manha\b|\bdesjejum\b|comec\w* (?:bem )?o dia/.test(clean)||hasNearWord(clean,['desjejum'],1))components.push('breakfast');
+ if(hasStem(clean,['almoc','jantar','refeic','prato','comida','rango'])||hasNearWord(clean,['almoco','jantar','refeicao','prato','comida','rango'],1))components.push('meal');
+ if(hasStem(clean,['sobrem','doce','bolo'])||hasNearWord(clean,['sobremesa','doce','bolo'],1))components.push('dessert');
+ if(hasStem(clean,['lanch','tapioca','sandu','pao'])||hasNearWord(clean,['lanche','tapioca','sanduiche','pao'],1))components.push('snack');
+ if(hasStem(clean,['beb','sede','suco','refriger'])||hasNearWord(clean,['bebida','beber','suco','refrigerante'],1)||(/\bcafe\b/.test(clean)&&!components.includes('breakfast')))components.push('drink');
  if(hasStem(clean,['horta','hortal','verdura','legume','organic','produtor','roca']))components.push('produce');
  components=unique(components,3);
  let topic=components[0]||'catalog';
@@ -41,14 +68,15 @@ export function localIntent(current,previous=null){
  else if(/mais pedido|mais vendido|mais popular/.test(clean))fact='most_ordered';
  else if(/\bpreco\b|\bquanto custa\b/.test(clean))fact='price';
  else if(!alternative&&!listing&&/\b(?:tem|ha|existe|disponiv|vende|vendem|oferece|oferecem)\b/.test(clean))fact='availability';
- let action=conversational?'chat':fact!=='none'?'fact':switching?'switch':alternative?'alternative':listing?'list':'recommend';
- if(!conversational&&/\bdieta\b|\bregime\b/.test(clean)&&!preferences.length)action='clarify';
+ const affirmative=isAffirmative(clean);
+ let action=conversational?'chat':fact!=='none'?'fact':switching?'switch':alternative?'alternative':listing?'list':affirmative&&components.length===0?'confirm':'recommend';
+ if(!conversational&&action!=='confirm'&&/\bdieta\b|\bregime\b/.test(clean)&&!preferences.length)action='clarify';
  let searchTerms=[];
  if(['availability','price'].includes(fact)&&!preferences.length){
   const stop=new Set(['tem','nao','sim','aqui','isso','esse','essa','esses','essas','algo','alguma','coisa','pra','para','com','sem','uma','uns','umas','voces','vcs','catalogo','disponivel','disponiveis','vende','vendem','oferece','oferecem','existe','qual','quais','quanto','quantos','custa','custam','preco','valor','reais']);
   searchTerms=tokens(clean).filter(word=>word.length>=3&&!stop.has(word)&&!/^(?:r\$)?\d/.test(word)).slice(0,4);
  }
- const inherited=Boolean(topic==='catalog'&&previous&&!switching&&!conversational&&(alternative||action==='recommend'||action==='list'));
+ const inherited=Boolean(topic==='catalog'&&previous&&!switching&&!conversational&&(alternative||action==='recommend'||action==='list'||action==='confirm'));
  if(inherited){
   topic=previous.topic||topic;
   components=previous.components||components;

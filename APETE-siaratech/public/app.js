@@ -630,6 +630,22 @@ function sabiaPage() {
           <button class="ghost-btn strong" data-action="send-suggestion" data-text="Como posso valorizar os produtores locais nas minhas refeições?" ${sabiaBusy?'disabled':''}>Conversar sobre a Serra</button>
         </div>
         <div class="sabia-mode"><span>${sabiaMode==='generative'?'IA generativa configurada':sabiaMode==='checking'?'Verificando conexão':'IA indisponível'}</span><small id="sabia-mode-label">${esc(sabiaStatusMessage)}</small><button class="ghost-btn strong" data-action="sabia-check">Verificar conexão</button></div>
+        <div class="sabia-diagnostic">
+          <strong>Diagnóstico temporário</strong>
+          <small>Testa só um provedor usando a mensagem digitada no chat. Não usa os outros e não cai na Reserva.</small>
+          <div class="row">
+            ${['cloudflare','gemini','groq'].map(provider=>`<button class="ghost-btn strong" data-action="sabia-diagnostic" data-provider="${provider}" ${sabiaBusy||sabiaDiagnosticBusy?'disabled':''}>${sabiaDiagnosticBusy===provider?'Testando…':'Testar '+(provider==='cloudflare'?'Cloudflare':provider==='gemini'?'Gemini':'Groq')}</button>`).join('')}
+          </div>
+          ${sabiaDiagnostic?`<div class="sabia-diagnostic-result">
+            <b>${esc(sabiaDiagnostic.provider||'provedor')} · ${sabiaDiagnostic.loading?'testando':sabiaDiagnostic.ok?'OK':'FALHOU'}</b>
+            ${sabiaDiagnostic.model?`<small>Modelo: ${esc(sabiaDiagnostic.model)}</small>`:''}
+            ${sabiaDiagnostic.elapsedMs!==undefined?`<small>Tempo: ${esc(sabiaDiagnostic.elapsedMs)} ms</small>`:''}
+            ${!sabiaDiagnostic.loading?`<small>Stage: ${esc(sabiaDiagnostic.stage||'—')} · status: ${esc(sabiaDiagnostic.status??0)}</small>`:''}
+            ${sabiaDiagnostic.detail?`<pre>${esc(sabiaDiagnostic.detail)}</pre>`:''}
+            ${sabiaDiagnostic.raw?`<pre>${esc(sabiaDiagnostic.raw)}</pre>`:''}
+            ${sabiaDiagnostic.validatedText?`<small><b>Validado pelo APETÊ:</b> ${esc(sabiaDiagnostic.validatedText)}</small>`:''}
+          </div>`:''}
+        </div>
         <p class="note">As mensagens são enviadas ao provedor de IA. Não informe senhas, documentos ou dados pessoais. A conversa desta sessão expira no servidor após seis horas.</p>
         <p class="note">O catálogo da IA é o catálogo cadastrado no servidor. Alterações locais no painel de demonstração ainda não sincronizam com ele.</p>
       </article>

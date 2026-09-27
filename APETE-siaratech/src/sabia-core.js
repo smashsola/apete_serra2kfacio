@@ -33,7 +33,8 @@ function isAffirmative(text){
  const noise=new Set(['pode','podee','por','favor','pfv','sugere','sugerir','manda','mandar','quero','claro','isso','ai','aí','blz','beleza']);
  const meaningful=list.filter(word=>!noise.has(word));
  if(!meaningful.length&&list.some(word=>['pode','claro','manda','sugere','sugerir'].includes(word)))return true;
- return meaningful.every(word=>word==='s'||word==='ss'||word==='yes'||word==='yep'||hasNearWord(word,['sim'],1));
+ const shortYes=new Set(['s','ss','si','sim','sin','cim','ci','yes','yep']);
+ return meaningful.every(word=>shortYes.has(word)||hasNearWord(word,['sim'],1));
 }
 function unique(list,max=8){return [...new Set(list)].slice(0,max);}
 

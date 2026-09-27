@@ -505,9 +505,13 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
    const answer=await callProvider(provider,env,messages);
    const options=validatedRecommendations(answer.text,catalog,constraints.intent);
    const validated=catalogAnswer(options,body.mode,constraints,false,Boolean(constraints.intent?.another));
-   return response({ok:true,provider:answer.provider,model:answer.model,elapsedMs:Date.now()-started,stage:'success',status:200,raw:answer.text.slice(0,2400),validatedText:validated.text,productIds:validated.productIds,catalogSize:catalog.length});
+   const elapsedMs=Date.now()-started;
+   console.info('sabia_provider_diagnostic',{provider:answer.provider,ok:true,model:answer.model,stage:'success',status:200,elapsedMs,rawPreview:safeProviderDetail(answer.text).slice(0,700),validatedPreview:safeProviderDetail(validated.text).slice(0,700),catalogSize:catalog.length});
+   return response({ok:true,provider:answer.provider,model:answer.model,elapsedMs,stage:'success',status:200,raw:answer.text.slice(0,2400),validatedText:validated.text,productIds:validated.productIds,catalogSize:catalog.length});
   }catch(error){
-   return response({ok:false,provider,model:providerModel(provider,env),elapsedMs:Date.now()-started,stage:error?.stage||'unknown',status:Number(error?.status)||0,timeout:Boolean(error?.timeout),retryable:Boolean(error?.retryable),detail:safeProviderDetail(error?.detail||error?.message||'Sem detalhe adicional.')});
+   const elapsedMs=Date.now()-started,detail=safeProviderDetail(error?.detail||error?.message||'Sem detalhe adicional.');
+   console.info('sabia_provider_diagnostic',{provider,ok:false,model:providerModel(provider,env),stage:error?.stage||'unknown',status:Number(error?.status)||0,timeout:Boolean(error?.timeout),retryable:Boolean(error?.retryable),elapsedMs,detail});
+   return response({ok:false,provider,model:providerModel(provider,env),elapsedMs,stage:error?.stage||'unknown',status:Number(error?.status)||0,timeout:Boolean(error?.timeout),retryable:Boolean(error?.retryable),detail});
   }
  }
  if(path==='/api/sabia/product'){const p=productById.get(body.productId);const info=validCity(body.city)&&['delivery','pickup'].includes(body.mode)?productInfo(p||{},body.city,body.mode):null;if(!info||!info.available)return failure('unavailable','Produto indisponível para esta cidade.',409);return response(info);}

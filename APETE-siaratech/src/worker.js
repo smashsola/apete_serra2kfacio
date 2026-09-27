@@ -241,11 +241,10 @@ function validatedRecommendations(text,catalog,intent={}){
  }
  if(intent.withDrink){
   const meal=catalog.find(item=>['Regional','Caseiro','Vegetariano'].includes(item.category));
-  const drink=catalog.find(item=>item.category==='Bebidas');
-  if(meal&&drink){
-   const extras=picked.filter(item=>item.id!==meal.id&&item.id!==drink.id);
-   picked.splice(0,picked.length,{...meal},{...drink},...extras.slice(0,1));
-  }
+  const drink=meal
+   ?(catalog.find(item=>item.category==='Bebidas'&&item.storeId===meal.storeId)||catalog.find(item=>item.category==='Bebidas'))
+   :null;
+  if(meal&&drink)picked.splice(0,picked.length,{...meal},{...drink});
  }
  picked.message=data&&typeof data.message==='string'
   ?safeExplanation(data.message,picked)
@@ -261,7 +260,15 @@ function catalogAnswer(options,mode,constraints,basic=false,another=false){
   return (index+1)+'. '+item.name+' — 1 unidade por R$ '+money(item.priceReais)+', '+delivery+'; total de R$ '+money(item.totalReais)+'.'+(!basic&&item.reason?' '+item.reason:'');
  });
  const budgetNote=constraints.budget!==null&&constraints.budgetScope==='products'?' O limite considera só o produto; a entrega está discriminada à parte.':'';
- const intro=constraints.intent?.withDrink?'Separei um prato e uma bebida compatíveis com o pedido.':'Estas são opções individuais, para escolher uma.';
+ let intro='Estas são opções individuais, para escolher uma.';
+ if(constraints.intent?.withDrink){
+  const sameStore=options.length>=2&&options[0].storeId===options[1].storeId;
+  if(sameStore){
+   const productsTotal=options.slice(0,2).reduce((sum,item)=>sum+Number(item.priceReais),0);
+   const fee=Number(options[0].feeReais);
+   intro='Separei um prato e uma bebida do mesmo estabelecimento. Juntos, os produtos somam R$ '+money(productsTotal)+' e a entrega cadastrada é R$ '+money(fee)+'; total do conjunto: R$ '+money(productsTotal+fee)+'.';
+  }else intro='Separei um prato e uma bebida compatíveis com o pedido.';
+ }
  return {text:prefix+(!basic&&options.message?options.message+' ':'')+intro+budgetNote+'\n'+lines.join('\n'),productIds:options.map(item=>item.id)};
 }
 function providerText(data){
@@ -384,11 +391,10 @@ function reserveAnswer(catalog,mode,query,prior,constraints){
  let options=ranked.slice(0,3);
  if(intent.withDrink){
   const meal=ranked.find(item=>['Regional','Caseiro','Vegetariano'].includes(item.category));
-  const drink=ranked.find(item=>item.category==='Bebidas');
-  if(meal&&drink){
-   const extras=ranked.filter(item=>item.id!==meal.id&&item.id!==drink.id);
-   options=[meal,drink,...extras].slice(0,3);
-  }
+  const drink=meal
+   ?(ranked.find(item=>item.category==='Bebidas'&&item.storeId===meal.storeId)||ranked.find(item=>item.category==='Bebidas'))
+   :null;
+  if(meal&&drink)options=[meal,drink];
  }
  return {...catalogAnswer(options,mode,constraints,true,intent.another),provider:'reserve',model:'deterministic-v1'};
 }
@@ -451,7 +457,7 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  if(!catalog.length&&noRecognizedIntent){
   return response({text:'Não entendi bem o que você procura. Posso ajudar com almoço, lanche, café da manhã, sobremesa, bebida ou produtos locais.',provider:'rules',model:'deterministic-v1',products:[],stores:[],demo:true});
  }
- const context='Você é Sabiá, assistente do APETÊ. Ajude a escolher até 3 opções individuais do catálogo permitido, considerando a intenção atual e o histórico. Responda JSON: {"message":"texto curto e natural", "recommendations":[{"productId":2,"reason":"motivo curto e personalizado"}]}. Explique sua escolha de forma breve em português brasileiro, relacionando-a ao pedido, à praticidade, ao gosto ou à variedade. A mensagem e os motivos não devem incluir preços, taxas, quantidades, estoque, estabelecimentos, promoções nem alegações nutricionais. O servidor acrescentará todos os nomes e dados comerciais verdadeiros. Se mencionar um produto, use o nome exato de um ID selecionado; nunca transforme categorias em nomes. Não invente produtos, ingredientes ou combos. Pode citar literalmente a descrição cadastrada para explicar a escolha. Não retorne campos extras de preço ou nome. Quando completeBreakfast ou completeSnack for true, priorize como primeira opção um combo/refeição completa já cadastrado e compatível, se houver. Se o catálogo estiver vazio, retorne {"message":"", "recommendations":[]}. As constraints atuais substituem regras antigas. Dados demonstrativos. Cidade: '+body.city+'; modalidade: '+body.mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo permitido: '+JSON.stringify(catalog);
+ const context='Você é Sabiá, assistente do APETÊ. Ajude a escolher até 3 opções do catálogo permitido, considerando a intenção atual e o histórico. Regras de conversa: "mais opções", "tem mais?" e "quero mais" continuam o assunto anterior e não devem repetir itens já mostrados; mensagens que só alteram orçamento ou entrega mantêm a intenção anterior; "almoço com bebida" significa escolher um prato e uma bebida, preferindo a mesma loja; quando a intenção estiver ambígua, peça esclarecimento em vez de chutar. Responda JSON: {"message":"texto curto e natural", "recommendations":[{"productId":2,"reason":"motivo curto e personalizado"}]}. Explique sua escolha de forma breve em português brasileiro, relacionando-a ao pedido, à praticidade, ao gosto ou à variedade. A mensagem e os motivos não devem incluir preços, taxas, quantidades, estoque, estabelecimentos, promoções nem alegações nutricionais. O servidor acrescentará todos os nomes e dados comerciais verdadeiros. Se mencionar um produto, use o nome exato de um ID selecionado; nunca transforme categorias em nomes. Não invente produtos, ingredientes ou combos. Pode citar literalmente a descrição cadastrada para explicar a escolha. Não retorne campos extras de preço ou nome. Quando completeBreakfast ou completeSnack for true, priorize como primeira opção um combo/refeição completa já cadastrado e compatível, se houver. Se o catálogo estiver vazio, retorne {"message":"", "recommendations":[]}. As constraints atuais substituem regras antigas. Dados demonstrativos. Cidade: '+body.city+'; modalidade: '+body.mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo permitido: '+JSON.stringify(catalog);
 
  let answer;try{answer=await generate(env,[{role:'system',content:context},...prior,{role:'user',content:body.question.trim()}],catalog,body.mode,constraints);}catch(e){if(!['not_configured','providers_unavailable'].includes(e?.code))throw e;answer=reserveAnswer(catalog,body.mode,body.question,prior,constraints);}
  const {productIds,...publicAnswer}=answer;

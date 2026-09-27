@@ -15,7 +15,7 @@ export function localIntent(current,previous=null){
  const conversational=/^(?:(?:oi|ola|opa|e ai|ei|salve|bom dia|boa tarde|boa noite|tudo bem|blz|beleza|valeu|obrigad[oa])\b[\s,.!?]*)+$/.test(clean);
  const switching=hasStem(clean,['agora','prefir','troca','esquec','verdade'])||/pensando melhor|deixa (?:isso|esse|essa)|outra coisa/.test(clean);
  const alternative=hasStem(clean,['outr','diferent','alternativ'])||/\btem mais\b|\bmais op(?:cao|coes)\b|nao gostei/.test(clean);
- const listing=hasStem(clean,['list'])||/\b(?:mostra|mostre|quais|ver)\b.*\b(?:opcoes|itens|produtos|doces|bebidas|lanches)\b|\btodos?\b|\btodas?\b/.test(clean);
+ const listing=hasStem(clean,['list'])||/\b(?:mostra|mostre|quais|ver)\b.*\b(?:opcoes|itens|produtos|doces|bebidas|lanches)\b|\btodos?\b|\btodas?\b|\b(?:so|somente|apenas)\s+(?:tem|existe)\b|\b(?:e|eh)\s+(?:so|somente|apenas)\s+(?:esse|essa|isso|esses|essas)\b/.test(clean);
  let preferences=[];
  if(hasStem(clean,['vegan']))preferences.push('vegano');
  if(hasStem(clean,['vegetarian']))preferences.push('vegetariano');
@@ -40,7 +40,7 @@ export function localIntent(current,previous=null){
  else if(/mais caro|maior preco/.test(clean))fact='most_expensive';
  else if(/mais pedido|mais vendido|mais popular/.test(clean))fact='most_ordered';
  else if(/\bpreco\b|\bquanto custa\b/.test(clean))fact='price';
- else if(!alternative&&/\b(?:tem|ha|existe|disponiv|vende|vendem|oferece|oferecem)\b/.test(clean))fact='availability';
+ else if(!alternative&&!listing&&/\b(?:tem|ha|existe|disponiv|vende|vendem|oferece|oferecem)\b/.test(clean))fact='availability';
  let action=conversational?'chat':fact!=='none'?'fact':switching?'switch':alternative?'alternative':listing?'list':'recommend';
  if(!conversational&&/\bdieta\b|\bregime\b/.test(clean)&&!preferences.length)action='clarify';
  let searchTerms=[];

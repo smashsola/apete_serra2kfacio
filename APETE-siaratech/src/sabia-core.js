@@ -44,9 +44,9 @@ export function localIntent(current,previous=null){
  let action=conversational?'chat':fact!=='none'?'fact':switching?'switch':alternative?'alternative':listing?'list':'recommend';
  if(!conversational&&/\bdieta\b|\bregime\b/.test(clean)&&!preferences.length)action='clarify';
  let searchTerms=[];
- if(fact==='availability'&&topic==='catalog'&&!preferences.length){
-  const stop=new Set(['tem','nao','sim','aqui','isso','esse','essa','esses','essas','algo','alguma','coisa','pra','para','com','sem','uma','uns','umas','voces','voces','vcs','vcs','catalogo','disponivel','disponiveis','vende','vendem','oferece','oferecem','existe']);
-  searchTerms=tokens(clean).filter(word=>word.length>=3&&!stop.has(word)).slice(0,4);
+ if(['availability','price'].includes(fact)&&!preferences.length){
+  const stop=new Set(['tem','nao','sim','aqui','isso','esse','essa','esses','essas','algo','alguma','coisa','pra','para','com','sem','uma','uns','umas','voces','vcs','catalogo','disponivel','disponiveis','vende','vendem','oferece','oferecem','existe','qual','quais','quanto','quantos','custa','custam','preco','valor','reais']);
+  searchTerms=tokens(clean).filter(word=>word.length>=3&&!stop.has(word)&&!/^(?:r\$)?\d/.test(word)).slice(0,4);
  }
  const inherited=Boolean(topic==='catalog'&&previous&&!switching&&!conversational&&(alternative||action==='recommend'||action==='list'));
  if(inherited){

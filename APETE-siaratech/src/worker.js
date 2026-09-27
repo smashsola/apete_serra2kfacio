@@ -296,10 +296,10 @@ function providerText(data){
 }
 async function callProvider(name,env,messages){
  if(name==='cloudflare'){
-  const model=env.CLOUDFLARE_AI_MODEL||'@cf/qwen/qwen3-30b-a3b-fp8';let timer;
+  const model=env.CLOUDFLARE_AI_MODEL||'@cf/qwen/qwen3.8-27b';let timer;
   try{
    const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject({stage:'network',retryable:true,timeout:true,status:0,retryAfter:30}),18000);});
-   const data=await Promise.race([env.AI.run(model,{messages,temperature:0.15,max_tokens:900,stream:false}),timeout]);
+   const data=await Promise.race([env.AI.run(model,{messages,reasoning_effort:'low',max_completion_tokens:1200,stream:false}),timeout]);
    const text=providerText(data);
    if(!text)throw validationFailure();
    return {text,provider:name,model};
@@ -329,15 +329,9 @@ async function callProvider(name,env,messages){
 
   const model=env.GEMINI_MODEL||'gemini-3.5-flash-lite';
   const systemText=messages.filter(message=>message.role==='system').map(message=>message.content).join('\n\n');
-  const contents=messages.filter(message=>message.role!=='system').map(message=>({
-   role:message.role==='assistant'?'model':'user',
-   parts:[{text:message.content}]
-  }));
-  const payload={
-   contents,
-   ...(systemText?{systemInstruction:{parts:[{text:systemText}]}}:{}),
-   generationConfig:{responseMimeType:'application/json',maxOutputTokens:900}
-  };
+  const dialogue=messages.filter(message=>message.role!=='system').map(message=>(message.role==='assistant'?'Assistente':'Usuário')+': '+message.content).join('\n');
+  const prompt=(systemText?systemText+'\n\n':'')+'Histórico recente:\n'+dialogue+'\n\nResponda somente ao último pedido do usuário no JSON solicitado.';
+  const payload={contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1200}};
   const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{
    method:'POST',
    headers:{'x-goog-api-key':env.GEMINI_API_KEY,'Content-Type':'application/json'},

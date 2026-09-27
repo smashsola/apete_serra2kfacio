@@ -1,5 +1,6 @@
 // APETÊ / Cloudflare Pages Advanced Mode. Public catalogue = demonstration data.
 // Keep GROQ_API_KEY and GEMINI_API_KEY only in Cloudflare Worker Secrets.
+import {bundleTotal,localIntent as localSemanticIntent,normalizeIntent,plain as semanticPlain} from './sabia-core.js';
 const CATALOG={"stores":[{"id":1,"name":"Casa do Baião","category":"Comida regional","city":"Guaraciaba do Norte","fee":600,"open":true,"producer":false,"cover":"assets/images/cover-casa.webp","desc":"Pratos regionais, baião de dois, almoço executivo e combinações para compartilhar.","hero":"Baião, galinha caipira e comida de casa com aquele tempero da Serra.","demo":true,"serviceAreas":["Guaraciaba do Norte"],"delivery":true,"pickup":true},{"id":2,"name":"Forno & Afeto","category":"Padaria artesanal","city":"Guaraciaba do Norte","fee":450,"open":true,"producer":false,"cover":"assets/images/cover-forno.webp","desc":"Pães, bolos, tapiocas, cafés e opções frescas para o café da manhã e da tarde.","hero":"Pães quentinhos, bolos e café passado na hora.","demo":true,"serviceAreas":["Guaraciaba do Norte"],"delivery":true,"pickup":true},{"id":3,"name":"Quintal da Serra","category":"Cozinha caseira","city":"São Benedito","fee":700,"open":true,"producer":false,"cover":"assets/images/cover-quintal.webp","desc":"Comida caseira, marmitas, caldinhos e pratos bem servidos para o almoço ou jantar.","hero":"Receitas caseiras e porções que lembram comida de família.","demo":true,"serviceAreas":["São Benedito"],"delivery":true,"pickup":true},{"id":4,"name":"Sítio Boa Vista","category":"Produtor local","city":"Guaraciaba do Norte","fee":500,"open":true,"producer":true,"cover":"assets/images/cover-sitio.webp","desc":"Hortaliças, frutas e produtos artesanais colhidos na Serra e enviados com frescor.","hero":"Frutas, verduras e produtos da roça direto para a sua mesa.","demo":true,"serviceAreas":["Guaraciaba do Norte"],"delivery":true,"pickup":true},{"id":5,"name":"Serra Verde Orgânicos","category":"Produtor local","city":"Ibiapina","fee":550,"open":true,"producer":true,"cover":"assets/images/cover-serraverde.webp","desc":"Cestas, legumes, mel e itens naturais de pequenos produtores da região.","hero":"Orgânicos selecionados e cestas prontas para a semana.","demo":true,"serviceAreas":["Ibiapina"],"delivery":true,"pickup":true}],"products":[{"id":1,"storeId":1,"name":"Baião da casa para dois","desc":"Baião de dois, frango grelhado, macaxeira e salada.","cat":"Regional","price":6200,"stock":20,"image":"assets/images/prod-baiao.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":2,"preferences":[],"offer":null},{"id":2,"storeId":1,"name":"Galinha caipira com pirão","desc":"Prato completo com arroz, pirão e salada da casa.","cat":"Regional","price":3600,"stock":14,"image":"assets/images/prod-galinha.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":3,"storeId":1,"name":"Escondidinho de carne","desc":"Purê de macaxeira, carne desfiada e queijo dourado.","cat":"Regional","price":3100,"stock":16,"image":"assets/images/prod-escondidinho.webp","oldPrice":3900,"lastBatch":true,"demo":true,"available":true,"serves":null,"preferences":[],"offer":{"startsAt":null,"endsAt":null,"note":"O catálogo original não informa validade. Não anunciar como oferta válida até cadastrar as datas."}},{"id":4,"storeId":1,"name":"Macaxeira dourada","desc":"Porção crocante para compartilhar.","cat":"Acompanhamentos","price":1600,"stock":22,"image":"assets/images/prod-macaxeira.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":5,"storeId":1,"name":"Suco de acerola","desc":"Copo de 400 ml preparado na hora.","cat":"Bebidas","price":900,"stock":30,"image":"assets/images/prod-acerola.webp","oldPrice":1200,"lastBatch":true,"demo":true,"available":true,"serves":null,"preferences":[],"offer":{"startsAt":null,"endsAt":null,"note":"O catálogo original não informa validade. Não anunciar como oferta válida até cadastrar as datas."}},{"id":6,"storeId":2,"name":"Pão de fermentação lenta","desc":"Pão artesanal de 400 g, casca crocante e miolo macio.","cat":"Padaria","price":1800,"stock":18,"image":"assets/images/prod-pao.webp","oldPrice":2400,"lastBatch":true,"demo":true,"available":true,"serves":null,"preferences":[],"offer":{"startsAt":null,"endsAt":null,"note":"O catálogo original não informa validade. Não anunciar como oferta válida até cadastrar as datas."}},{"id":7,"storeId":2,"name":"Bolo de milho caseiro","desc":"Fatia generosa, fofinha e com gostinho de interior.","cat":"Doces","price":1500,"stock":20,"image":"assets/images/prod-bolo-milho.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":8,"storeId":2,"name":"Tapioca com queijo coalho","desc":"Tapioca recheada, feita na chapa e servida quentinha.","cat":"Padaria","price":1300,"stock":24,"image":"assets/images/prod-tapioca.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":9,"storeId":2,"name":"Café coado","desc":"Café passado na hora, copo de 200 ml.","cat":"Bebidas","price":600,"stock":35,"image":"assets/images/prod-cafe-coado.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":10,"storeId":2,"name":"Combo café da manhã","desc":"Pão, bolo de milho e café para começar bem o dia.","cat":"Padaria","price":2400,"stock":10,"image":"assets/images/prod-combo-cafe.webp","oldPrice":3200,"lastBatch":true,"demo":true,"available":true,"serves":null,"preferences":[],"offer":{"startsAt":null,"endsAt":null,"note":"O catálogo original não informa validade. Não anunciar como oferta válida até cadastrar as datas."}},{"id":11,"storeId":3,"name":"Prato da Serra","desc":"Arroz, feijão, frango, legumes e salada.","cat":"Caseiro","price":2800,"stock":18,"image":"assets/images/prod-prato-serra.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":12,"storeId":3,"name":"Caldinho de feijão","desc":"Porção de 350 ml, ideal para o fim da tarde.","cat":"Caseiro","price":1500,"stock":20,"image":"assets/images/prod-caldinho.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":13,"storeId":3,"name":"Almoço vegetariano","desc":"Arroz, feijão verde, legumes e salada fresca.","cat":"Vegetariano","price":2600,"stock":16,"image":"assets/images/prod-almoco-veg.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":["vegetariano"],"offer":null},{"id":14,"storeId":3,"name":"Panelada da Serra","desc":"Prato forte e bem temperado, servido com arroz.","cat":"Regional","price":3400,"stock":8,"image":"assets/images/prod-panelada.webp","oldPrice":4300,"lastBatch":true,"demo":true,"available":true,"serves":null,"preferences":[],"offer":{"startsAt":null,"endsAt":null,"note":"O catálogo original não informa validade. Não anunciar como oferta válida até cadastrar as datas."}},{"id":15,"storeId":3,"name":"Suco de cajá","desc":"Copo de 400 ml, preparado com fruta natural.","cat":"Bebidas","price":900,"stock":25,"image":"assets/images/prod-caja.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":16,"storeId":4,"name":"Banana da estação","desc":"Um quilo de bananas frescas da região.","cat":"Do produtor","price":700,"stock":30,"image":"assets/images/prod-banana.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":17,"storeId":4,"name":"Café da Serra","desc":"Café torrado e moído, pacote de 250 g.","cat":"Do produtor","price":2200,"stock":15,"image":"assets/images/prod-cafe-serra.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":18,"storeId":4,"name":"Geleia de goiaba","desc":"Pote artesanal de 250 g, produção local.","cat":"Do produtor","price":1700,"stock":14,"image":"assets/images/prod-geleia-goiaba.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":19,"storeId":4,"name":"Cesta de hortaliças","desc":"Mix com alface, tomate, coentro e cheiro-verde.","cat":"Do produtor","price":2900,"stock":10,"image":"assets/images/prod-cesta-hortalicas.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":20,"storeId":4,"name":"Tomate da horta","desc":"Tomates selecionados, vendidos por quilo.","cat":"Do produtor","price":1000,"stock":24,"image":"assets/images/prod-tomate.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":21,"storeId":5,"name":"Cesta orgânica semanal","desc":"Legumes e verduras da semana, pronta para a família.","cat":"Do produtor","price":3900,"stock":8,"image":"assets/images/prod-cesta-organica.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":22,"storeId":5,"name":"Mel da região","desc":"Pote de mel puro com 300 g.","cat":"Do produtor","price":2000,"stock":16,"image":"assets/images/prod-mel.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":23,"storeId":5,"name":"Alface crespa","desc":"Maço fresco, colhido no dia.","cat":"Do produtor","price":500,"stock":30,"image":"assets/images/prod-alface.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":24,"storeId":5,"name":"Cenoura orgânica","desc":"Pacote com 500 g de cenouras selecionadas.","cat":"Do produtor","price":800,"stock":25,"image":"assets/images/prod-cenoura.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null},{"id":25,"storeId":5,"name":"Queijo coalho artesanal","desc":"Peça de 250 g produzida na região.","cat":"Do produtor","price":1800,"stock":12,"image":"assets/images/prod-queijo-coalho.webp","oldPrice":0,"lastBatch":false,"demo":true,"available":true,"serves":null,"preferences":[],"offer":null}],"cities":["Guaraciaba do Norte","Tianguá","São Benedito","Ubajara","Ibiapina","Viçosa do Ceará","Carnaubal","Croatá","Ipu"],"schemaVersion":1};
 const byStore=new Map(CATALOG.stores.map(s=>[s.id,s]));
 const productById=new Map(CATALOG.products.map(p=>[p.id,p]));
@@ -463,6 +464,115 @@ function mealDrinkBudgetAnswer(catalog,constraints,mode){
  if(constraints.budgetScope==='total')text+=' Se quiser, posso usar o limite só para os produtos e deixar a entrega à parte.';
  return {text,provider:'rules',model:'meal-drink-budget-v1',productIds:[]};
 }
+
+function availableCatalog(city,mode){
+ const items=[];
+ for(const p of CATALOG.products){
+  const x=productInfo(p,city,mode);if(!x||!x.available)continue;
+  const store=byStore.get(x.storeId);
+  items.push({id:x.id,name:x.name,description:x.description.slice(0,160),category:x.category,producer:Boolean(store?.producer),priceReais:(x.price/100).toFixed(2),store:x.storeName,storeId:x.storeId,city:x.city,feeReais:(x.fee/100).toFixed(2),totalReais:(x.total/100).toFixed(2),serves:x.serves,stock:x.stock,preferences:x.preferences});
+ }
+ return items;
+}
+function semanticCatalog(items){
+ return items.map(item=>({id:item.id,name:item.name,description:item.description,category:item.category,store:item.store,producer:item.producer,preferences:item.preferences,serves:item.serves}));
+}
+function semanticFallbackIntent(question,prior){
+ let intent=null;
+ for(const text of [...prior.filter(message=>message.role==='user').map(message=>message.content),question])intent=localSemanticIntent(text,intent);
+ return intent||localSemanticIntent(question);
+}
+function semanticToLegacy(semantic,fallback){
+ const modifiers=new Set(semantic.modifiers||[]),components=(semantic.components||[]).filter(component=>component!=='catalog').slice(0,3);
+ const kindMap={meal:'meal',drink:'drink',snack:'snack',breakfast:'breakfast',dessert:'dessert',produce:'any',catalog:'any'};
+ const kind=kindMap[semantic.topic]||fallback.kind||'any';
+ return {...fallback,kind,
+  vegetarian:semantic.preferences.includes('vegetariano'),
+  vegan:semantic.preferences.includes('vegano'),
+  healthy:modifiers.has('healthy'),
+  dietAmbiguous:semantic.action==='clarify',
+  producer:semantic.topic==='produce'||modifiers.has('producer')||modifiers.has('garden')||modifiers.has('organic'),
+  withDrink:components.includes('meal')&&components.includes('drink'),
+  completeBreakfast:(semantic.topic==='breakfast'||components.includes('breakfast'))&&modifiers.has('complete'),
+  completeSnack:(semantic.topic==='snack'||components.includes('snack'))&&modifiers.has('complete'),
+  organic:modifiers.has('organic'),garden:modifiers.has('garden'),juice:modifiers.has('juice'),
+  another:semantic.action==='alternative',components,semanticAction:semantic.action,semanticFact:semantic.fact};
+}
+function semanticContext(city,mode,constraints,catalog,fallback){
+ return 'Você é a camada de interpretação da Sabiá, assistente do APETÊ. Entenda português brasileiro natural: sinônimos, gírias, diminutivos, abreviações, pequenos erros de digitação, frases curtas, follow-ups e mudanças de assunto. Interprete a intenção FINAL do usuário considerando o histórico. Não dependa de uma frase literal. Um pedido por outra opção preserva o assunto e as restrições ainda válidas; uma mudança explícita de assunto substitui o pedido anterior. Pedidos compostos devem virar componentes, por exemplo almoço+bebida = ["meal","drink"], lanche+bebida = ["snack","drink"], prato+sobremesa = ["meal","dessert"]. Para "café e algo para comer", represente os componentes reais pedidos. "Dieta", "regime" ou saúde vaga sem restrição clara deve usar action "clarify". Retorne SOMENTE JSON válido no formato {"intent":{"topic":"meal|drink|snack|breakfast|dessert|produce|catalog","action":"recommend|alternative|refine|switch|fact|clarify","fact":"none|cheapest|most_expensive|most_ordered|price|availability","categories":[],"preferences":["vegano|vegetariano"],"modifiers":["producer|garden|organic|juice|healthy|complete"],"exclusions":[],"components":[],"serves":null,"keepPreviousContext":false,"confidence":0.0},"message":"frase curta e natural","recommendations":[{"productId":1,"reason":"motivo curto"}]}. Use no máximo 6 recomendações ranqueadas. Nunca invente IDs. Não calcule nem decida preço, taxa, estoque, disponibilidade, orçamento ou promoção: o servidor é a autoridade absoluta desses dados. Não faça alegações nutricionais, de emagrecimento ou ingredientes não cadastrados. Os motivos podem falar de gosto, praticidade, variedade e encaixe no pedido. Restrições duras já detectadas pelo servidor: '+JSON.stringify({budget:constraints.budget,budgetScope:constraints.budgetScope,excluded:constraints.excluded})+'. Fallback semântico local: '+JSON.stringify(fallback)+'. Catálogo real disponível para interpretação (sem autoridade comercial): '+JSON.stringify(semanticCatalog(catalog))+'. Cidade: '+city+'; modalidade: '+mode+'.';
+}
+function semanticFactAnswer(city,mode,semantic){
+ if(semantic.action!=='fact')return null;
+ const items=availableCatalog(city,mode),money=cents=>'R$ '+(cents/100).toFixed(2).replace('.',',');
+ if(semantic.fact==='most_ordered')return {text:'O catálogo demonstrativo ainda não registra quantidade de pedidos ou vendas, então não dá para afirmar qual item é o mais pedido, vendido ou popular.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
+ if(!items.length)return {text:'Não encontrei produto disponível para comparar nesta cidade e modalidade.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
+ if(semantic.fact==='cheapest'||semantic.fact==='most_expensive'){
+  const sorted=[...items].sort((a,b)=>Number(a.priceReais)-Number(b.priceReais)||a.id-b.id);
+  const item=semantic.fact==='most_expensive'?sorted.at(-1):sorted[0];
+  const price=Math.round(Number(item.priceReais)*100),total=Math.round(Number(item.totalReais)*100);
+  return {text:'Pelo preço do produto, a opção '+(semantic.fact==='most_expensive'?'mais cara':'mais barata')+' disponível é '+item.name+': '+money(price)+'. '+(mode==='pickup'?'Na retirada não há taxa de entrega.':'Com a entrega cadastrada, o total fica '+money(total)+'.'),provider:'rules',model:'catalog-facts-v2',productIds:[item.id]};
+ }
+ return null;
+}
+function componentIntent(base,component){
+ const kindMap={meal:'meal',drink:'drink',snack:'snack',breakfast:'breakfast',dessert:'dessert',produce:'any'};
+ return {...base,kind:kindMap[component]||'any',withDrink:false,another:base.another,
+  producer:component==='produce',organic:component==='produce'&&base.organic,garden:component==='produce'&&base.garden,
+  juice:component==='drink'&&base.juice,completeBreakfast:component==='breakfast'&&base.completeBreakfast,
+  completeSnack:component==='snack'&&base.completeSnack};
+}
+function genericBundle(city,mode,query,prior,constraints,components,suggestedIds=[]){
+ const uniqueComponents=[...new Set(components.filter(component=>['meal','drink','snack','breakfast','dessert','produce'].includes(component)))].slice(0,3);
+ if(uniqueComponents.length<2)return null;
+ const lists=uniqueComponents.map(component=>{
+  const intent=componentIntent(constraints.intent,component),part={...constraints,budget:null,intent};
+  const full=summary(city,mode,query,part),alt=alternativeCatalog(full,intent,prior);
+  return (alt.length?alt:full).slice(0,8);
+ });
+ if(lists.some(list=>!list.length))return null;
+ const bundles=[];
+ const walk=(index,picked,rank)=>{
+  if(index===lists.length){
+   const scoped=bundleTotal(picked,mode,constraints.budgetScope),payable=bundleTotal(picked,mode,'total');
+   const stores=new Set(picked.map(item=>item.storeId)).size;
+   const suggestedScore=picked.reduce((sum,item)=>{const pos=suggestedIds.indexOf(item.id);return sum+(pos<0?0:1000-pos*25);},0);
+   bundles.push({items:[...picked],scoped,payable,stores,rank,suggestedScore});return;
+  }
+  lists[index].forEach((item,pos)=>{if(picked.some(current=>current.id===item.id))return;walk(index+1,[...picked,item],rank+pos);});
+ };
+ walk(0,[],0);
+ if(!bundles.length)return null;
+ const within=constraints.budget===null?bundles:bundles.filter(bundle=>bundle.scoped<=constraints.budget);
+ const pool=within.length?within:bundles;
+ pool.sort((a,b)=>{
+  if(!within.length&&constraints.budget!==null){
+   const overA=Math.max(0,a.scoped-constraints.budget),overB=Math.max(0,b.scoped-constraints.budget);
+   if(overA!==overB)return overA-overB;
+  }
+  return b.suggestedScore-a.suggestedScore||a.stores-b.stores||a.rank-b.rank||a.scoped-b.scoped;
+ });
+ return {...pool[0],overBudget:Boolean(constraints.budget!==null&&!within.length)};
+}
+function recommendationReasons(data,items){
+ const map=new Map();
+ if(data&&Array.isArray(data.recommendations))for(const entry of data.recommendations){
+  const id=Number(entry?.productId);if(!Number.isInteger(id)||typeof entry?.reason!=='string')continue;
+  const item=items.find(candidate=>candidate.id===id);if(item)map.set(id,safeExplanation(entry.reason,[item],true));
+ }
+ return map;
+}
+function bundleAnswer(bundle,mode,constraints,data,basic=false){
+ const money=cents=>'R$ '+(cents/100).toFixed(2).replace('.',','),reasons=recommendationReasons(data,bundle.items);
+ const productsTotal=bundleTotal(bundle.items,mode,'products'),payable=bundleTotal(bundle.items,mode,'total'),scoped=bundleTotal(bundle.items,mode,constraints.budgetScope);
+ const fees=new Map();for(const item of bundle.items)fees.set(item.storeId,{name:item.store,fee:mode==='pickup'?0:Math.round(Number(item.feeReais)*100)});
+ let intro=safeExplanation(data?.message||'',bundle.items)||'Montei uma combinação compatível com o pedido.';
+ if(bundle.overBudget&&constraints.budget!==null)intro='Não encontrei uma combinação dentro de '+money(constraints.budget)+(constraints.budgetScope==='products'?' considerando só os produtos':' contando a entrega')+'. A opção mais próxima ultrapassa o limite em '+money(scoped-constraints.budget)+'.';
+ const lines=bundle.items.map((item,index)=>(index+1)+'. '+item.name+' — 1 unidade por '+money(Math.round(Number(item.priceReais)*100))+' — '+item.store+'.'+(reasons.get(item.id)?' '+reasons.get(item.id):''));
+ const delivery=mode==='pickup'?'Retirada sem taxa.':'Entregas: '+[...fees.values()].map(entry=>entry.name+' '+money(entry.fee)).join('; ')+'.';
+ const totals=constraints.budgetScope==='products'?'Produtos: '+money(productsTotal)+'; total com entrega: '+money(payable)+'.':'Produtos: '+money(productsTotal)+'; '+(mode==='pickup'?'total na retirada: ':'total com entrega: ')+money(payable)+'.';
+ return {text:(basic?'Estou em modo básico. ':'')+intro+'\n'+lines.join('\n')+'\n'+delivery+' '+totals,productIds:bundle.items.map(item=>item.id)};
+}
+
 function alternativeCatalog(catalog,intent,prior){
  if(!intent.another)return catalog;
  const last=[...prior].reverse().find(message=>message.role==='assistant')?.content||'';
@@ -527,6 +637,74 @@ function budgetNoMatchAnswer(city,mode,query,constraints){
 function sabiaContext(city,mode,constraints,catalog){
  return 'Você é Sabiá, assistente do APETÊ. Ajude a escolher até 3 opções do catálogo permitido, considerando a intenção atual e o histórico. Regras de conversa: "mais opções", "tem mais?" e "quero mais" continuam o assunto anterior e não devem repetir itens já mostrados; mensagens que só alteram orçamento ou entrega mantêm a intenção anterior; "almoço com bebida" significa escolher um prato e uma bebida, preferindo a mesma loja; quando a intenção estiver ambígua, peça esclarecimento em vez de chutar. Responda JSON: {"message":"uma frase curta, natural e específica para o pedido, sem repetir estas são opções", "recommendations":[{"productId":2,"reason":"motivo curto e personalizado"}]}. Explique sua escolha de forma breve em português brasileiro, relacionando-a ao pedido, à praticidade, ao gosto ou à variedade. A mensagem e os motivos não devem incluir preços, taxas, quantidades, estoque, estabelecimentos, promoções nem alegações nutricionais. O servidor acrescentará todos os nomes e dados comerciais verdadeiros. Se mencionar um produto, use o nome exato de um ID selecionado; nunca transforme categorias em nomes. Não invente produtos, ingredientes ou combos. Pode citar literalmente a descrição cadastrada para explicar a escolha. Não retorne campos extras de preço ou nome. Quando completeBreakfast ou completeSnack for true, priorize como primeira opção um combo/refeição completa já cadastrado e compatível, se houver. Se o catálogo estiver vazio, retorne {"message":"", "recommendations":[]}. As constraints atuais substituem regras antigas. Dados demonstrativos. Cidade: '+city+'; modalidade: '+mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo permitido: '+JSON.stringify(catalog);
 }
+
+async function generateSemantic(env,messages,city,mode,query,prior,baseConstraints,fallbackIntent){
+ const choices=[['groq',env.GROQ_API_KEY],['gemini',env.GEMINI_API_KEY],['cloudflare',env.AI]].filter(([,binding])=>Boolean(binding));
+ if(!choices.length)throw {code:'not_configured',status:503};
+ const fallbackSemantic=semanticFallbackIntent(query,prior);let last=null;
+ for(const [name] of choices){
+  if((blocked.get(name)||0)>Date.now())continue;
+  let stage='network';
+  try{
+   const answer=await callProvider(name,env,messages);stage='validation';
+   const data=parseProviderObject(answer.text);
+   if(!data?.intent||typeof data.intent!=='object'||Array.isArray(data.intent))throw validationFailure();
+   const semantic=normalizeIntent(data.intent,fallbackSemantic),intent=semanticToLegacy(semantic,fallbackIntent);
+   const semanticExcluded=(semantic.exclusions||[]).flatMap(value=>normalizedWords(value));
+   const constraints={...baseConstraints,excluded:[...new Set([...(baseConstraints.excluded||[]),...semanticExcluded])],intent};
+   if(semantic.action==='clarify'){
+    const message=safeExplanation(data.message||'',[])||'Pode me dizer qual tipo de produto, preferência ou restrição você quer considerar?';
+    console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
+    return {...answer,text:message,productIds:[]};
+   }
+   const fact=semanticFactAnswer(city,mode,semantic);
+   if(fact){
+    console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
+    return {...answer,text:fact.text,productIds:fact.productIds};
+   }
+   const components=(semantic.components||[]).filter(component=>component!=='catalog').slice(0,3);
+   if(components.length>1){
+    const suggested=Array.isArray(data.recommendations)?data.recommendations.map(entry=>Number(entry?.productId)).filter(Number.isInteger):[];
+    const bundle=genericBundle(city,mode,query,prior,constraints,components,suggested);
+    if(bundle){
+     console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
+     return {...answer,...bundleAnswer(bundle,mode,constraints,data,false)};
+    }
+   }
+   let catalog=alternativeCatalog(summary(city,mode,query,constraints),intent,prior);
+   if(!catalog.length&&constraints.budget!==null){
+    const budgetAnswer=budgetNoMatchAnswer(city,mode,query,constraints);
+    if(budgetAnswer){
+     console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
+     return {...answer,text:budgetAnswer.text,productIds:[]};
+    }
+   }
+   if(!catalog.length&&intent.vegan){
+    console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
+    return {...answer,text:'Não encontrei itens cadastrados como veganos para esta cidade e modalidade. Prefiro não presumir que um produto seja vegano sem essa informação no catálogo.',productIds:[]};
+   }
+   if(!catalog.length&&intent.vegetarian){
+    console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
+    return {...answer,text:'Não encontrei item cadastrado como vegetariano para esta cidade e modalidade.',productIds:[]};
+   }
+   if(!catalog.length){
+    console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
+    return {...answer,text:'Não encontrei produto compatível com sua intenção, cidade, modalidade e restrições atuais.',productIds:[]};
+   }
+   const options=validatedRecommendations(answer.text,catalog,intent);
+   console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
+   return {...answer,...catalogAnswer(options,mode,constraints,false,Boolean(intent.another))};
+  }catch(error){
+   last=error;stage=error?.stage||stage;
+   const status=Number(error?.status)||0,timeout=Boolean(error?.timeout),retryable=stage!=='validation'&&Boolean(error?.retryable);
+   console.warn('sabia_provider_failure',{provider:name,stage,status,timeout,retryable});
+   if(stage==='provider'&&[400,401,403,404].includes(status))blocked.set(name,Date.now()+5*60*1000);
+   else if(stage!=='validation'&&retryable&&(timeout||status===429||status>=500))blocked.set(name,Date.now()+(error.retryAfter||30)*1000);
+  }
+ }
+ throw {code:'providers_unavailable',status:429,retryAfter:last?.retryAfter||60};
+}
+
 async function route(req,env){const url=new URL(req.url);const path=url.pathname;
  if(path==='/api/sabia/status'&&req.method==='GET'){const providers=[env.GROQ_API_KEY?'Groq':null,env.AI?'Cloudflare Workers AI':null,env.GEMINI_API_KEY?'Gemini':null].filter(Boolean);return response({mode:providers.length?'generative':'unavailable',configured:providers.length>0,providers,message:providers.length?'Sabiá online: '+providers.join(' → '):'Sabiá ainda não configurada. Catálogo disponível.'});}
  if(path==='/api/catalog'&&req.method==='GET')return response({...CATALOG,demo:true});
@@ -575,45 +753,40 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
   const {productIds,...publicAnswer}=factAnswer;
   return response({...publicAnswer,products,stores:[],demo:true});
  }
- const prior=messagesFor(body),constraints={...conversationConstraints(body.question,prior),intent:conversationIntent(body.question,prior)};
- if(constraints.intent.dietAmbiguous){
-  return response({text:'“Dieta” pode significar coisas diferentes. Se você procura uma preferência alimentar específica, como vegetariana ou vegana, me diga qual para eu conferir apenas itens cadastrados com essa informação.',provider:'rules',model:'diet-clarifier-v1',products:[],stores:[],demo:true});
- }
- let catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
- if(constraints.intent.withDrink){
-  const pair=mealDrinkPair(catalog,constraints,body.mode);
-  if(pair)catalog=[pair.meal,pair.drink];
-  else if(constraints.budget!==null){
-   const broader=alternativeCatalog(summary(body.city,body.mode,body.question,{...constraints,budget:null}),constraints.intent,prior);
-   const pairBudgetAnswer=mealDrinkBudgetAnswer(broader,constraints,body.mode);
-   if(pairBudgetAnswer){
-    const {productIds,...publicAnswer}=pairBudgetAnswer;
-    return response({...publicAnswer,products:[],stores:[],demo:true});
+ const prior=messagesFor(body),baseConstraints=conversationConstraints(body.question,prior),fallbackIntent=conversationIntent(body.question,prior);
+ const available=availableCatalog(body.city,body.mode),fallbackSemantic=semanticFallbackIntent(body.question,prior);
+ const semanticMessages=[{role:'system',content:semanticContext(body.city,body.mode,baseConstraints,available,fallbackSemantic)},...prior,{role:'user',content:body.question.trim()}];
+ let answer;
+ try{
+  answer=await generateSemantic(env,semanticMessages,body.city,body.mode,body.question,prior,baseConstraints,fallbackIntent);
+ }catch(e){
+  if(!['not_configured','providers_unavailable'].includes(e?.code))throw e;
+  const constraints={...baseConstraints,intent:fallbackIntent};
+  if(constraints.intent.dietAmbiguous){
+   answer={text:'“Dieta” pode significar coisas diferentes. Se você procura uma preferência alimentar específica, como vegetariana ou vegana, me diga qual para eu conferir apenas itens cadastrados com essa informação.',provider:'rules',model:'diet-clarifier-v1',productIds:[]};
+  }else{
+   let catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
+   if(constraints.intent.withDrink){
+    const pair=mealDrinkPair(catalog,constraints,body.mode);
+    if(pair)catalog=[pair.meal,pair.drink];
+    else if(constraints.budget!==null){
+     const broader=alternativeCatalog(summary(body.city,body.mode,body.question,{...constraints,budget:null}),constraints.intent,prior);
+     const pairBudgetAnswer=mealDrinkBudgetAnswer(broader,constraints,body.mode);
+     if(pairBudgetAnswer)answer=pairBudgetAnswer;
+    }
+   }
+   if(!answer&&!catalog.length&&constraints.budget!==null)answer=budgetNoMatchAnswer(body.city,body.mode,body.question,constraints);
+   if(!answer&&!catalog.length&&constraints.intent.vegan)answer={text:'Não encontrei itens cadastrados como veganos para esta cidade e modalidade. Prefiro não presumir que um produto seja vegano sem essa informação no catálogo.',provider:'rules',model:'dietary-grounding-v1',productIds:[]};
+   if(!answer&&!catalog.length&&constraints.intent.vegetarian)answer={text:'Não encontrei item cadastrado como vegetariano para esta cidade e modalidade.',provider:'rules',model:'dietary-grounding-v1',productIds:[]};
+   if(!answer){
+    const noRecognizedIntent=constraints.intent.kind==='any'&&!constraints.intent.vegetarian&&!constraints.intent.vegan&&!constraints.intent.healthy&&!constraints.intent.producer&&!constraints.intent.another;
+    if(!catalog.length&&noRecognizedIntent)answer={text:'Não entendi bem o que você procura. Posso ajudar com almoço, lanche, café da manhã, sobremesa, bebida ou produtos locais.',provider:'rules',model:'deterministic-v1',productIds:[]};
+    else answer=reserveAnswer(catalog,body.mode,body.question,prior,constraints);
    }
   }
  }
- if(!catalog.length){
-  const budgetAnswer=budgetNoMatchAnswer(body.city,body.mode,body.question,constraints);
-  if(budgetAnswer){
-   const {productIds,...publicAnswer}=budgetAnswer;
-   return response({...publicAnswer,products:[],stores:[],demo:true});
-  }
- }
- if(!catalog.length&&constraints.intent.vegan){
-  return response({text:'Não encontrei itens cadastrados como veganos para esta cidade e modalidade. Prefiro não presumir que um produto seja vegano sem essa informação no catálogo.',provider:'rules',model:'dietary-grounding-v1',products:[],stores:[],demo:true});
- }
- if(!catalog.length&&constraints.intent.vegetarian){
-  return response({text:'Não encontrei item cadastrado como vegetariano para esta cidade e modalidade.',provider:'rules',model:'dietary-grounding-v1',products:[],stores:[],demo:true});
- }
- const noRecognizedIntent=constraints.intent.kind==='any'&&!constraints.intent.vegetarian&&!constraints.intent.vegan&&!constraints.intent.healthy&&!constraints.intent.producer&&!constraints.intent.another;
- if(!catalog.length&&noRecognizedIntent){
-  return response({text:'Não entendi bem o que você procura. Posso ajudar com almoço, lanche, café da manhã, sobremesa, bebida ou produtos locais.',provider:'rules',model:'deterministic-v1',products:[],stores:[],demo:true});
- }
- const context=sabiaContext(body.city,body.mode,constraints,catalog);
-
- let answer;try{answer=await generate(env,[{role:'system',content:context},...prior,{role:'user',content:body.question.trim()}],catalog,body.mode,constraints);}catch(e){if(!['not_configured','providers_unavailable'].includes(e?.code))throw e;answer=reserveAnswer(catalog,body.mode,body.question,prior,constraints);}
  const {productIds,...publicAnswer}=answer;
- const products=productIds.filter(id=>catalog.some(item=>item.id===id)).map(id=>productInfo(productById.get(id),body.city,body.mode));
+ const products=productIds.map(id=>productInfo(productById.get(id)||{},body.city,body.mode)).filter(item=>item&&item.available);
  return response({...publicAnswer,products,stores:[],demo:true});
 }
 export default {async fetch(request,env){try{if(new URL(request.url).pathname.startsWith('/api/'))return await route(request,env);return env.ASSETS.fetch(request);}catch(e){return failure(e.code||'internal',e.message&&e.code?e.message:'A Sabiá está temporariamente indisponível. O catálogo continua acessível.',e.status||503,e.retryAfter||0);}}};

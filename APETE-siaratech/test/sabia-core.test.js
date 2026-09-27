@@ -101,3 +101,21 @@ test('follow-up sem novo assunto mantém contexto anterior',()=>{
  assert.equal(follow.topic,'breakfast');
  assert.equal(follow.keepPreviousContext,true);
 });
+
+
+test('confirmações curtas e com erro preservam o pedido anterior',()=>{
+ const meal=localIntent('quero algo pro almoço');
+ for(const text of ['sim','sin','cim','çim','~~çim','pode sugerir sim','pode']){
+  const follow=localIntent(text,meal);
+  assert.equal(follow.action,'confirm',text);
+  assert.equal(follow.topic,'meal',text);
+  assert.equal(follow.keepPreviousContext,true,text);
+ }
+});
+
+test('tolera erro pequeno em palavra central sem depender da frase inteira',()=>{
+ for(const text of ['queru ago pro aalmoço','quero algo pro almoco','queria uma refeicoa']){
+  assert.equal(localIntent(text).topic,'meal',text);
+ }
+ assert.equal(localIntent('uma bebda').topic,'drink');
+});

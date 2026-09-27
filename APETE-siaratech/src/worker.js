@@ -193,15 +193,24 @@ const explanationWords=new Set(normalizedText(`
 `).trim().split(/\s+/));
 function safeExplanation(value,items,groundDescription=false){
  if(typeof value!=='string')return '';
- const vocabulary=new Set(explanationWords);
- if(groundDescription)for(const item of items)for(const word of normalizedWords(item.description))vocabulary.add(word);
- return value.split(/(?<=[.!?])\s+/).filter(sentence=>{
+ const text=value.trim().slice(0,420);
+ if(!text)return '';
+ return text.split(/(?<=[.!?])\s+/).slice(0,2).filter(sentence=>{
   let remaining=sentence;
   for(const item of items)for(const literal of [item.name,item.description])if(literal)remaining=remaining.split(literal).join(' ');
-  if(/[^a-z\s.,!?;:()—–-]/i.test(normalizedText(remaining)))return false;
-  const words=normalizedText(remaining).match(/[a-z]+/g)||[];
-  if(/\b(preco|precos|reais|custa|custam|gratis|gratuito|gratuita|taxa|estoque|desconto|promocao|calorias|proteina|garantido|garantida)\b/.test(normalizedText(remaining)))return false;
-  return words.length>0&&words.every(word=>vocabulary.has(word));
+  const normalized=normalizedText(remaining);
+  if(/https?:\/\/|www\.|@/.test(remaining))return false;
+  if(/\d|r\$|\b(preco|precos|reais|custa|custam|gratis|gratuito|gratuita|taxa|frete|estoque|desconto|promocao|promocoes|cupom|calorias|proteina|proteinas|carboidrato|carboidratos|vitamina|vitaminas|garantido|garantida|cura|trata|tratamento)\b/.test(normalized))return false;
+  if(groundDescription){
+   const grounded=new Set();
+   for(const item of items)for(const word of normalizedWords(item.description+' '+item.name+' '+item.category))grounded.add(word);
+   const factual=/\b(tem|leva|feito|feita|feitos|feitas|com|contendo|acompanha|recheado|recheada|ingrediente|ingredientes)\b/.test(normalized);
+   if(factual){
+    const content=normalizedWords(remaining).filter(word=>!explanationWords.has(word));
+    if(content.some(word=>!grounded.has(word)))return false;
+   }
+  }
+  return normalizedWords(remaining).length>0;
  }).join(' ').trim();
 }
 function validatedRecommendations(text,catalog,intent={}){
@@ -260,16 +269,16 @@ function catalogAnswer(options,mode,constraints,basic=false,another=false){
   return (index+1)+'. '+item.name+' — 1 unidade por R$ '+money(item.priceReais)+', '+delivery+'; total de R$ '+money(item.totalReais)+'.'+(!basic&&item.reason?' '+item.reason:'');
  });
  const budgetNote=constraints.budget!==null&&constraints.budgetScope==='products'?' O limite considera só o produto; a entrega está discriminada à parte.':'';
- let intro='Estas são opções individuais, para escolher uma.';
+ let intro=basic?'Estas são opções individuais, para escolher uma.':(options.message||'Encontrei algumas opções que combinam com o pedido.');
  if(constraints.intent?.withDrink){
   const sameStore=options.length>=2&&options[0].storeId===options[1].storeId;
   if(sameStore){
    const productsTotal=options.slice(0,2).reduce((sum,item)=>sum+Number(item.priceReais),0);
    const fee=Number(options[0].feeReais);
-   intro='Separei um prato e uma bebida do mesmo estabelecimento. Juntos, os produtos somam R$ '+money(productsTotal)+' e a entrega cadastrada é R$ '+money(fee)+'; total do conjunto: R$ '+money(productsTotal+fee)+'.';
+   intro=(basic?'':'Separei um prato e uma bebida do mesmo estabelecimento. ')+'Juntos, os produtos somam R$ '+money(productsTotal)+' e a entrega cadastrada é R$ '+money(fee)+'; total do conjunto: R$ '+money(productsTotal+fee)+'.';
   }else intro='Separei um prato e uma bebida compatíveis com o pedido.';
  }
- return {text:prefix+(!basic&&options.message?options.message+' ':'')+intro+budgetNote+'\n'+lines.join('\n'),productIds:options.map(item=>item.id)};
+ return {text:prefix+intro+budgetNote+'\n'+lines.join('\n'),productIds:options.map(item=>item.id)};
 }
 function providerText(data){
  const candidates=[
@@ -484,7 +493,7 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  if(!catalog.length&&noRecognizedIntent){
   return response({text:'Não entendi bem o que você procura. Posso ajudar com almoço, lanche, café da manhã, sobremesa, bebida ou produtos locais.',provider:'rules',model:'deterministic-v1',products:[],stores:[],demo:true});
  }
- const context='Você é Sabiá, assistente do APETÊ. Ajude a escolher até 3 opções do catálogo permitido, considerando a intenção atual e o histórico. Regras de conversa: "mais opções", "tem mais?" e "quero mais" continuam o assunto anterior e não devem repetir itens já mostrados; mensagens que só alteram orçamento ou entrega mantêm a intenção anterior; "almoço com bebida" significa escolher um prato e uma bebida, preferindo a mesma loja; quando a intenção estiver ambígua, peça esclarecimento em vez de chutar. Responda JSON: {"message":"texto curto e natural", "recommendations":[{"productId":2,"reason":"motivo curto e personalizado"}]}. Explique sua escolha de forma breve em português brasileiro, relacionando-a ao pedido, à praticidade, ao gosto ou à variedade. A mensagem e os motivos não devem incluir preços, taxas, quantidades, estoque, estabelecimentos, promoções nem alegações nutricionais. O servidor acrescentará todos os nomes e dados comerciais verdadeiros. Se mencionar um produto, use o nome exato de um ID selecionado; nunca transforme categorias em nomes. Não invente produtos, ingredientes ou combos. Pode citar literalmente a descrição cadastrada para explicar a escolha. Não retorne campos extras de preço ou nome. Quando completeBreakfast ou completeSnack for true, priorize como primeira opção um combo/refeição completa já cadastrado e compatível, se houver. Se o catálogo estiver vazio, retorne {"message":"", "recommendations":[]}. As constraints atuais substituem regras antigas. Dados demonstrativos. Cidade: '+body.city+'; modalidade: '+body.mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo permitido: '+JSON.stringify(catalog);
+ const context='Você é Sabiá, assistente do APETÊ. Ajude a escolher até 3 opções do catálogo permitido, considerando a intenção atual e o histórico. Regras de conversa: "mais opções", "tem mais?" e "quero mais" continuam o assunto anterior e não devem repetir itens já mostrados; mensagens que só alteram orçamento ou entrega mantêm a intenção anterior; "almoço com bebida" significa escolher um prato e uma bebida, preferindo a mesma loja; quando a intenção estiver ambígua, peça esclarecimento em vez de chutar. Responda JSON: {"message":"uma frase curta, natural e específica para o pedido, sem repetir 'estas são opções'", "recommendations":[{"productId":2,"reason":"motivo curto e personalizado"}]}. Explique sua escolha de forma breve em português brasileiro, relacionando-a ao pedido, à praticidade, ao gosto ou à variedade. A mensagem e os motivos não devem incluir preços, taxas, quantidades, estoque, estabelecimentos, promoções nem alegações nutricionais. O servidor acrescentará todos os nomes e dados comerciais verdadeiros. Se mencionar um produto, use o nome exato de um ID selecionado; nunca transforme categorias em nomes. Não invente produtos, ingredientes ou combos. Pode citar literalmente a descrição cadastrada para explicar a escolha. Não retorne campos extras de preço ou nome. Quando completeBreakfast ou completeSnack for true, priorize como primeira opção um combo/refeição completa já cadastrado e compatível, se houver. Se o catálogo estiver vazio, retorne {"message":"", "recommendations":[]}. As constraints atuais substituem regras antigas. Dados demonstrativos. Cidade: '+body.city+'; modalidade: '+body.mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo permitido: '+JSON.stringify(catalog);
 
  let answer;try{answer=await generate(env,[{role:'system',content:context},...prior,{role:'user',content:body.question.trim()}],catalog,body.mode,constraints);}catch(e){if(!['not_configured','providers_unavailable'].includes(e?.code))throw e;answer=reserveAnswer(catalog,body.mode,body.question,prior,constraints);}
  const {productIds,...publicAnswer}=answer;

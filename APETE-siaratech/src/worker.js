@@ -779,6 +779,8 @@ async function generateSemantic(env,messages,city,mode,query,prior,baseConstrain
    if(currentSemantic.action==='chat')semantic={...semantic,topic:'catalog',action:'chat',fact:'none',components:[],preferences:[],modifiers:[],exclusions:[],searchTerms:[],keepPreviousContext:false};
    else if(currentSemantic.action==='confirm'&&fallbackSemantic.topic!=='catalog'){
     semantic={...semantic,topic:fallbackSemantic.topic,action:'recommend',fact:'none',components:[...(fallbackSemantic.components||[])],preferences:[...(fallbackSemantic.preferences||[])],modifiers:[...(fallbackSemantic.modifiers||[])],exclusions:[...(fallbackSemantic.exclusions||[])],searchTerms:[],keepPreviousContext:true,confidence:Math.max(.8,semantic.confidence||0)};
+   }else if(semantic.action==='clarify'&&currentSemantic.action==='recommend'&&currentSemantic.topic!=='catalog'&&currentSemantic.confidence>=.7){
+    semantic={...semantic,topic:currentSemantic.topic,action:'recommend',fact:'none',components:[...(currentSemantic.components||[])],preferences:currentSemantic.preferences.length?[...currentSemantic.preferences]:semantic.preferences,modifiers:currentSemantic.modifiers.length?[...currentSemantic.modifiers]:semantic.modifiers,keepPreviousContext:currentSemantic.keepPreviousContext};
    }else if(currentSemantic.action==='fact'&&currentSemantic.fact!=='none'){
     semantic={...semantic,topic:currentSemantic.topic!=='catalog'?currentSemantic.topic:semantic.topic,action:'fact',fact:currentSemantic.fact,preferences:currentSemantic.preferences.length?currentSemantic.preferences:semantic.preferences,searchTerms:semantic.searchTerms.length?semantic.searchTerms:[...(currentSemantic.searchTerms||[])]};
    }else if(currentSemantic.action==='list'){

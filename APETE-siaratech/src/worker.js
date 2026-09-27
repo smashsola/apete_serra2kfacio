@@ -292,7 +292,7 @@ async function callProvider(name,env,messages){
   const model=env.CLOUDFLARE_AI_MODEL||'@cf/qwen/qwen3-30b-a3b-fp8';let timer;
   try{
    const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject({stage:'network',retryable:true,timeout:true,status:0,retryAfter:30}),18000);});
-   const data=await Promise.race([env.AI.run(model,{messages,temperature:0.2,max_tokens:900,stream:false}),timeout]);
+   const data=await Promise.race([env.AI.run(model,{messages,temperature:0.15,max_tokens:900,stream:false}),timeout]);
    const text=providerText(data);
    if(!text)throw validationFailure();
    return {text,provider:name,model};
@@ -302,28 +302,56 @@ async function callProvider(name,env,messages){
    throw {stage:status?'provider':'network',status,retryable:status===429||status>=500||!status,timeout:false,retryAfter:30};
   }finally{clearTimeout(timer);}
  }
- const isGroq=name==='groq',key=isGroq?env.GROQ_API_KEY:env.GEMINI_API_KEY;
- const model=isGroq?(env.GROQ_MODEL||'openai/gpt-oss-20b'):(env.GEMINI_MODEL||'gemini-3.5-flash-lite');
- const endpoint=isGroq?'https://api.groq.com/openai/v1/chat/completions':'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),18000);
  try{
-  const payload=isGroq
-   ?{model,messages,temperature:0.2,max_completion_tokens:900,stream:false,reasoning_effort:'low'}
-   :{model,messages,stream:false};
-  const r=await fetch(endpoint,{method:'POST',headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal});
+  if(name==='groq'){
+   const model=env.GROQ_MODEL||'openai/gpt-oss-20b';
+   const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Authorization':`Bearer ${env.GROQ_API_KEY}`,'Content-Type':'application/json'},
+    body:JSON.stringify({model,messages,temperature:0.15,max_completion_tokens:900,stream:false,reasoning_effort:'low'}),
+    signal:controller.signal
+   });
+   if(!r.ok)throw {stage:'provider',status:r.status,retryable:r.status===429||r.status>=500,timeout:false,retryAfter:Math.min(180,Math.max(15,parseInt(r.headers.get('retry-after')||'30',10)||30))};
+   let data;try{data=await r.json();}catch{throw validationFailure();}
+   const text=providerText(data);
+   if(!text)throw validationFailure();
+   return {text,provider:name,model};
+  }
+
+  const model=env.GEMINI_MODEL||'gemini-3.5-flash-lite';
+  const systemText=messages.filter(message=>message.role==='system').map(message=>message.content).join('\n\n');
+  const contents=messages.filter(message=>message.role!=='system').map(message=>({
+   role:message.role==='assistant'?'model':'user',
+   parts:[{text:message.content}]
+  }));
+  const payload={
+   contents,
+   ...(systemText?{systemInstruction:{parts:[{text:systemText}]}}:{}),
+   generationConfig:{responseMimeType:'application/json',maxOutputTokens:900}
+  };
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{
+   method:'POST',
+   headers:{'x-goog-api-key':env.GEMINI_API_KEY,'Content-Type':'application/json'},
+   body:JSON.stringify(payload),
+   signal:controller.signal
+  });
   if(!r.ok)throw {stage:'provider',status:r.status,retryable:r.status===429||r.status>=500,timeout:false,retryAfter:Math.min(180,Math.max(15,parseInt(r.headers.get('retry-after')||'30',10)||30))};
-  let data;try{data=await r.json();}catch(error){if(error?.name==='AbortError')throw error;throw validationFailure();}
-  const text=data?.choices?.[0]?.message?.content;
-  if(typeof text!=='string'||!text.trim())throw validationFailure();
+  let data;try{data=await r.json();}catch{throw validationFailure();}
+  const text=(data?.candidates?.[0]?.content?.parts||[]).map(part=>part?.text||'').join('\n').trim();
+  if(!text)throw validationFailure();
   return {text,provider:name,model};
  }catch(error){
   if(error?.stage)throw error;
   throw {stage:'network',status:0,retryable:true,timeout:error?.name==='AbortError',retryAfter:30};
  }finally{clearTimeout(timer);}
 }
+
 const blocked=new Map(); // Best-effort per-isolate cooldown; no global quota promise.
 async function generate(env,messages,catalog,mode,constraints){
- const choices=[['groq',env.GROQ_API_KEY],['cloudflare',env.AI],['gemini',env.GEMINI_API_KEY]].filter(([,binding])=>Boolean(binding));
+ // Cloudflare is the proven healthy primary in Preview. Reserve remains the last fallback.
+ const choices=[['cloudflare',env.AI],['gemini',env.GEMINI_API_KEY],['groq',env.GROQ_API_KEY]].filter(([,binding])=>Boolean(binding));
  if(!choices.length)throw {code:'not_configured',status:503};
  let last=null;
  for(const [name] of choices){
@@ -337,7 +365,8 @@ async function generate(env,messages,catalog,mode,constraints){
    last=error;stage=error?.stage||stage;
    const status=Number(error?.status)||0,timeout=Boolean(error?.timeout),retryable=stage!=='validation'&&Boolean(error?.retryable);
    console.warn('sabia_provider_failure',{provider:name,stage,status,timeout,retryable});
-   if(stage!=='validation'&&retryable&&(timeout||status===429||status>=500))blocked.set(name,Date.now()+(error.retryAfter||30)*1000);
+   if(stage==='provider'&&[400,401,403,404].includes(status))blocked.set(name,Date.now()+5*60*1000);
+   else if(stage!=='validation'&&retryable&&(timeout||status===429||status>=500))blocked.set(name,Date.now()+(error.retryAfter||30)*1000);
   }
  }
  throw {code:'providers_unavailable',status:429,retryAfter:last?.retryAfter||60};

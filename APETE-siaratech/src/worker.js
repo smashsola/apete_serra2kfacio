@@ -43,14 +43,16 @@ function requestConstraints(text){
 }
 function conversationConstraints(question,prior){
  let budget=null,budgetScope='total';
- for(const text of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
+ for(const rawText of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
+  const text=latestIntentText(rawText);
   const next=requestConstraints(text);
   const followup=isSearchModifier(text,next)||isAlternativeFollowup(text);
   if(!followup){budget=null;budgetScope='total';}
   if(next.budgetChanged)budget=next.budget;
   if(next.budgetScope!==null)budgetScope=next.budgetScope;
  }
- return {...requestConstraints(question),budget,budgetScope};
+ const current=requestConstraints(latestIntentText(question));
+ return {...current,budget,budgetScope};
 }
 function isAlternativeFollowup(text){
  const clean=normalizedText(text);
@@ -58,8 +60,18 @@ function isAlternativeFollowup(text){
   ||/\bmais\s+(?:opcoes?|alternativas?|sugestoes?)\b/.test(clean)
   ||/\b(?:outr[oa]s?|diferentes?|alternativas?)\s+(?:opcoes?|sugestoes?)?\b/.test(clean);
 }
+function latestIntentText(value){
+ const text=normalizedText(value);
+ const explicit=/\b(?:almoco|refeicao|jantar|pratos?|comida|sobremesas?|doces?|cafe da manha|bebidas?|sucos?|lanches?|lanchinhos?|vegetarian[oa]s?|vegan[oa]s?|saudave(?:l|is)|produtor(?:es)?|horta|organicos?|organicas?)\b/;
+ const markers=[...text.matchAll(/\bagora\b/g)];
+ for(let i=markers.length-1;i>=0;i--){
+  const tail=text.slice(markers[i].index+markers[i][0].length).trim();
+  if(explicit.test(tail))return tail;
+ }
+ return text;
+}
 function currentIntent(query){
- const text=normalizedText(query);
+ const text=latestIntentText(query);
  const hasMeal=/\b(almoco|refeicao|jantar|pratos?|comida)\b/.test(text);
  const hasDrink=/\b(bebidas?|sucos?|cafe)\b/.test(text);
  let kind='any';
@@ -89,11 +101,13 @@ function isSearchModifier(text,constraints=requestConstraints(text)){
 }
 function conversationIntent(question,prior){
  let intent=currentIntent('');
- for(const text of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
+ for(const rawText of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
+  const text=latestIntentText(rawText);
   if(isSearchModifier(text))continue;
   const next=currentIntent(text);
   const hasPriorIntent=intent.kind!=='any'||intent.vegetarian||intent.vegan||intent.healthy||intent.producer||intent.organic||intent.garden;
-  if(isAlternativeFollowup(text)&&hasPriorIntent){
+  const hasExplicitIntent=next.kind!=='any'||next.vegetarian||next.vegan||next.healthy||next.producer||next.organic||next.garden;
+  if(next.another&&hasPriorIntent&&!hasExplicitIntent){
    intent={...intent,another:true};
    continue;
   }
@@ -272,10 +286,10 @@ function catalogAnswer(options,mode,constraints,basic=false,another=false){
  let intro=basic?'Estas são opções individuais, para escolher uma.':(options.message||'Encontrei algumas opções que combinam com o pedido.');
  if(constraints.intent?.withDrink){
   const sameStore=options.length>=2&&options[0].storeId===options[1].storeId;
-  if(sameStore){
+  if(options.length>=2){
    const productsTotal=options.slice(0,2).reduce((sum,item)=>sum+Number(item.priceReais),0);
-   const fee=Number(options[0].feeReais);
-   intro=(basic?'':'Separei um prato e uma bebida do mesmo estabelecimento. ')+'Juntos, os produtos somam R$ '+money(productsTotal)+' e a entrega cadastrada é R$ '+money(fee)+'; total do conjunto: R$ '+money(productsTotal+fee)+'.';
+   const fee=mode==='pickup'?0:(sameStore?Number(options[0].feeReais):options.slice(0,2).reduce((sum,item)=>sum+Number(item.feeReais),0));
+   intro=(basic?'':sameStore?'Separei um prato e uma bebida do mesmo estabelecimento. ':'Separei um prato e uma bebida de estabelecimentos diferentes. ')+'Juntos, os produtos somam R$ '+money(productsTotal)+' e '+(mode==='pickup'?'a retirada não tem taxa':'a entrega cadastrada soma R$ '+money(fee))+'; total do conjunto: R$ '+money(productsTotal+fee)+'.';
   }else intro='Separei um prato e uma bebida compatíveis com o pedido.';
  }
  return {text:prefix+intro+budgetNote+'\n'+lines.join('\n'),productIds:options.map(item=>item.id)};
@@ -415,6 +429,37 @@ async function generate(env,messages,catalog,mode,constraints){
  }
  throw {code:'providers_unavailable',status:429,retryAfter:last?.retryAfter||60};
 }
+function mealDrinkPair(catalog,constraints,mode){
+ const meals=catalog.filter(item=>['Regional','Caseiro','Vegetariano'].includes(item.category));
+ const drinks=catalog.filter(item=>item.category==='Bebidas');
+ const pairs=[];
+ for(let mi=0;mi<meals.length;mi++)for(let di=0;di<drinks.length;di++){
+  const meal=meals[mi],drink=drinks[di];
+  const products=Math.round((Number(meal.priceReais)+Number(drink.priceReais))*100);
+  const delivery=mode==='pickup'?0:Math.round((meal.storeId===drink.storeId?Number(meal.feeReais):Number(meal.feeReais)+Number(drink.feeReais))*100);
+  const total=products+delivery;
+  const scoped=constraints.budgetScope==='products'?products:total;
+  pairs.push({meal,drink,products,delivery,total,scoped,sameStore:meal.storeId===drink.storeId,rank:mi+di});
+ }
+ if(!pairs.length)return null;
+ const eligible=constraints.budget===null?pairs:pairs.filter(pair=>pair.scoped<=constraints.budget);
+ if(!eligible.length)return null;
+ eligible.sort((a,b)=>Number(b.sameStore)-Number(a.sameStore)||a.rank-b.rank||a.scoped-b.scoped);
+ return eligible[0];
+}
+function mealDrinkBudgetAnswer(catalog,constraints,mode){
+ if(!constraints.intent?.withDrink||constraints.budget===null)return null;
+ const unconstrained={...constraints,budget:null};
+ const nearest=mealDrinkPair(catalog,unconstrained,mode);
+ if(!nearest)return null;
+ const money=cents=>'R$ '+(cents/100).toFixed(2).replace('.',',');
+ const over=nearest.scoped-constraints.budget;
+ if(over<=0)return null;
+ const basis=constraints.budgetScope==='products'?'considerando só os produtos':'contando a entrega';
+ let text='Não encontrei almoço com bebida até '+money(constraints.budget)+' '+basis+'. A combinação mais próxima é '+nearest.meal.name+' + '+nearest.drink.name+', por '+money(nearest.scoped)+', ficando '+money(over)+' acima do limite.';
+ if(constraints.budgetScope==='total')text+=' Se quiser, posso usar o limite só para os produtos e deixar a entrega à parte.';
+ return {text,provider:'rules',model:'meal-drink-budget-v1',productIds:[]};
+}
 function alternativeCatalog(catalog,intent,prior){
  if(!intent.another)return catalog;
  const last=[...prior].reverse().find(message=>message.role==='assistant')?.content||'';
@@ -498,7 +543,11 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
   if(typeof body.question!=='string'||!body.question.trim()||body.question.length>1200||!validCity(body.city)||!['delivery','pickup'].includes(body.mode))return failure('invalid_request','Pergunta, cidade ou modalidade inválida.',400);
   if(!providerConfigured(provider,env))return response({ok:false,provider,model:providerModel(provider,env),stage:'not_configured',status:0,timeout:false,retryable:false,detail:'Provedor não configurado neste ambiente.'});
   const prior=messagesFor(body),constraints={...conversationConstraints(body.question,prior),intent:conversationIntent(body.question,prior)};
-  const catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
+  let catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
+  if(constraints.intent.withDrink){
+   const pair=mealDrinkPair(catalog,constraints,body.mode);
+   if(pair)catalog=[pair.meal,pair.drink];
+  }
   const context=sabiaContext(body.city,body.mode,constraints,catalog);
   const messages=[{role:'system',content:context},...prior,{role:'user',content:body.question.trim()}];
   const started=Date.now();
@@ -527,7 +576,19 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  if(constraints.intent.dietAmbiguous){
   return response({text:'“Dieta” pode significar coisas diferentes. Se você procura uma preferência alimentar específica, como vegetariana ou vegana, me diga qual para eu conferir apenas itens cadastrados com essa informação.',provider:'rules',model:'diet-clarifier-v1',products:[],stores:[],demo:true});
  }
- const catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
+ let catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
+ if(constraints.intent.withDrink){
+  const pair=mealDrinkPair(catalog,constraints,body.mode);
+  if(pair)catalog=[pair.meal,pair.drink];
+  else if(constraints.budget!==null){
+   const broader=alternativeCatalog(summary(body.city,body.mode,body.question,{...constraints,budget:null}),constraints.intent,prior);
+   const pairBudgetAnswer=mealDrinkBudgetAnswer(broader,constraints,body.mode);
+   if(pairBudgetAnswer){
+    const {productIds,...publicAnswer}=pairBudgetAnswer;
+    return response({...publicAnswer,products:[],stores:[],demo:true});
+   }
+  }
+ }
  if(!catalog.length){
   const budgetAnswer=budgetNoMatchAnswer(body.city,body.mode,body.question,constraints);
   if(budgetAnswer){

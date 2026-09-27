@@ -694,7 +694,11 @@ async function generateSemantic(env,messages,city,mode,query,prior,baseConstrain
    let semantic=normalizeIntent(data.intent,fallbackSemantic);
    const currentSemantic=localSemanticIntent(query);
    if(currentSemantic.action==='chat')semantic={...semantic,topic:'catalog',action:'chat',fact:'none',components:[],preferences:[],modifiers:[],exclusions:[],searchTerms:[],keepPreviousContext:false};
-   else if(fallbackSemantic.keepPreviousContext&&currentSemantic.topic==='catalog'&&currentSemantic.fact==='none'&&['recommend','list','alternative','refine'].includes(semantic.action)){
+   else if(currentSemantic.action==='fact'&&currentSemantic.fact!=='none'){
+    semantic={...semantic,topic:currentSemantic.topic!=='catalog'?currentSemantic.topic:semantic.topic,action:'fact',fact:currentSemantic.fact,preferences:currentSemantic.preferences.length?currentSemantic.preferences:semantic.preferences,searchTerms:semantic.searchTerms.length?semantic.searchTerms:[...(currentSemantic.searchTerms||[])]};
+   }else if(currentSemantic.action==='list'){
+    semantic={...semantic,topic:currentSemantic.topic!=='catalog'?currentSemantic.topic:semantic.topic,action:'list',components:currentSemantic.components.length?[...currentSemantic.components]:semantic.components};
+   }else if(fallbackSemantic.keepPreviousContext&&currentSemantic.topic==='catalog'&&currentSemantic.fact==='none'&&['recommend','list','alternative','refine'].includes(semantic.action)){
     semantic={...semantic,topic:fallbackSemantic.topic,components:[...(fallbackSemantic.components||[])],preferences:semantic.preferences.length?semantic.preferences:[...(fallbackSemantic.preferences||[])],modifiers:semantic.modifiers.length?semantic.modifiers:[...(fallbackSemantic.modifiers||[])],keepPreviousContext:true};
    }
    const intent=semanticToLegacy(semantic,fallbackIntent);

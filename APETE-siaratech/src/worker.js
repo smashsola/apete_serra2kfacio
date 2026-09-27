@@ -651,7 +651,15 @@ async function generateSemantic(env,messages,city,mode,query,prior,baseConstrain
    if(!data?.intent||typeof data.intent!=='object'||Array.isArray(data.intent))throw validationFailure();
    const semantic=normalizeIntent(data.intent,fallbackSemantic),intent=semanticToLegacy(semantic,fallbackIntent);
    const semanticExcluded=(semantic.exclusions||[]).flatMap(value=>normalizedWords(value));
-   const constraints={...baseConstraints,excluded:[...new Set([...(baseConstraints.excluded||[]),...semanticExcluded])],intent};
+   const currentHard=requestConstraints(query),carryContext=semantic.keepPreviousContext||['alternative','refine'].includes(semantic.action);
+   const historyHard=carryContext?conversationConstraints('tem mais opções',prior):null;
+   const carriedExcluded=carryContext?prior.filter(message=>message.role==='user').flatMap(message=>requestConstraints(message.content).excluded):[];
+   const hard={...baseConstraints};
+   if(carryContext&&historyHard){
+    if(!currentHard.budgetChanged&&hard.budget===null)hard.budget=historyHard.budget;
+    if(currentHard.budgetScope===null)hard.budgetScope=historyHard.budgetScope;
+   }
+   const constraints={...hard,excluded:[...new Set([...(hard.excluded||[]),...carriedExcluded,...semanticExcluded])],intent};
    if(semantic.action==='clarify'){
     const message=safeExplanation(data.message||'',[])||'Pode me dizer qual tipo de produto, preferência ou restrição você quer considerar?';
     console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});

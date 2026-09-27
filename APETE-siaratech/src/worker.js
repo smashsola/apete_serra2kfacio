@@ -691,7 +691,13 @@ async function generateSemantic(env,messages,city,mode,query,prior,baseConstrain
    const answer=await callProvider(name,env,messages);stage='validation';
    const data=parseProviderObject(answer.text);
    if(!data?.intent||typeof data.intent!=='object'||Array.isArray(data.intent))throw validationFailure();
-   const semantic=normalizeIntent(data.intent,fallbackSemantic),intent=semanticToLegacy(semantic,fallbackIntent);
+   let semantic=normalizeIntent(data.intent,fallbackSemantic);
+   const currentSemantic=localSemanticIntent(query);
+   if(currentSemantic.action==='chat')semantic={...semantic,topic:'catalog',action:'chat',fact:'none',components:[],preferences:[],modifiers:[],exclusions:[],searchTerms:[],keepPreviousContext:false};
+   else if(fallbackSemantic.keepPreviousContext&&currentSemantic.topic==='catalog'&&currentSemantic.fact==='none'&&['recommend','list','alternative','refine'].includes(semantic.action)){
+    semantic={...semantic,topic:fallbackSemantic.topic,components:[...(fallbackSemantic.components||[])],preferences:semantic.preferences.length?semantic.preferences:[...(fallbackSemantic.preferences||[])],modifiers:semantic.modifiers.length?semantic.modifiers:[...(fallbackSemantic.modifiers||[])],keepPreviousContext:true};
+   }
+   const intent=semanticToLegacy(semantic,fallbackIntent);
    const semanticExcluded=(semantic.exclusions||[]).flatMap(value=>normalizedWords(value));
    const currentHard=requestConstraints(query),carryContext=semantic.keepPreviousContext||['alternative','refine'].includes(semantic.action);
    const historyHard=carryContext?conversationConstraints('tem mais opções',prior):null;
@@ -702,15 +708,26 @@ async function generateSemantic(env,messages,city,mode,query,prior,baseConstrain
     if(currentHard.budgetScope===null)hard.budgetScope=historyHard.budgetScope;
    }
    const constraints={...hard,excluded:[...new Set([...(hard.excluded||[]),...carriedExcluded,...semanticExcluded])],intent};
+   if(semantic.action==='chat'){
+    console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
+    return {...answer,...semanticChatAnswer(data)};
+   }
    if(semantic.action==='clarify'){
     const message=safeExplanation(data.message||'',[])||'Pode me dizer qual tipo de produto, preferência ou restrição você quer considerar?';
     console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
     return {...answer,text:message,productIds:[]};
    }
-   const fact=semanticFactAnswer(city,mode,semantic);
+   const fact=semanticFactAnswer(city,mode,query,semantic,constraints,prior);
    if(fact){
     console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
     return {...answer,text:fact.text,productIds:fact.productIds};
+   }
+   if(semantic.action==='list'){
+    const listed=semanticListAnswer(city,mode,query,constraints,prior,data);
+    if(listed){
+     console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
+     return {...answer,...listed};
+    }
    }
    const components=(semantic.components||[]).filter(component=>component!=='catalog').slice(0,3);
    if(components.length>1){

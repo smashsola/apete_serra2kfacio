@@ -890,6 +890,8 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  }
  if(path==='/api/sabia/product'){const p=productById.get(body.productId);const info=validCity(body.city)&&['delivery','pickup'].includes(body.mode)?productInfo(p||{},body.city,body.mode):null;if(!info||!info.available)return failure('unavailable','Produto indisponível para esta cidade.',409);return response(info);}
  if(!safeId(body.conversationId)||typeof body.question!=='string'||!body.question.trim()||body.question.length>1200||!validCity(body.city)||!['delivery','pickup'].includes(body.mode))return failure('invalid_request','Pergunta ou cidade inválida.',400);
+ const immediateSemantic=localSemanticIntent(body.question);
+ if(immediateSemantic.action==='chat')return response({text:'Oi! Posso te ajudar a encontrar algo do catálogo, comparar opções ou montar um pedido.',provider:'rules',model:'conversation-v1',products:[],stores:[],demo:true});
  const factAnswer=catalogFactAnswer(body.city,body.mode,body.question);
  if(factAnswer){
   const products=factAnswer.productIds.map(id=>productInfo(productById.get(id),body.city,body.mode)).filter(Boolean);

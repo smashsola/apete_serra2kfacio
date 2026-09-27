@@ -1,5 +1,5 @@
 export const TOPICS=['meal','drink','snack','breakfast','dessert','produce','catalog'];
-export const ACTIONS=['recommend','alternative','refine','switch','fact','clarify'];
+export const ACTIONS=['recommend','list','alternative','refine','switch','fact','clarify','chat'];
 export const FACTS=['none','cheapest','most_expensive','most_ordered','price','availability'];
 export const MODIFIERS=['producer','garden','organic','juice','healthy','complete'];
 
@@ -12,6 +12,7 @@ function unique(list,max=8){return [...new Set(list)].slice(0,max);}
 
 export function localIntent(current,previous=null){
  const clean=plain(current);
+ const conversational=/^(?:(?:oi|ola|opa|e ai|ei|salve|bom dia|boa tarde|boa noite|tudo bem|blz|beleza|valeu|obrigad[oa])\b[\s,.!?]*)+$/.test(clean);
  const switching=hasStem(clean,['agora','prefir','troca','esquec','verdade'])||/pensando melhor|deixa (?:isso|esse|essa)|outra coisa/.test(clean);
  const alternative=hasStem(clean,['outr','diferent','alternativ'])||/\btem mais\b|\bmais op(?:cao|coes)\b|nao gostei/.test(clean);
  let preferences=[];
@@ -39,15 +40,15 @@ export function localIntent(current,previous=null){
  else if(/mais pedido|mais vendido|mais popular/.test(clean))fact='most_ordered';
  else if(/\bpreco\b|\bquanto custa\b/.test(clean))fact='price';
  else if(/disponiv|tem no catalogo/.test(clean))fact='availability';
- let action=fact!=='none'?'fact':switching?'switch':alternative?'alternative':'recommend';
- if(/\bdieta\b|\bregime\b/.test(clean)&&!preferences.length)action='clarify';
+ let action=conversational?'chat':fact!=='none'?'fact':switching?'switch':alternative?'alternative':'recommend';
+ if(!conversational&&/\bdieta\b|\bregime\b/.test(clean)&&!preferences.length)action='clarify';
  if(topic==='catalog'&&previous&&!switching&&(alternative||action==='recommend')){
   topic=previous.topic||topic;
   components=previous.components||components;
   if(!preferences.length)preferences=[...(previous.preferences||[])];
   if(!modifiers.length)modifiers.push(...(previous.modifiers||[]));
  }
- return {topic,action,fact,categories:[],preferences:unique(preferences),modifiers:unique(modifiers),exclusions:[],components,serves:null,keepPreviousContext:Boolean(previous&&!switching&&(alternative||topic==='catalog')),confidence:topic!=='catalog'||fact!=='none'?0.78:0.35};
+ return {topic,action,fact,categories:[],preferences:unique(preferences),modifiers:unique(modifiers),exclusions:[],searchTerms:[],components,serves:null,keepPreviousContext:Boolean(previous&&!switching&&!conversational&&(alternative||topic==='catalog')),confidence:conversational||topic!=='catalog'||fact!=='none'?0.78:0.35};
 }
 
 export function normalizeIntent(value,fallback=localIntent('')){
@@ -65,10 +66,12 @@ export function normalizeIntent(value,fallback=localIntent('')){
  const preferences=list('preferences',['vegano','vegetariano'],4);
  const modifiers=list('modifiers',MODIFIERS,6);
  const exclusions=list('exclusions',null,6).map(x=>x.slice(0,48));
+ const searchTerms=list('searchTerms',null,6).map(x=>x.slice(0,48));
  let components=list('components',TOPICS.filter(x=>x!=='catalog'),3);
  if(!components.length&&topic!=='catalog')components=[topic];
  const serves=Number.isInteger(raw.serves)&&raw.serves>0&&raw.serves<=20?raw.serves:(Number.isInteger(fallback.serves)?fallback.serves:null);
- return {topic,action,fact,categories:list('categories',null,6),preferences,modifiers,exclusions,components,serves,keepPreviousContext,confidence:Math.max(0,Math.min(1,Number(raw.confidence)||0))};
+ const resolvedAction=action==='clarify'&&preferences.length?'recommend':action;
+ return {topic,action:resolvedAction,fact,categories:list('categories',null,6),preferences,modifiers,exclusions,searchTerms,components,serves,keepPreviousContext,confidence:Math.max(0,Math.min(1,Number(raw.confidence)||0))};
 }
 
 export function bundleTotal(items,mode,budgetScope='total'){

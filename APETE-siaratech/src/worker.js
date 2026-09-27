@@ -477,10 +477,41 @@ function availableCatalog(city,mode){
 function semanticCatalog(items){
  return items.map(item=>({id:item.id,name:item.name,description:item.description,category:item.category,store:item.store,producer:item.producer,preferences:item.preferences,serves:item.serves}));
 }
+function semanticIntentFromAssistant(text){
+ const clean=normalizedText(text),mentioned=[];
+ for(const product of CATALOG.products)if(clean.includes(normalizedText(product.name)))mentioned.push(product);
+ if(!mentioned.length)return null;
+ const topics=new Set();
+ for(const product of mentioned){
+  const name=normalizedText(product.name),category=product.cat,store=byStore.get(product.storeId);
+  if(/cafe da manha|desjejum/.test(name))topics.add('breakfast');
+  else if(['Regional','Caseiro','Vegetariano'].includes(category))topics.add('meal');
+  else if(category==='Bebidas')topics.add('drink');
+  else if(category==='Doces'||/bolo|geleia|doce|pudim|mel|sorvete|chocolate/.test(name))topics.add('dessert');
+  else if(category==='Padaria')topics.add('snack');
+  else if(store?.producer)topics.add('produce');
+ }
+ let topic='catalog',components=[...topics].slice(0,3),modifiers=[];
+ if(topics.has('breakfast')||topics.has('snack')&&topics.has('drink')&&mentioned.some(product=>/cafe/.test(normalizedText(product.name)))){topic='breakfast';components=['breakfast'];}
+ else if(topics.size===1)topic=components[0];
+ else if(topics.has('meal'))topic='meal';
+ else if(topics.has('snack'))topic='snack';
+ else if(topics.has('dessert'))topic='dessert';
+ else if(topics.has('drink'))topic='drink';
+ else if(topics.has('produce'))topic='produce';
+ if(topic==='produce')modifiers=['producer'];
+ return {topic,action:'recommend',fact:'none',categories:[],preferences:[],modifiers,exclusions:[],searchTerms:[],components:topic==='catalog'?components:[topic],serves:null,keepPreviousContext:true,confidence:.68};
+}
 function semanticFallbackIntent(question,prior){
  let intent=null;
- for(const text of [...prior.filter(message=>message.role==='user').map(message=>message.content),question])intent=localSemanticIntent(text,intent);
- return intent||localSemanticIntent(question);
+ for(const message of prior){
+  if(message.role==='user')intent=localSemanticIntent(message.content,intent);
+  else if(message.role==='assistant'){
+   const inferred=semanticIntentFromAssistant(message.content);
+   if(inferred&&(!intent||intent.topic==='catalog'||intent.confidence<0.5))intent={...inferred,preferences:intent?.preferences?.length?intent.preferences:inferred.preferences,modifiers:intent?.modifiers?.length?intent.modifiers:inferred.modifiers};
+  }
+ }
+ return localSemanticIntent(question,intent)||localSemanticIntent(question);
 }
 function semanticToLegacy(semantic,fallback){
  const modifiers=new Set(semantic.modifiers||[]),components=(semantic.components||[]).filter(component=>component!=='catalog').slice(0,3);

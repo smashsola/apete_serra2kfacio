@@ -40,9 +40,14 @@ export function localIntent(current,previous=null){
  else if(/mais caro|maior preco/.test(clean))fact='most_expensive';
  else if(/mais pedido|mais vendido|mais popular/.test(clean))fact='most_ordered';
  else if(/\bpreco\b|\bquanto custa\b/.test(clean))fact='price';
- else if(/disponiv|tem no catalogo/.test(clean))fact='availability';
+ else if(!alternative&&/\b(?:tem|ha|existe|disponiv|vende|vendem|oferece|oferecem)\b/.test(clean))fact='availability';
  let action=conversational?'chat':fact!=='none'?'fact':switching?'switch':alternative?'alternative':listing?'list':'recommend';
  if(!conversational&&/\bdieta\b|\bregime\b/.test(clean)&&!preferences.length)action='clarify';
+ let searchTerms=[];
+ if(fact==='availability'&&topic==='catalog'&&!preferences.length){
+  const stop=new Set(['tem','nao','sim','aqui','isso','esse','essa','esses','essas','algo','alguma','coisa','pra','para','com','sem','uma','uns','umas','voces','voces','vcs','vcs','catalogo','disponivel','disponiveis','vende','vendem','oferece','oferecem','existe']);
+  searchTerms=tokens(clean).filter(word=>word.length>=3&&!stop.has(word)).slice(0,4);
+ }
  const inherited=Boolean(topic==='catalog'&&previous&&!switching&&!conversational&&(alternative||action==='recommend'||action==='list'));
  if(inherited){
   topic=previous.topic||topic;
@@ -50,7 +55,7 @@ export function localIntent(current,previous=null){
   if(!preferences.length)preferences=[...(previous.preferences||[])];
   if(!modifiers.length)modifiers.push(...(previous.modifiers||[]));
  }
- return {topic,action,fact,categories:[],preferences:unique(preferences),modifiers:unique(modifiers),exclusions:[],searchTerms:[],components,serves:null,keepPreviousContext:inherited,confidence:conversational||topic!=='catalog'||fact!=='none'?0.78:0.35};
+ return {topic,action,fact,categories:[],preferences:unique(preferences),modifiers:unique(modifiers),exclusions:[],searchTerms:unique(searchTerms,4),components,serves:null,keepPreviousContext:inherited,confidence:conversational||topic!=='catalog'||fact!=='none'?0.78:0.35};
 }
 
 export function normalizeIntent(value,fallback=localIntent('')){

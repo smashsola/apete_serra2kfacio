@@ -303,6 +303,25 @@ function providerText(data){
  }
  return '';
 }
+function safeProviderDetail(value){
+ return String(value||'')
+  .replace(/AIza[0-9A-Za-z_-]{20,}/g,'[redacted]')
+  .replace(/gsk_[0-9A-Za-z_-]{12,}/g,'[redacted]')
+  .replace(/Bearer\s+[0-9A-Za-z._-]+/gi,'Bearer [redacted]')
+  .slice(0,1200);
+}
+function providerConfigured(name,env){
+ if(name==='cloudflare')return Boolean(env.AI);
+ if(name==='gemini')return Boolean(env.GEMINI_API_KEY);
+ if(name==='groq')return Boolean(env.GROQ_API_KEY);
+ return false;
+}
+function providerModel(name,env){
+ if(name==='cloudflare')return env.CLOUDFLARE_AI_MODEL||'@cf/qwen/qwen3.8-27b';
+ if(name==='gemini')return env.GEMINI_MODEL||'gemini-3.5-flash-lite';
+ if(name==='groq')return env.GROQ_MODEL||'openai/gpt-oss-20b';
+ return '';
+}
 async function callProvider(name,env,messages){
  if(name==='cloudflare'){
   const model=env.CLOUDFLARE_AI_MODEL||'@cf/qwen/qwen3.8-27b';let timer;
@@ -310,7 +329,7 @@ async function callProvider(name,env,messages){
    const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject({stage:'network',retryable:true,timeout:true,status:0,retryAfter:30}),18000);});
    const data=await Promise.race([env.AI.run(model,{messages,reasoning_effort:'low',max_completion_tokens:1200,stream:false}),timeout]);
    const text=providerText(data);
-   if(!text)throw validationFailure();
+   if(!text)throw {...validationFailure(),detail:safeProviderDetail(JSON.stringify(data))};
    return {text,provider:name,model};
   }catch(error){
    if(error?.stage)throw error;
@@ -329,7 +348,10 @@ async function callProvider(name,env,messages){
     body:JSON.stringify({model,messages,temperature:0.15,max_completion_tokens:900,stream:false,reasoning_effort:'low'}),
     signal:controller.signal
    });
-   if(!r.ok)throw {stage:'provider',status:r.status,retryable:r.status===429||r.status>=500,timeout:false,retryAfter:Math.min(180,Math.max(15,parseInt(r.headers.get('retry-after')||'30',10)||30))};
+   if(!r.ok){
+    let detail='';try{detail=safeProviderDetail(await r.text());}catch{}
+    throw {stage:'provider',status:r.status,retryable:r.status===429||r.status>=500,timeout:false,retryAfter:Math.min(180,Math.max(15,parseInt(r.headers.get('retry-after')||'30',10)||30)),detail};
+   }
    let data;try{data=await r.json();}catch{throw validationFailure();}
    const text=providerText(data);
    if(!text)throw validationFailure();
@@ -347,7 +369,10 @@ async function callProvider(name,env,messages){
    body:JSON.stringify(payload),
    signal:controller.signal
   });
-  if(!r.ok)throw {stage:'provider',status:r.status,retryable:r.status===429||r.status>=500,timeout:false,retryAfter:Math.min(180,Math.max(15,parseInt(r.headers.get('retry-after')||'30',10)||30))};
+  if(!r.ok){
+   let detail='';try{detail=safeProviderDetail(await r.text());}catch{}
+   throw {stage:'provider',status:r.status,retryable:r.status===429||r.status>=500,timeout:false,retryAfter:Math.min(180,Math.max(15,parseInt(r.headers.get('retry-after')||'30',10)||30)),detail};
+  }
   let data;try{data=await r.json();}catch{throw validationFailure();}
   const text=(data?.candidates?.[0]?.content?.parts||[]).map(part=>part?.text||'').join('\n').trim();
   if(!text)throw validationFailure();
@@ -450,10 +475,13 @@ function budgetNoMatchAnswer(city,mode,query,constraints){
  }
  return {text,provider:'rules',model:'budget-explain-v1',productIds:[]};
 }
+function sabiaContext(city,mode,constraints,catalog){
+ return 'Você é Sabiá, assistente do APETÊ. Ajude a escolher até 3 opções do catálogo permitido, considerando a intenção atual e o histórico. Regras de conversa: "mais opções", "tem mais?" e "quero mais" continuam o assunto anterior e não devem repetir itens já mostrados; mensagens que só alteram orçamento ou entrega mantêm a intenção anterior; "almoço com bebida" significa escolher um prato e uma bebida, preferindo a mesma loja; quando a intenção estiver ambígua, peça esclarecimento em vez de chutar. Responda JSON: {"message":"uma frase curta, natural e específica para o pedido, sem repetir estas são opções", "recommendations":[{"productId":2,"reason":"motivo curto e personalizado"}]}. Explique sua escolha de forma breve em português brasileiro, relacionando-a ao pedido, à praticidade, ao gosto ou à variedade. A mensagem e os motivos não devem incluir preços, taxas, quantidades, estoque, estabelecimentos, promoções nem alegações nutricionais. O servidor acrescentará todos os nomes e dados comerciais verdadeiros. Se mencionar um produto, use o nome exato de um ID selecionado; nunca transforme categorias em nomes. Não invente produtos, ingredientes ou combos. Pode citar literalmente a descrição cadastrada para explicar a escolha. Não retorne campos extras de preço ou nome. Quando completeBreakfast ou completeSnack for true, priorize como primeira opção um combo/refeição completa já cadastrado e compatível, se houver. Se o catálogo estiver vazio, retorne {"message":"", "recommendations":[]}. As constraints atuais substituem regras antigas. Dados demonstrativos. Cidade: '+city+'; modalidade: '+mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo permitido: '+JSON.stringify(catalog);
+}
 async function route(req,env){const url=new URL(req.url);const path=url.pathname;
  if(path==='/api/sabia/status'&&req.method==='GET'){const providers=[env.GROQ_API_KEY?'Groq':null,env.AI?'Cloudflare Workers AI':null,env.GEMINI_API_KEY?'Gemini':null].filter(Boolean);return response({mode:providers.length?'generative':'unavailable',configured:providers.length>0,providers,message:providers.length?'Sabiá online: '+providers.join(' → '):'Sabiá ainda não configurada. Catálogo disponível.'});}
  if(path==='/api/catalog'&&req.method==='GET')return response({...CATALOG,demo:true});
- if(!['/api/sabia/session','/api/sabia','/api/sabia/product'].includes(path)||req.method!=='POST')return failure('not_found','Operação não encontrada.',404);
+ if(!['/api/sabia/session','/api/sabia','/api/sabia/product','/api/sabia/diagnostic'].includes(path)||req.method!=='POST')return failure('not_found','Operação não encontrada.',404);
  if(req.headers.get('Origin')!==url.origin)return failure('origin','Origem não autorizada.',403);
  if(!req.headers.get('content-type')?.startsWith('application/json'))return failure('content_type','Envie JSON.',415);
  const body=await postBody(req);
@@ -463,6 +491,25 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  if(path==='/api/sabia/session'){const id=verified?sid:randomHex(),signature=verified?sig:await sign(id,secret),cid=safeId(body.conversationId)?body.conversationId:randomHex(),csrf=(await sign('csrf:'+id,secret)).slice(0,32);return response({conversationId:cid,csrfToken:csrf,history:[],status:{mode:env.GROQ_API_KEY||env.AI||env.GEMINI_API_KEY?'generative':'unavailable'}},200,{'Set-Cookie':`apete_sabia_cloud=${id}.${signature}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=7200`});}
  if(!verified)return failure('session','Sua sessão expirou. Reabra a Sabiá.',401);
  const csrf=(await sign('csrf:'+sid,secret)).slice(0,32);if(req.headers.get('X-CSRF-Token')!==csrf)return failure('csrf','Sessão inválida. Reabra a Sabiá.',403);
+ if(path==='/api/sabia/diagnostic'){
+  const provider=String(body.provider||'').toLowerCase();
+  if(!['cloudflare','gemini','groq'].includes(provider))return failure('provider','Provedor de diagnóstico inválido.',400);
+  if(typeof body.question!=='string'||!body.question.trim()||body.question.length>1200||!validCity(body.city)||!['delivery','pickup'].includes(body.mode))return failure('invalid_request','Pergunta, cidade ou modalidade inválida.',400);
+  if(!providerConfigured(provider,env))return response({ok:false,provider,model:providerModel(provider,env),stage:'not_configured',status:0,timeout:false,retryable:false,detail:'Provedor não configurado neste ambiente.'});
+  const prior=messagesFor(body),constraints={...conversationConstraints(body.question,prior),intent:conversationIntent(body.question,prior)};
+  const catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
+  const context=sabiaContext(body.city,body.mode,constraints,catalog);
+  const messages=[{role:'system',content:context},...prior,{role:'user',content:body.question.trim()}];
+  const started=Date.now();
+  try{
+   const answer=await callProvider(provider,env,messages);
+   const options=validatedRecommendations(answer.text,catalog,constraints.intent);
+   const validated=catalogAnswer(options,body.mode,constraints,false,Boolean(constraints.intent?.another));
+   return response({ok:true,provider:answer.provider,model:answer.model,elapsedMs:Date.now()-started,stage:'success',status:200,raw:answer.text.slice(0,2400),validatedText:validated.text,productIds:validated.productIds,catalogSize:catalog.length});
+  }catch(error){
+   return response({ok:false,provider,model:providerModel(provider,env),elapsedMs:Date.now()-started,stage:error?.stage||'unknown',status:Number(error?.status)||0,timeout:Boolean(error?.timeout),retryable:Boolean(error?.retryable),detail:safeProviderDetail(error?.detail||error?.message||'Sem detalhe adicional.')});
+  }
+ }
  if(path==='/api/sabia/product'){const p=productById.get(body.productId);const info=validCity(body.city)&&['delivery','pickup'].includes(body.mode)?productInfo(p||{},body.city,body.mode):null;if(!info||!info.available)return failure('unavailable','Produto indisponível para esta cidade.',409);return response(info);}
  if(!safeId(body.conversationId)||typeof body.question!=='string'||!body.question.trim()||body.question.length>1200||!validCity(body.city)||!['delivery','pickup'].includes(body.mode))return failure('invalid_request','Pergunta ou cidade inválida.',400);
  const factAnswer=catalogFactAnswer(body.city,body.mode,body.question);
@@ -493,7 +540,7 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  if(!catalog.length&&noRecognizedIntent){
   return response({text:'Não entendi bem o que você procura. Posso ajudar com almoço, lanche, café da manhã, sobremesa, bebida ou produtos locais.',provider:'rules',model:'deterministic-v1',products:[],stores:[],demo:true});
  }
- const context='Você é Sabiá, assistente do APETÊ. Ajude a escolher até 3 opções do catálogo permitido, considerando a intenção atual e o histórico. Regras de conversa: "mais opções", "tem mais?" e "quero mais" continuam o assunto anterior e não devem repetir itens já mostrados; mensagens que só alteram orçamento ou entrega mantêm a intenção anterior; "almoço com bebida" significa escolher um prato e uma bebida, preferindo a mesma loja; quando a intenção estiver ambígua, peça esclarecimento em vez de chutar. Responda JSON: {"message":"uma frase curta, natural e específica para o pedido, sem repetir estas são opções", "recommendations":[{"productId":2,"reason":"motivo curto e personalizado"}]}. Explique sua escolha de forma breve em português brasileiro, relacionando-a ao pedido, à praticidade, ao gosto ou à variedade. A mensagem e os motivos não devem incluir preços, taxas, quantidades, estoque, estabelecimentos, promoções nem alegações nutricionais. O servidor acrescentará todos os nomes e dados comerciais verdadeiros. Se mencionar um produto, use o nome exato de um ID selecionado; nunca transforme categorias em nomes. Não invente produtos, ingredientes ou combos. Pode citar literalmente a descrição cadastrada para explicar a escolha. Não retorne campos extras de preço ou nome. Quando completeBreakfast ou completeSnack for true, priorize como primeira opção um combo/refeição completa já cadastrado e compatível, se houver. Se o catálogo estiver vazio, retorne {"message":"", "recommendations":[]}. As constraints atuais substituem regras antigas. Dados demonstrativos. Cidade: '+body.city+'; modalidade: '+body.mode+'; constraints: '+JSON.stringify(constraints)+'; catálogo permitido: '+JSON.stringify(catalog);
+ const context=sabiaContext(body.city,body.mode,constraints,catalog);
 
  let answer;try{answer=await generate(env,[{role:'system',content:context},...prior,{role:'user',content:body.question.trim()}],catalog,body.mode,constraints);}catch(e){if(!['not_configured','providers_unavailable'].includes(e?.code))throw e;answer=reserveAnswer(catalog,body.mode,body.question,prior,constraints);}
  const {productIds,...publicAnswer}=answer;

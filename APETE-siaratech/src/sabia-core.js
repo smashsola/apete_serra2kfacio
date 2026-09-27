@@ -55,8 +55,10 @@ export function normalizeIntent(value,fallback=localIntent('')){
  const topic=TOPICS.includes(raw.topic)?raw.topic:fallback.topic;
  const action=ACTIONS.includes(raw.action)?raw.action:fallback.action;
  const fact=FACTS.includes(raw.fact)?raw.fact:(fallback.fact||'none');
+ const keepPreviousContext=Boolean(raw.keepPreviousContext)||['alternative','refine'].includes(action);
  const list=(key,allowed=null,max=8)=>{
-  const source=Array.isArray(raw[key])?raw[key]:fallback[key]||[];
+  let source=Array.isArray(raw[key])?raw[key]:fallback[key]||[];
+  if(keepPreviousContext&&Array.isArray(raw[key])&&!raw[key].length&&Array.isArray(fallback[key])&&fallback[key].length)source=fallback[key];
   const cleaned=source.filter(x=>typeof x==='string').map(x=>plain(x)).filter(Boolean).filter(x=>!allowed||allowed.includes(x));
   return unique(cleaned,max);
  };
@@ -66,7 +68,7 @@ export function normalizeIntent(value,fallback=localIntent('')){
  let components=list('components',TOPICS.filter(x=>x!=='catalog'),3);
  if(!components.length&&topic!=='catalog')components=[topic];
  const serves=Number.isInteger(raw.serves)&&raw.serves>0&&raw.serves<=20?raw.serves:(Number.isInteger(fallback.serves)?fallback.serves:null);
- return {topic,action,fact,categories:list('categories',null,6),preferences,modifiers,exclusions,components,serves,keepPreviousContext:Boolean(raw.keepPreviousContext),confidence:Math.max(0,Math.min(1,Number(raw.confidence)||0))};
+ return {topic,action,fact,categories:list('categories',null,6),preferences,modifiers,exclusions,components,serves,keepPreviousContext,confidence:Math.max(0,Math.min(1,Number(raw.confidence)||0))};
 }
 
 export function bundleTotal(items,mode,budgetScope='total'){

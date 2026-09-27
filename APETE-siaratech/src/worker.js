@@ -789,6 +789,10 @@ async function generateSemantic(env,messages,city,mode,query,prior,baseConstrain
     console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
     return {...answer,text:'Não encontrei item cadastrado como vegetariano para esta cidade e modalidade.',productIds:[]};
    }
+   if(!catalog.length&&intent.another){
+    console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
+    return {...answer,text:'Não encontrei outra opção compatível no catálogo para esse mesmo pedido.',productIds:[]};
+   }
    if(!catalog.length){
     console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
     return {...answer,text:'Não encontrei produto compatível com sua intenção, cidade, modalidade e restrições atuais.',productIds:[]};

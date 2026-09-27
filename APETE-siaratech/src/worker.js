@@ -429,7 +429,7 @@ async function generate(env,messages,catalog,mode,constraints){
  }
  throw {code:'providers_unavailable',status:429,retryAfter:last?.retryAfter||60};
 }
-function mealDrinkPair(catalog,constraints,mode){
+function mealDrinkPair(catalog,constraints,mode,closest=false){
  const meals=catalog.filter(item=>['Regional','Caseiro','Vegetariano'].includes(item.category));
  const drinks=catalog.filter(item=>item.category==='Bebidas');
  const pairs=[];
@@ -442,6 +442,10 @@ function mealDrinkPair(catalog,constraints,mode){
   pairs.push({meal,drink,products,delivery,total,scoped,sameStore:meal.storeId===drink.storeId,rank:mi+di});
  }
  if(!pairs.length)return null;
+ if(closest&&constraints.budget!==null){
+  pairs.sort((a,b)=>Math.abs(a.scoped-constraints.budget)-Math.abs(b.scoped-constraints.budget)||Number(b.sameStore)-Number(a.sameStore)||a.rank-b.rank);
+  return pairs[0];
+ }
  const eligible=constraints.budget===null?pairs:pairs.filter(pair=>pair.scoped<=constraints.budget);
  if(!eligible.length)return null;
  eligible.sort((a,b)=>Number(b.sameStore)-Number(a.sameStore)||a.rank-b.rank||a.scoped-b.scoped);
@@ -449,8 +453,7 @@ function mealDrinkPair(catalog,constraints,mode){
 }
 function mealDrinkBudgetAnswer(catalog,constraints,mode){
  if(!constraints.intent?.withDrink||constraints.budget===null)return null;
- const unconstrained={...constraints,budget:null};
- const nearest=mealDrinkPair(catalog,unconstrained,mode);
+ const nearest=mealDrinkPair(catalog,constraints,mode,true);
  if(!nearest)return null;
  const money=cents=>'R$ '+(cents/100).toFixed(2).replace('.',',');
  const over=nearest.scoped-constraints.budget;

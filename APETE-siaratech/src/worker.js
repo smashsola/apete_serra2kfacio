@@ -365,7 +365,15 @@ async function generate(env,messages,catalog,mode,constraints){
   if((blocked.get(name)||0)>Date.now())continue;
   let stage='network';
   try{
-   const answer=await callProvider(name,env,messages);stage='validation';
+   let answer;
+   try{
+    answer=await callProvider(name,env,messages);
+   }catch(firstError){
+    const transientCloudflare=name==='cloudflare'&&(firstError?.stage==='validation'||firstError?.stage==='network'||Number(firstError?.status)>=500);
+    if(!transientCloudflare)throw firstError;
+    answer=await callProvider(name,env,messages);
+   }
+   stage='validation';
    const options=validatedRecommendations(answer.text,catalog,constraints.intent);
    return {...answer,...catalogAnswer(options,mode,constraints,false,Boolean(constraints.intent?.another))};
   }catch(error){
@@ -421,6 +429,24 @@ function catalogFactAnswer(city,mode,text){
  if(fact.mostOrdered)parts.push('O catálogo demonstrativo ainda não registra quantidade de pedidos ou vendas, então não dá para afirmar qual item é o mais pedido.');
  return {text:parts.join(' '),provider:'rules',model:'catalog-facts-v1',productIds};
 }
+function budgetNoMatchAnswer(city,mode,query,constraints){
+ if(constraints.budget===null)return null;
+ const unconstrained={...constraints,budget:null};
+ const candidates=summary(city,mode,query,unconstrained);
+ if(!candidates.length)return null;
+ const scope=constraints.budgetScope==='products'?'priceReais':'totalReais';
+ const closest=[...candidates].sort((a,b)=>Number(a[scope])-Number(b[scope])||a.id-b.id)[0];
+ const value=Math.round(Number(closest[scope])*100);
+ const over=value-constraints.budget;
+ if(over<=0)return null;
+ const money=cents=>'R$ '+(cents/100).toFixed(2).replace('.',',');
+ const basis=constraints.budgetScope==='products'?'considerando só o produto':'contando a entrega';
+ let text='Não encontrei opção compatível até '+money(constraints.budget)+' '+basis+'. A mais próxima é '+closest.name+', por '+money(value)+', ficando '+money(over)+' acima do limite.';
+ if(constraints.budgetScope==='total'&&mode==='delivery'&&closest.priceReais&&Math.round(Number(closest.priceReais)*100)<=constraints.budget){
+  text+=' Se quiser, posso usar esse mesmo limite só para o produto e deixar a entrega à parte.';
+ }
+ return {text,provider:'rules',model:'budget-explain-v1',productIds:[]};
+}
 async function route(req,env){const url=new URL(req.url);const path=url.pathname;
  if(path==='/api/sabia/status'&&req.method==='GET'){const providers=[env.GROQ_API_KEY?'Groq':null,env.AI?'Cloudflare Workers AI':null,env.GEMINI_API_KEY?'Gemini':null].filter(Boolean);return response({mode:providers.length?'generative':'unavailable',configured:providers.length>0,providers,message:providers.length?'Sabiá online: '+providers.join(' → '):'Sabiá ainda não configurada. Catálogo disponível.'});}
  if(path==='/api/catalog'&&req.method==='GET')return response({...CATALOG,demo:true});
@@ -447,6 +473,13 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
   return response({text:'“Dieta” pode significar coisas diferentes. Se você procura uma preferência alimentar específica, como vegetariana ou vegana, me diga qual para eu conferir apenas itens cadastrados com essa informação.',provider:'rules',model:'diet-clarifier-v1',products:[],stores:[],demo:true});
  }
  const catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
+ if(!catalog.length){
+  const budgetAnswer=budgetNoMatchAnswer(body.city,body.mode,body.question,constraints);
+  if(budgetAnswer){
+   const {productIds,...publicAnswer}=budgetAnswer;
+   return response({...publicAnswer,products:[],stores:[],demo:true});
+  }
+ }
  if(!catalog.length&&constraints.intent.vegan){
   return response({text:'Não encontrei itens cadastrados como veganos para esta cidade e modalidade. Prefiro não presumir que um produto seja vegano sem essa informação no catálogo.',provider:'rules',model:'dietary-grounding-v1',products:[],stores:[],demo:true});
  }

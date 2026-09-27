@@ -3,10 +3,19 @@
   "name": "apete-serra2kfacio",
   "main": "src/worker.js",
   "compatibility_date": "2026-09-24",
+  "preview_urls": true,
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
+  },
+  "ai": {
+    "binding": "AI"
+  },
+  "previews": {
+    "ai": {
+      "binding": "AI"
+    }
   },
   "observability": {
     "logs": {

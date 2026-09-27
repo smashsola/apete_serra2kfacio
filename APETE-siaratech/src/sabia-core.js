@@ -1,10 +1,11 @@
 export const TOPICS=['meal','drink','snack','breakfast','dessert','produce','catalog'];
 export const ACTIONS=['recommend','list','alternative','refine','switch','fact','clarify','confirm','chat'];
-export const FACTS=['none','cheapest','most_expensive','most_ordered','price','availability'];
+export const FACTS=['none','cheapest','most_expensive','most_ordered','price','availability','delivery_fee'];
+export const CONFIDENCE={low:0.42,medium:0.62,high:0.78};
 export const MODIFIERS=['producer','garden','organic','juice','healthy','complete'];
 
 export function plain(text){
- return String(text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9$.,\s-]/g,' ').replace(/\s+/g,' ').trim();
+ return String(text||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/([a-z])\1{2,}/g,'$1').replace(/[^a-z0-9$.,\s-]/g,' ').replace(/\s+/g,' ').trim();
 }
 function tokens(text){return plain(text).split(/\s+/).filter(Boolean);}
 function hasStem(text,stems){const list=tokens(text);return stems.some(stem=>list.some(word=>word.startsWith(stem)));}
@@ -19,12 +20,13 @@ function editDistance(a,b){
  }
  return prev[b.length];
 }
-function hasNearWord(text,words,maxDistance=1){
+function hasNearWord(text,words,maxDistance=null){
  const list=tokens(text);
  return words.some(target=>list.some(word=>{
   if(word===target)return true;
-  if(target.length<4||word.length<3||Math.abs(word.length-target.length)>maxDistance)return false;
-  return editDistance(word,target)<=maxDistance;
+  const allowed=maxDistance??(target.length>=7?2:target.length>=4?1:0);
+  if(!allowed||word.length<3||Math.abs(word.length-target.length)>allowed)return false;
+  return editDistance(word,target)<=allowed;
  }));
 }
 function isAffirmative(text){
@@ -42,7 +44,7 @@ export function localIntent(current,previous=null){
  const clean=plain(current);
  const conversational=/^(?:(?:oi|ola|opa|e ai|ei|salve|bom dia|boa tarde|boa noite|tudo bem|blz|beleza|valeu|obrigad[oa])\b[\s,.!?]*)+$/.test(clean)
   ||tokens(clean).length<=4&&(hasNearWord(clean,['oi','ola','opa','salve'],1)||hasNearWord(clean,['bom','boa'],1)&&hasNearWord(clean,['dia','tarde','noite'],1));
- const switching=hasStem(clean,['agora','prefir','troca','esquec','verdade'])||/pensando melhor|deixa (?:isso|esse|essa)|outra coisa/.test(clean);
+ const switching=hasStem(clean,['agora','prefir','troca','esquec','verdade','mudei'])||hasNearWord(clean,['agora','prefiro','troca','esquece','verdade','mudei'])||/pensando melhor|deixa (?:isso|esse|essa)|outra coisa/.test(clean);
  const alternative=hasStem(clean,['outr','diferent','alternativ'])||/\btem mais\b|\bmais op(?:cao|coes)\b|nao gostei/.test(clean);
  const listing=hasStem(clean,['list'])||/\b(?:mostra|mostre|quais|ver)\b.*\b(?:opcoes|itens|produtos|doces|bebidas|lanches)\b|\btodos?\b|\btodas?\b|\b(?:so|somente|apenas)\s+(?:tem|existe)\b|\b(?:e|eh)\s+(?:so|somente|apenas)\s+(?:esse|essa|isso|esses|essas)\b/.test(clean);
  let preferences=[];
@@ -56,16 +58,17 @@ export function localIntent(current,previous=null){
  if(hasStem(clean,['saudav']))modifiers.push('healthy');
  if(hasStem(clean,['complet','combo']))modifiers.push('complete');
  let components=[];
- if(/\bcafe da manha\b|\bdesjejum\b|comec\w* (?:bem )?o dia/.test(clean)||hasNearWord(clean,['desjejum'],1))components.push('breakfast');
- if(hasStem(clean,['almoc','jantar','refeic','prato','comida','rango'])||hasNearWord(clean,['almoco','jantar','refeicao','prato','comida','rango'],1))components.push('meal');
- if(hasStem(clean,['sobrem','doce','bolo'])||hasNearWord(clean,['sobremesa','doce','bolo'],1))components.push('dessert');
- if(hasStem(clean,['lanch','tapioca','sandu','pao'])||hasNearWord(clean,['lanche','tapioca','sanduiche','pao'],1))components.push('snack');
- if(hasStem(clean,['beb','sede','suco','refriger'])||hasNearWord(clean,['bebida','beber','suco','refrigerante'],1)||(/\bcafe\b/.test(clean)&&!components.includes('breakfast')))components.push('drink');
+ if(/\bcafe da manha\b|\bdesjejum\b|comec\w* (?:bem )?o dia/.test(clean)||hasNearWord(clean,['desjejum','matinal','comecar']))components.push('breakfast');
+ if(hasStem(clean,['almoc','jantar','refeic','prato','comida','rango','marmita'])||hasNearWord(clean,['almoco','jantar','refeicao','prato','comida','rango','marmita']))components.push('meal');
+ if(hasStem(clean,['sobrem','doce','bolo','docinh'])||hasNearWord(clean,['sobremesa','doce','bolo','docinho']))components.push('dessert');
+ if(hasStem(clean,['lanch','tapioca','sandu','pao','salgad','petisc'])||hasNearWord(clean,['lanche','tapioca','sanduiche','pao','salgado','petisco']))components.push('snack');
+ if(hasStem(clean,['beb','sede','suco','refriger','agua','tomar'])||hasNearWord(clean,['bebida','beber','suco','refrigerante','agua','tomar'])||(/\bcafe\b/.test(clean)&&!components.includes('breakfast')))components.push('drink');
  if(hasStem(clean,['horta','hortal','verdura','legume','organic','produtor','roca']))components.push('produce');
  components=unique(components,3);
  let topic=components[0]||'catalog';
  let fact='none';
- if(/mais barato|menor preco|mais em conta/.test(clean))fact='cheapest';
+ if(/\b(?:quanto|qual|valor|custa|custam)\b.{0,18}\b(?:entrega|taxa|frete)\b|\b(?:entrega|taxa|frete)\b.{0,18}\b(?:quanto|qual|valor|custa|custam)\b|^(?:entrega|taxa|frete)\??$/.test(clean))fact='delivery_fee';
+ else if(/mais barato|menor preco|mais em conta/.test(clean))fact='cheapest';
  else if(/mais caro|maior preco/.test(clean))fact='most_expensive';
  else if(/mais pedido|mais vendido|mais popular/.test(clean))fact='most_ordered';
  else if(/\bpreco\b|\bquanto custa\b/.test(clean))fact='price';
@@ -85,7 +88,8 @@ export function localIntent(current,previous=null){
   if(!preferences.length)preferences=[...(previous.preferences||[])];
   if(!modifiers.length)modifiers.push(...(previous.modifiers||[]));
  }
- return {topic,action,fact,categories:[],preferences:unique(preferences),modifiers:unique(modifiers),exclusions:[],searchTerms:unique(searchTerms,4),components,serves:null,keepPreviousContext:inherited,confidence:conversational||topic!=='catalog'||fact!=='none'?0.78:0.35};
+ const confidence=conversational||fact!=='none'?0.9:components.length||preferences.length||modifiers.length?0.82:inherited?0.62:0.18;
+ return {topic,action,fact,categories:[],preferences:unique(preferences),modifiers:unique(modifiers),exclusions:[],searchTerms:unique(searchTerms,4),components,serves:null,keepPreviousContext:inherited,confidence};
 }
 
 export function normalizeIntent(value,fallback=localIntent('')){

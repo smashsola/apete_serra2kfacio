@@ -64,3 +64,40 @@ test('total de conjunto cobra uma taxa por estabelecimento e respeita retirada',
  assert.equal(bundleTotal(different,'delivery','products'),4500);
  assert.equal(bundleTotal(different,'pickup'),4500);
 });
+
+
+test('separa conversa, listagem e consulta de disponibilidade de recomendação',()=>{
+ assert.equal(localIntent('opa boa noite').action,'chat');
+ const list=localIntent('liste doces de até 30 reais');
+ assert.equal(list.action,'list');
+ assert.equal(list.topic,'dessert');
+ const water=localIntent('tem água ou nao');
+ assert.equal(water.action,'fact');
+ assert.equal(water.fact,'availability');
+ assert.ok(water.searchTerms.includes('agua'));
+});
+
+test('preferência explícita não vira esclarecimento genérico',()=>{
+ const fallback=localIntent('tem algo pra vegetarianos ai');
+ const normalized=normalizeIntent({
+  topic:'catalog',
+  action:'clarify',
+  fact:'none',
+  preferences:['vegetariano'],
+  modifiers:[],
+  exclusions:[],
+  searchTerms:[],
+  components:[],
+  keepPreviousContext:false,
+  confidence:.8
+ },fallback);
+ assert.equal(normalized.action,'recommend');
+ assert.deepEqual(normalized.preferences,['vegetariano']);
+});
+
+test('follow-up sem novo assunto mantém contexto anterior',()=>{
+ const breakfast=localIntent('quero café da manhã');
+ const follow=localIntent('ainda tô com fome',breakfast);
+ assert.equal(follow.topic,'breakfast');
+ assert.equal(follow.keepPreviousContext,true);
+});

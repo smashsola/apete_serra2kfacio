@@ -489,7 +489,13 @@ function semanticCatalog(items){
 function semanticIntentFromAssistant(text){
  const clean=normalizedText(text),mentioned=[];
  for(const product of CATALOG.products)if(clean.includes(normalizedText(product.name)))mentioned.push(product);
- if(!mentioned.length)return null;
+ if(!mentioned.length){
+  const conversational=localSemanticIntent(text);
+  if(conversational.action!=='chat'&&(conversational.topic!=='catalog'||conversational.preferences.length||conversational.modifiers.length)){
+   return {...conversational,action:'recommend',keepPreviousContext:true,confidence:Math.max(.62,conversational.confidence||0)};
+  }
+  return null;
+ }
  const topics=new Set();
  for(const product of mentioned){
   const name=normalizedText(product.name),category=product.cat,store=byStore.get(product.storeId);
@@ -539,7 +545,7 @@ function semanticToLegacy(semantic,fallback){
   another:semantic.action==='alternative'||(semantic.keepPreviousContext&&Boolean(fallback.another)),components,semanticAction:semantic.action,semanticFact:semantic.fact};
 }
 function semanticContext(city,mode,constraints,catalog,fallback){
- return 'Você é a camada de interpretação da Sabiá, assistente do APETÊ. Entenda português brasileiro natural: sinônimos, gírias, diminutivos, abreviações, pequenos erros de digitação, frases curtas, follow-ups, elipses e mudanças de assunto. Interprete a intenção FINAL do usuário considerando o histórico, sem depender de frases literais. Se a mensagem atual não trouxer um novo tipo de produto, preserve o assunto anterior em vez de inventar uma troca. Saudações, agradecimentos e conversa casual sem pedido de produto usam action "chat" e zero recomendações. Pedidos para listar, mostrar opções ou saber quais itens existem usam action "list". Perguntas sobre existência, disponibilidade, preço, item mais barato/caro ou popularidade usam action "fact". Em fact availability, preencha searchTerms apenas com o conceito consultado; para perguntas do tipo "é só esse?" sobre um item já mostrado, preserve o tópico anterior e deixe searchTerms vazio para o servidor conferir o grupo inteiro. Preferências explícitas como vegetariano ou vegano NÃO precisam de esclarecimento: use recommend/list/fact conforme o pedido. "Dieta", "regime" ou saúde vaga sem restrição clara deve usar action "clarify". Pedidos compostos viram components, podendo ter até 3 conceitos. Retorne SOMENTE JSON válido no formato {"intent":{"topic":"meal|drink|snack|breakfast|dessert|produce|catalog","action":"recommend|list|alternative|refine|switch|fact|clarify|chat","fact":"none|cheapest|most_expensive|most_ordered|price|availability","categories":[],"preferences":["vegano|vegetariano"],"modifiers":["producer|garden|organic|juice|healthy|complete"],"exclusions":[],"searchTerms":[],"components":[],"serves":null,"keepPreviousContext":false,"confidence":0.0},"message":"frase curta, natural e sem fatos comerciais inventados","recommendations":[{"productId":1,"reason":"motivo curto"}]}. Use no máximo 6 recomendações ranqueadas. Nunca invente IDs. Não calcule nem decida preço, taxa, estoque, disponibilidade, orçamento, promoção ou quantidade de opções: o servidor é a autoridade absoluta desses dados. Não faça alegações nutricionais, de emagrecimento ou ingredientes não cadastrados. Os motivos podem falar de gosto, praticidade, variedade e encaixe no pedido. Restrições duras já detectadas pelo servidor: '+JSON.stringify({budget:constraints.budget,budgetScope:constraints.budgetScope,excluded:constraints.excluded})+'. Fallback semântico local: '+JSON.stringify(fallback)+'. Catálogo real disponível para interpretação (sem autoridade comercial): '+JSON.stringify(semanticCatalog(catalog))+'. Cidade: '+city+'; modalidade: '+mode+'.';
+ return 'Você é a camada de interpretação da Sabiá, assistente do APETÊ. Entenda português brasileiro natural: sinônimos, gírias, diminutivos, abreviações, pequenos erros de digitação, frases curtas, follow-ups, elipses e mudanças de assunto. Interprete a intenção FINAL do usuário considerando o histórico, sem depender de frases literais. Se a mensagem atual não trouxer um novo tipo de produto, preserve o assunto anterior em vez de inventar uma troca. Saudações, agradecimentos e conversa casual sem pedido de produto usam action "chat" e zero recomendações. Pedidos para listar, mostrar opções ou saber quais itens existem usam action "list". Perguntas sobre existência, disponibilidade, preço, item mais barato/caro ou popularidade usam action "fact". Em fact availability, preencha searchTerms apenas com o conceito consultado; para perguntas do tipo "é só esse?" sobre um item já mostrado, preserve o tópico anterior e deixe searchTerms vazio para o servidor conferir o grupo inteiro. Preferências explícitas como vegetariano ou vegano NÃO precisam de esclarecimento: use recommend/list/fact conforme o pedido. Respostas afirmativas curtas, inclusive com pequenos erros de digitação, a uma pergunta anterior da Sabiá usam action "confirm" e preservam o assunto pendente; não peça a mesma confirmação de novo. "Dieta", "regime" ou saúde vaga sem restrição clara deve usar action "clarify". Pedidos compostos viram components, podendo ter até 3 conceitos. Retorne SOMENTE JSON válido no formato {"intent":{"topic":"meal|drink|snack|breakfast|dessert|produce|catalog","action":"recommend|list|alternative|refine|switch|fact|clarify|confirm|chat","fact":"none|cheapest|most_expensive|most_ordered|price|availability","categories":[],"preferences":["vegano|vegetariano"],"modifiers":["producer|garden|organic|juice|healthy|complete"],"exclusions":[],"searchTerms":[],"components":[],"serves":null,"keepPreviousContext":false,"confidence":0.0},"message":"frase curta, natural e sem fatos comerciais inventados","recommendations":[{"productId":1,"reason":"motivo curto"}]}. Use no máximo 6 recomendações ranqueadas. Nunca invente IDs. Não calcule nem decida preço, taxa, estoque, disponibilidade, orçamento, promoção ou quantidade de opções: o servidor é a autoridade absoluta desses dados. Não faça alegações nutricionais, de emagrecimento ou ingredientes não cadastrados. Os motivos podem falar de gosto, praticidade, variedade e encaixe no pedido. Restrições duras já detectadas pelo servidor: '+JSON.stringify({budget:constraints.budget,budgetScope:constraints.budgetScope,excluded:constraints.excluded})+'. Fallback semântico local: '+JSON.stringify(fallback)+'. Catálogo real disponível para interpretação (sem autoridade comercial): '+JSON.stringify(semanticCatalog(catalog))+'. Cidade: '+city+'; modalidade: '+mode+'.';
 }
 function semanticTermMatch(item,terms){
  if(!terms?.length)return true;
@@ -723,7 +729,7 @@ function sabiaContext(city,mode,constraints,catalog){
 
 function reserveSemanticAnswer(city,mode,query,prior,baseConstraints,fallbackIntent){
  const semantic=semanticFallbackIntent(query,prior),intent=semanticToLegacy(semantic,fallbackIntent);
- const currentHard=requestConstraints(query),carryContext=semantic.keepPreviousContext||['alternative','refine'].includes(semantic.action);
+ const currentHard=requestConstraints(query),carryContext=semantic.keepPreviousContext||['alternative','refine','confirm'].includes(semantic.action);
  const historyHard=carryContext?conversationConstraints('tem mais opções',prior):null;
  const carriedExcluded=carryContext?prior.filter(message=>message.role==='user').flatMap(message=>requestConstraints(message.content).excluded):[];
  const hard={...baseConstraints};
@@ -771,7 +777,9 @@ async function generateSemantic(env,messages,city,mode,query,prior,baseConstrain
    let semantic=normalizeIntent(data.intent,fallbackSemantic);
    const currentSemantic=localSemanticIntent(query);
    if(currentSemantic.action==='chat')semantic={...semantic,topic:'catalog',action:'chat',fact:'none',components:[],preferences:[],modifiers:[],exclusions:[],searchTerms:[],keepPreviousContext:false};
-   else if(currentSemantic.action==='fact'&&currentSemantic.fact!=='none'){
+   else if(currentSemantic.action==='confirm'&&fallbackSemantic.topic!=='catalog'){
+    semantic={...semantic,topic:fallbackSemantic.topic,action:'recommend',fact:'none',components:[...(fallbackSemantic.components||[])],preferences:[...(fallbackSemantic.preferences||[])],modifiers:[...(fallbackSemantic.modifiers||[])],exclusions:[...(fallbackSemantic.exclusions||[])],searchTerms:[],keepPreviousContext:true,confidence:Math.max(.8,semantic.confidence||0)};
+   }else if(currentSemantic.action==='fact'&&currentSemantic.fact!=='none'){
     semantic={...semantic,topic:currentSemantic.topic!=='catalog'?currentSemantic.topic:semantic.topic,action:'fact',fact:currentSemantic.fact,preferences:currentSemantic.preferences.length?currentSemantic.preferences:semantic.preferences,searchTerms:semantic.searchTerms.length?semantic.searchTerms:[...(currentSemantic.searchTerms||[])]};
    }else if(currentSemantic.action==='list'){
     semantic={...semantic,topic:currentSemantic.topic!=='catalog'?currentSemantic.topic:semantic.topic,action:'list',components:currentSemantic.components.length?[...currentSemantic.components]:semantic.components};
@@ -780,7 +788,7 @@ async function generateSemantic(env,messages,city,mode,query,prior,baseConstrain
    }
    const intent=semanticToLegacy(semantic,fallbackIntent);
    const semanticExcluded=(semantic.exclusions||[]).flatMap(value=>normalizedWords(value));
-   const currentHard=requestConstraints(query),carryContext=semantic.keepPreviousContext||['alternative','refine'].includes(semantic.action);
+   const currentHard=requestConstraints(query),carryContext=semantic.keepPreviousContext||['alternative','refine','confirm'].includes(semantic.action);
    const historyHard=carryContext?conversationConstraints('tem mais opções',prior):null;
    const carriedExcluded=carryContext?prior.filter(message=>message.role==='user').flatMap(message=>requestConstraints(message.content).excluded):[];
    const hard={...baseConstraints};

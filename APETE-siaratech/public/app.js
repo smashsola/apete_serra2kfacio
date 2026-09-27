@@ -269,6 +269,8 @@ let sabiaLastQuestion = '';
 let sabiaDraft = '';
 let sabiaPendingProduct = null;
 let sabiaSessionPromise = null;
+let sabiaDiagnostic = null;
+let sabiaDiagnosticBusy = '';
 state.city = REGIONAL_CITIES.includes(state.city) ? state.city : 'Guaraciaba do Norte';
 
 const getStore = (id) => state.stores.find((item) => item.id === Number(id));
@@ -1248,6 +1250,26 @@ async function sendToSabia(text) {
   } catch(error) {sabiaError=error.message;sabiaRetryAfter=error.retryAfter||0;sabiaDraft=clean;if(error.status===401)sabiaSession=null;}
   finally {sabiaBusy=false;if(state.page==='sabia'){render();$('#sabia-input')?.focus({preventScroll:true});}}
 }
+async function runSabiaDiagnostic(provider) {
+  const clean=String($('#sabia-input')?.value||sabiaDraft||'quero almoço').trim();
+  if(!clean||sabiaBusy||sabiaDiagnosticBusy)return;
+  sabiaDiagnosticBusy=provider;
+  sabiaDiagnostic={provider,question:clean,loading:true};
+  if(state.page==='sabia')render();
+  try{
+    await ensureSabiaSession();
+    const result=await sabiaRequest('/api/sabia/diagnostic',{
+      provider,question:clean,conversationId:sabiaSession.conversationId,city:state.city,mode:'delivery',
+      history:sabiaChat.slice(-6).map(({role,content})=>({role,content}))
+    });
+    sabiaDiagnostic={...result,question:clean,loading:false};
+  }catch(error){
+    sabiaDiagnostic={ok:false,provider,question:clean,loading:false,stage:'client',status:error.status||0,detail:error.message};
+  }finally{
+    sabiaDiagnosticBusy='';
+    if(state.page==='sabia')render();
+  }
+}
 async function detectSabiaMode() {
   try {
     const status=await sabiaRequest('/api/sabia/status');
@@ -1318,6 +1340,7 @@ $('#content').addEventListener('click', (event) => {
   }
   if (action === 'send-suggestion') sendToSabia(button.dataset.text || '');
   if (action === 'sabia-check') detectSabiaMode();
+  if (action === 'sabia-diagnostic') runSabiaDiagnostic(button.dataset.provider);
   if (action === 'sabia-review') reviewSabiaProduct(button.dataset.entry,button.dataset.id);
   if (action === 'sabia-retry') sendToSabia(sabiaLastQuestion);
   if (action === 'sabia-new'&&!sabiaBusy) {sabiaSession=null;sabiaError='';sabiaDraft='';sessionStorage.removeItem('apete-sabia-history');ensureSabiaSession(true).then(()=>render()).catch(e=>{sabiaError=e.message;render();});}

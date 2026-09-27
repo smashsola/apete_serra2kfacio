@@ -24,8 +24,9 @@ function hasNearWord(text,words,maxDistance=null){
  const list=tokens(text);
  return words.some(target=>list.some(word=>{
   if(word===target)return true;
-  const allowed=maxDistance??(target.length>=7?2:target.length>=4?1:0);
+  const allowed=maxDistance??(target.length>=7?2:target.length>=3?1:0);
   if(!allowed||word.length<3||Math.abs(word.length-target.length)>allowed)return false;
+  if(word[0]!==target[0])return false;
   return editDistance(word,target)<=allowed;
  }));
 }
@@ -62,7 +63,7 @@ export function localIntent(current,previous=null){
  if(hasStem(clean,['almoc','jantar','refeic','prato','comida','rango','marmita'])||hasNearWord(clean,['almoco','jantar','refeicao','prato','comida','rango','marmita']))components.push('meal');
  if(hasStem(clean,['sobrem','doce','bolo','docinh'])||hasNearWord(clean,['sobremesa','doce','bolo','docinho']))components.push('dessert');
  if(hasStem(clean,['lanch','tapioca','sandu','pao','salgad','petisc'])||hasNearWord(clean,['lanche','tapioca','sanduiche','pao','salgado','petisco']))components.push('snack');
- if(hasStem(clean,['beb','sede','suco','refriger','agua','tomar'])||hasNearWord(clean,['bebida','beber','suco','refrigerante','agua','tomar'])||(/\bcafe\b/.test(clean)&&!components.includes('breakfast')))components.push('drink');
+ if(hasStem(clean,['beb','sede','suco','refriger','refri','agua','tomar'])||hasNearWord(clean,['bebida','beber','suco','refrigerante','refri','agua','tomar'])||(/\bcafe\b/.test(clean)&&!components.includes('breakfast')))components.push('drink');
  if(hasStem(clean,['horta','hortal','verdura','legume','organic','produtor','roca'])||hasNearWord(clean,['horta','hortalica','verdura','legume','organico','produtor','roca']))components.push('produce');
  components=unique(components,3);
  let topic=components[0]||'catalog';

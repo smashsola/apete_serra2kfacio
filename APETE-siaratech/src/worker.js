@@ -34,7 +34,7 @@ function requestConstraints(text){
  }
  for(const event of events.sort((a,b)=>a.index-b.index)){budget=event.budget;budgetChanged=true;}
  const scopeEvents=[];
- for(const match of clean.matchAll(/\b(?:(?:sem(?:\s+(?:contar|incluir|considerar))?|nao\s+(?:contar|incluir|considerar))\s+(?:(?:a|o)\s+)?(?:taxa(?: de entrega)?|entrega|frete)|(?:so|somente|apenas)\s+(?:(?:a|o|os)\s+)?(?:comida|produto[s]?|itens)|(?:fora|excluindo)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa))\b/g))scopeEvents.push({index:match.index,scope:'products'});
+ for(const match of clean.matchAll(/\b(?:(?:sem(?:\s+(?:contar|incluir|considerar))?|nao\s+(?:contar|incluir|considerar))\s+(?:(?:a|o)\s+)?(?:taxa(?: de entrega)?|entrega|frete)|(?:so|somente|apenas)\s+(?:(?:a|o|os)\s+)?(?:comida|produto[s]?|itens)|(?:fora|excluindo|tirando|descontando)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa))\b/g))scopeEvents.push({index:match.index,scope:'products'});
  for(const match of clean.matchAll(/\b(?:(?:incluindo|com|contando)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa)|total|tudo junto)\b/g))scopeEvents.push({index:match.index,scope:'total'});
  for(const event of scopeEvents.sort((a,b)=>a.index-b.index))budgetScope=event.scope;
  const excluded=[];
@@ -68,8 +68,12 @@ function currentIntent(query){
  else if(hasMeal)kind='meal';
  else if(/\b(bebidas?|sucos?)\b/.test(text))kind='drink';
  else if(/\b(?:lanches?|lanchinhos?)\b/.test(text))kind='snack';
- const vegetarian=/\bvegetarian[oa]s?\b/.test(text),healthy=/\bsaudave(?:l|is)\b/.test(text),producer=/\b(produtor(?:es)?|horta|organicos?|organicas?)\b/.test(text);
- return {kind,vegetarian,healthy,producer,withDrink:hasMeal&&hasDrink,completeBreakfast:kind==='breakfast'&&/\b(complet[oa]|combo|refeicao completa)\b|\bcafe e (?:algo|alguma coisa) (?:para|pra) comer\b/.test(text),completeSnack:kind==='snack'&&/\b(complet[oa]s?|combos?|refeicao completa)\b/.test(text),organic:/\borganic[oa]s?\b/.test(text),garden:/\bhorta\b/.test(text),juice:/\bsucos?\b/.test(text),another:isAlternativeFollowup(text)||/\b(outr[oa]s?|diferentes?|alternativas?)\b/.test(text)};
+ const vegetarian=/\bvegetarian[oa]s?\b/.test(text);
+ const vegan=/\bvegan[oa]s?\b/.test(text);
+ const healthy=/\bsaudave(?:l|is)\b/.test(text);
+ const producer=/\b(produtor(?:es)?|horta|organicos?|organicas?)\b/.test(text);
+ const dietAmbiguous=/\bdieta\b/.test(text)&&!vegetarian&&!vegan;
+ return {kind,vegetarian,vegan,healthy,dietAmbiguous,producer,withDrink:hasMeal&&hasDrink,completeBreakfast:kind==='breakfast'&&/\b(complet[oa]|combo|refeicao completa)\b|\bcafe e (?:algo|alguma coisa) (?:para|pra) comer\b/.test(text),completeSnack:kind==='snack'&&/\b(complet[oa]s?|combos?|refeicao completa)\b/.test(text),organic:/\borganic[oa]s?\b/.test(text),garden:/\bhorta\b/.test(text),juice:/\bsucos?\b/.test(text),another:isAlternativeFollowup(text)||/\b(outr[oa]s?|diferentes?|alternativas?)\b/.test(text)};
 }
 function isSearchModifier(text,constraints=requestConstraints(text)){
   // Budget/delivery followups may contain harmless conversational filler.
@@ -77,7 +81,7 @@ function isSearchModifier(text,constraints=requestConstraints(text)){
    .replace(/\b(?:sem(?:\s+(?:contar|incluir|considerar))?|nao\s+(?:contar|incluir|considerar))\s+(?:(?:a|o)\s+)?(?:taxa(?: de entrega)?|entrega|frete)\b/g,'')
    .replace(/\b(?:so|somente|apenas)\s+(?:(?:a|o|os)\s+)?(?:comida|produtos?|itens)\b/g,'')
    .replace(/\b(?:com|incluindo)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa)\b/g,'')
-   .replace(/\b(?:fora|excluindo)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa)\b/g,'')
+   .replace(/\b(?:fora|excluindo|tirando|descontando)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa)\b/g,'')
    .replace(/\b(?:pode ser|pode ficar|pode custar|ate|no maximo|orcamento(?: de)?|limite de|pode passar(?: de)?|nao precisa ser ate|sem limite|sem teto)\b/g,'')
    .replace(/r\$|\d+(?:[.,]\d{1,2})?/g,'')
    .replace(/\b(?:quero|queria|um|uma|algo|alguma|coisa|opcao|item|reais|e|mas|entao|agora|cara|mano|ai|so|somente|apenas)\b|[\s,.;!?]/g,'');
@@ -88,7 +92,7 @@ function conversationIntent(question,prior){
  for(const text of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
   if(isSearchModifier(text))continue;
   const next=currentIntent(text);
-  const hasPriorIntent=intent.kind!=='any'||intent.vegetarian||intent.healthy||intent.producer||intent.organic||intent.garden;
+  const hasPriorIntent=intent.kind!=='any'||intent.vegetarian||intent.vegan||intent.healthy||intent.producer||intent.organic||intent.garden;
   if(isAlternativeFollowup(text)&&hasPriorIntent){
    intent={...intent,another:true};
    continue;
@@ -115,12 +119,13 @@ function intentScore(item,intent,query){
  }else if(intent.kind!=='any'){score=scores[intent.kind];if(!score)return 0;}
  if((intent.completeBreakfast||intent.completeSnack)&&isCatalogCombo(item))score+=1000;
  if(intent.vegetarian){if(category!=='Vegetariano'&&!item.preferences.includes('vegetariano'))return 0;score+=100;}
+ if(intent.vegan){if(!item.preferences.includes('vegano')&&!item.preferences.includes('vegan'))return 0;score+=120;}
  if(intent.producer){if(!item.producer)return 0;if(intent.organic&&!/organic/.test(normalizedText(item.name+' '+item.store)))return 0;if(intent.garden&&!/horta|hortalica|alface|tomate|cenoura|legume|verdura/.test(normalizedText(item.name+' '+item.description)))return 0;score+=100;}
  if(intent.healthy){if(category!=='Vegetariano'&&!/\b(banana|hortalicas|tomate|alface|cenoura|legumes|verduras)\b/.test(name))return 0;score+=100;}
  const words=new Set(normalizedWords(query));
  score+=normalizedWords(item.name+' '+item.category).filter(word=>words.has(word)).length*5;
  score+=normalizedWords(item.description+' '+item.store+' '+item.preferences.join(' ')).filter(word=>words.has(word)).length;
- if(intent.kind==='any'&&!intent.vegetarian&&!intent.healthy&&!intent.producer){
+ if(intent.kind==='any'&&!intent.vegetarian&&!intent.vegan&&!intent.healthy&&!intent.producer){
   if(score>0)return score;
   if(/\b(quero|procuro|mostra|mostre|opcoes?|sugestoes?|recomenda|recomende|algo|comer|pedido)\b/.test(normalizedText(query)))return 1;
   return 0;
@@ -403,8 +408,17 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
   return response({...publicAnswer,products,stores:[],demo:true});
  }
  const prior=messagesFor(body),constraints={...conversationConstraints(body.question,prior),intent:conversationIntent(body.question,prior)};
+ if(constraints.intent.dietAmbiguous){
+  return response({text:'“Dieta” pode significar coisas diferentes. Se você procura uma preferência alimentar específica, como vegetariana ou vegana, me diga qual para eu conferir apenas itens cadastrados com essa informação.',provider:'rules',model:'diet-clarifier-v1',products:[],stores:[],demo:true});
+ }
  const catalog=alternativeCatalog(summary(body.city,body.mode,body.question,constraints),constraints.intent,prior);
- const noRecognizedIntent=constraints.intent.kind==='any'&&!constraints.intent.vegetarian&&!constraints.intent.healthy&&!constraints.intent.producer&&!constraints.intent.another;
+ if(!catalog.length&&constraints.intent.vegan){
+  return response({text:'Não encontrei itens cadastrados como veganos para esta cidade e modalidade. Prefiro não presumir que um produto seja vegano sem essa informação no catálogo.',provider:'rules',model:'dietary-grounding-v1',products:[],stores:[],demo:true});
+ }
+ if(!catalog.length&&constraints.intent.vegetarian){
+  return response({text:'Não encontrei item cadastrado como vegetariano para esta cidade e modalidade.',provider:'rules',model:'dietary-grounding-v1',products:[],stores:[],demo:true});
+ }
+ const noRecognizedIntent=constraints.intent.kind==='any'&&!constraints.intent.vegetarian&&!constraints.intent.vegan&&!constraints.intent.healthy&&!constraints.intent.producer&&!constraints.intent.another;
  if(!catalog.length&&noRecognizedIntent){
   return response({text:'Não entendi bem o que você procura. Posso ajudar com almoço, lanche, café da manhã, sobremesa, bebida ou produtos locais.',provider:'rules',model:'deterministic-v1',products:[],stores:[],demo:true});
  }

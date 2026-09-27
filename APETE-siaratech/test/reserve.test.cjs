@@ -3,9 +3,12 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 const {webcrypto}=require('node:crypto');
-const source=fs.readFileSync(require('node:path').join(__dirname,'../src/worker.js'),'utf8');
+const path=require('node:path');
+const workerSource=fs.readFileSync(path.join(__dirname,'../src/worker.js'),'utf8');
+const coreSource=fs.readFileSync(path.join(__dirname,'../src/sabia-core.js'),'utf8').replace(/\\bexport\\s+/g,'');
+const source=coreSource+'\nconst localSemanticIntent=localIntent; const semanticPlain=plain;\n'+workerSource.replace(/^import .*sabia-core\\.js';\\s*/m,'');
 function load(overrides={}){
- const context=vm.createContext({Response,Request,URL,TextEncoder,AbortController,crypto:webcrypto,setTimeout,clearTimeout,console:{warn(){}},...overrides});
+ const context=vm.createContext({Response,Request,URL,TextEncoder,AbortController,crypto:webcrypto,setTimeout,clearTimeout,console:{warn(){},info(){}},...overrides});
  vm.runInContext(source.replace('export default','const worker =')+'\nthis.api={conversationConstraints,conversationIntent,summary,reserveAnswer,validatedRecommendations,parseProviderObject,catalogAnswer,productInfo,productById,generate,worker};',context);
  return context.api;
 }

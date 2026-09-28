@@ -250,7 +250,7 @@ if (AUTH_PAGE) {
   if (AUTH_PAGE === 'comerciante-entrar') state.ui.merchantAuthTab = 'entrar';
 } else {
   const pageFromHash = location.hash.replace(/^#/, '');
-  state.page = ['inicio','estabelecimentos','cardapio','fornada','produtores','sabia','pedidos','entrar','cadastro','cliente','comerciante','loja'].includes(pageFromHash)
+  state.page = ['inicio','estabelecimentos','cardapio','fornada','produtores','sabia','pedidos','entrar','cadastro','comerciante-entrar','comerciante-cadastro','cliente','comerciante','loja'].includes(pageFromHash)
     ? pageFromHash
     : (!state.page || AUTH_ROUTES[state.page] ? 'inicio' : state.page);
   if (state.page === 'cliente' && !(state.customer.logged && !state.customer.demo && window.APETE_BACKEND?.hasStoredSession?.())) state.page = 'inicio';
@@ -502,8 +502,9 @@ function setPage(next, storeId = null) {
   if (isRealCustomerLogged() && (next === 'entrar' || next === 'cadastro')) next = 'cliente';
   if (isMerchantLogged() && (next === 'comerciante-entrar' || next === 'comerciante-cadastro')) next = 'comerciante';
 
-  // Cliente usa uma única aplicação: login/cadastro ficam em index.html#entrar/#cadastro.
-  if (next === 'entrar' || next === 'cadastro') {
+  // Cliente e comerciante usam uma única aplicação.
+  const inlineAuthRoute = ['entrar','cadastro','comerciante-entrar','comerciante-cadastro'].includes(next);
+  if (inlineAuthRoute) {
     if (AUTH_PAGE) {
       location.assign(`index.html#${encodeURIComponent(next)}`);
       return;
@@ -517,8 +518,7 @@ function setPage(next, storeId = null) {
     next = 'entrar';
   }
   if (next === 'comerciante' && !merchantAccess()) {
-    location.assign(AUTH_ROUTES['comerciante-entrar']);
-    return;
+    next = 'comerciante-entrar';
   }
 
   if (next !== 'pedidos') state.ui.orderSuccessId = null;
@@ -831,7 +831,7 @@ function customerAuthPage(mode = 'entrar') {
         </div><button class="primary-btn auth-submit" data-action="login-customer">Entrar</button>`}
       <div class="auth-links">
         <p>${cadastro ? 'Já tem conta?' : 'Ainda não tem conta?'} <a href="${cadastro ? 'index.html#entrar' : 'index.html#cadastro'}" data-action="go-page" data-page="${cadastro ? 'entrar' : 'cadastro'}">${cadastro ? 'Fazer login' : 'Criar conta'}</a></p>
-        <a href="comerciante-entrar.html">Área do comerciante ↗</a>
+        <a href="index.html#comerciante-entrar" data-action="go-page" data-page="comerciante-entrar">Área do comerciante ↗</a>
       </div>
     </section>`;
 }
@@ -857,7 +857,7 @@ function merchantAuthPage(mode = 'entrar') {
         <div class="field"><label>Estabelecimento <span class="required-mark">*</span></label><select id="merchant-store" class="select">${state.stores.map(store=>`<option value="${store.id}">${esc(store.name)}</option>`).join('')}</select></div>
         <div class="field"><label>Senha do painel <span class="required-mark">*</span></label><input id="merchant-password" class="input" type="password" autocomplete="current-password" placeholder="Senha do estabelecimento"></div>
       </div><div class="demo-access"><strong>Acesso para a apresentação</strong><span>Escolha um estabelecimento, informe um telefone de teste e utilize a senha <b>1234</b> para abrir o painel.</span></div><button class="primary-btn auth-submit" data-action="login-merchant">Entrar no painel</button>`}
-      <div class="auth-links"><p>${cadastro ? 'Já cadastrou seu estabelecimento?' : 'Quer cadastrar outro estabelecimento?'} <a href="${cadastro ? 'comerciante-entrar.html' : 'comerciante-cadastro.html'}">${cadastro ? 'Entrar no painel' : 'Cadastrar loja'}</a></p><a href="entrar.html">Área do cliente ↗</a></div>
+      <div class="auth-links"><p>${cadastro ? 'Já cadastrou seu estabelecimento?' : 'Quer cadastrar outro estabelecimento?'} <a href="${cadastro ? 'index.html#comerciante-entrar' : 'index.html#comerciante-cadastro'}" data-action="go-page" data-page="${cadastro ? 'comerciante-entrar' : 'comerciante-cadastro'}">${cadastro ? 'Entrar no painel' : 'Cadastrar loja'}</a></p><a href="index.html#entrar" data-action="go-page" data-page="entrar">Área do cliente ↗</a></div>
     </section>`;
 }
 

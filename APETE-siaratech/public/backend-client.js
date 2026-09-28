@@ -27,8 +27,8 @@
         signal:controller.signal,
         headers:{
           apikey:SUPABASE_KEY,
+          Authorization:'Bearer '+(accessToken||SUPABASE_KEY),
           ...(body!==undefined?{'Content-Type':'application/json'}:{}),
-          ...(accessToken?{Authorization:'Bearer '+accessToken}:{}),
           ...headers
         },
         body:body===undefined?undefined:JSON.stringify(body)

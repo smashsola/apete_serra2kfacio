@@ -193,7 +193,7 @@
 
   async function loadCatalog() {
     const [stores,products]=await Promise.all([
-      request('/rest/v1/stores?select=id,public_id,name,category,city,description,hero,delivery_fee,producer,delivery,pickup,service_areas,cover,verified,active,demo&active=eq.true&order=public_id.asc'),
+      request('/rest/v1/stores?select=id,public_id,name,category,city,description,hero,delivery_fee,producer,delivery,pickup,service_areas,cover,verified,active,demo,instagram,contact_phone&active=eq.true&order=public_id.asc'),
       request('/rest/v1/products?select=id,public_id,store_id,name,description,category,price,stock,image,old_price,last_batch,preferences,serves,active,demo&active=eq.true&order=public_id.asc')
     ]);
     const publicStoreId=new Map(stores.map(store=>[store.id,Number(store.public_id)]));
@@ -202,7 +202,8 @@
         id:Number(store.public_id),backendId:store.id,name:store.name,category:store.category,city:store.city,
         desc:store.description||'',hero:store.hero||'',fee:Number(store.delivery_fee)||0,producer:Boolean(store.producer),
         delivery:Boolean(store.delivery),pickup:Boolean(store.pickup),serviceAreas:Array.isArray(store.service_areas)?store.service_areas:[],
-        cover:store.cover||'',verified:Boolean(store.verified),open:Boolean(store.active),demo:Boolean(store.demo)
+        cover:store.cover||'',verified:Boolean(store.verified),open:Boolean(store.active),demo:Boolean(store.demo),
+        instagram:store.instagram||'',contactPhone:store.contact_phone||''
       })),
       products:products.map(product=>({
         id:Number(product.public_id),backendId:product.id,storeId:publicStoreId.get(product.store_id),name:product.name,

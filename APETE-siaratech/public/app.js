@@ -534,7 +534,13 @@ function normalizePhone(value) {
   return digits.replace(/(\d{2})(\d{0,5})(\d{0,4})/, (_, a, b, c) => [a && `(${a})`, b, c && `-${c}`].filter(Boolean).join(' ')).trim();
 }
 function onlyDigits(value) { return String(value || '').replace(/\D/g, ''); }
-function validCustomerName(value) { return /^[A-Za-zÀ-ÿ' ]{2,}$/.test(String(value || '').trim()); }
+function validCustomerName(value) {
+  const name=String(value||'').trim();
+  if(!/^[A-Za-zÀ-ÿ' ]{2,}$/.test(name))return false;
+  const letters=name.toLocaleLowerCase('pt-BR').replace(/[^A-Za-zÀ-ÿ]/g,'');
+  return new Set([...letters]).size>=2;
+}
+function validAddress(value) { return String(value||'').trim().length>=5; }
 function validEmail(value) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim()); }
 function strongPassword(value) { return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(String(value || '')); }
 
@@ -1379,7 +1385,7 @@ async function saveCustomer() {
   if(!validCustomerName(name))return toast('Digite um nome válido, sem números');
   if(!validEmail(email))return toast('Digite um e-mail válido com @');
   if(onlyDigits(phone).length<10)return toast('Digite um telefone válido');
-  if(!address)return toast('Preencha o endereço');
+  if(!validAddress(address))return toast('Digite um endereço mais completo.');
   if(!strongPassword(password))return toast('A senha precisa ter no mínimo 8 caracteres, com letras e números');
   if(password!==confirmPassword)return toast('As senhas do cadastro não conferem');
   if(!$('#customer-accept-terms')?.checked||!$('#customer-accept-privacy')?.checked)return toast('Aceite os Termos de Uso e leia a Política de Privacidade para criar a conta.');

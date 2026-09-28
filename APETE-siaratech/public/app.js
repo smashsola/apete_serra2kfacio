@@ -217,7 +217,7 @@ try {
   if (!state.customer || !/^[A-Za-zÀ-ÿ' ]{2,}$/.test(String(state.customer.name||'').trim())
       || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(state.customer.email||''))
       || String(state.customer.phone||'').replace(/\D/g,'').length < 10
-      || !/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(String(state.customer.password||''))) {
+      ) {
     state.customer = initialState().customer;
   }
 } catch {
@@ -303,7 +303,13 @@ if (AUTH_PAGE === 'entrar' || AUTH_PAGE === 'cadastro') {
   if (isCustomerLogged()) location.replace('index.html#cliente');
 }
 
-function save() { localStorage.setItem(KEY, JSON.stringify({...state,chat:[]})); }
+function save() {
+  const snapshot=JSON.parse(JSON.stringify({...state,chat:[]}));
+  if(snapshot.customer) delete snapshot.customer.password;
+  if(snapshot.merchant) delete snapshot.merchant.password;
+  for(const store of snapshot.stores||[]) delete store.panelPassword;
+  localStorage.setItem(KEY, JSON.stringify(snapshot));
+}
 function toast(message, tone = 'normal') {
   const el = $('#toast');
   el.textContent = message;
@@ -1008,7 +1014,7 @@ function renderCartModal() {
   openModal('Sua sacola', `${items.map((item) => `<div class="cart-line"><div class="cart-thumb">${imgTag(item.product.image, item.product.name, getStore(item.product.storeId).producer ? 'producer' : 'food')}</div><div><strong>${esc(item.product.name)}</strong><p class="note">${esc(getStore(item.product.storeId).name)}</p><div class="qty-row"><button data-action="qty-cart" data-id="${item.productId}" data-step="-1">−</button><strong>${item.qty}</strong><button data-action="qty-cart" data-id="${item.productId}" data-step="1">+</button><button class="link-danger" data-action="remove-cart" data-id="${item.productId}">Remover</button></div></div><strong>${money(item.product.price * item.qty)}</strong></div>`).join('')}<div class="summary-card"><div class="total-row"><span>Subtotal</span><strong>${money(subtotal)}</strong></div><div class="total-row"><span>Entrega</span><strong>${money(deliveryFee)}</strong></div><div class="total-row final"><span>Total</span><strong>${money(total)}</strong></div><div class="row" style="margin-top:16px"><button class="ghost-btn strong" data-action="close">Continuar navegando</button><button class="primary-btn" data-action="go-checkout">Finalizar compra</button></div></div>`);
 }
 
-function placeOrder() {
+async function placeOrder() {
   const name = $('#checkout-name')?.value.trim();
   const phone = $('#checkout-phone')?.value.trim();
   const neighborhood = $('#checkout-neighborhood')?.value.trim();
@@ -1016,35 +1022,27 @@ function placeOrder() {
   const note = $('#checkout-note')?.value.trim();
   if (!name || !phone || !address) return toast('Preencha nome, telefone e endereço para finalizar');
   const items = state.cart.map((item) => ({ ...item, product: getProduct(item.productId) })).filter((item) => item.product);
+  if(!items.length) return toast('Sua sacola está vazia.');
   const store = getStore(items[0].product.storeId);
-  const subtotal = items.reduce((sum, item) => sum + item.product.price * item.qty, 0);
-  const total = subtotal + store.fee;
-  const paymentLabel = { pix: 'Pix', cartao: 'Cartão', 'cartao-entrega': 'Cartão na entrega' }[selectedPayment];
-  const order = {
-    id: state.orders.length ? Math.max(...state.orders.map((item) => item.id)) + 1 : 1,
-    createdAt: new Date().toISOString(),
-    storeId: store.id,
-    items: items.map((item) => ({ productId: item.product.id, name: item.product.name, price: item.product.price, qty: item.qty })),
-    subtotal,
-    deliveryFee: store.fee,
-    total,
-    status: 'pendente',
-    note,
-    payment: selectedPayment,
-    paymentLabel,
-    customer: { name, phone, address, neighborhood }
-  };
-  state.customer = { ...state.customer, logged: true, name, phone, address, neighborhood };
-  state.orders.unshift(order);
-  state.ui.orderSuccessId=order.id;
-  state.cart = [];
-  save();
-  closeModal();
-  setPage('pedidos');
-  toast('✓ Pedido enviado! Acompanhe em Meus pedidos.', 'success');
+  try {
+    const created=await window.APETE_BACKEND.createOrder({
+      storeId:store.id,city:state.city,mode:'delivery',customerName:name,customerPhone:onlyDigits(phone),
+      address,neighborhood,note,paymentMethod:selectedPayment==='cartao-entrega'?'card_on_delivery':(selectedPayment==='cartao'?'card':'pix'),
+      items:items.map(item=>({productId:item.product.id,quantity:item.qty}))
+    });
+    state.customer={...state.customer,logged:true,name,phone,address,neighborhood};
+    state.ui.orderSuccessId=Number(created.public_number);
+    state.cart=[];
+    await syncBackendState({renderAfter:false});
+    save();
+    closeModal();
+    setPage('pedidos');
+    toast('✓ Pedido enviado e salvo no servidor!','success');
+  } catch(error) {
+    toast(error.message||'Não foi possível registrar o pedido.');
+  }
 }
-
-function saveCustomer() {
+async function saveCustomer() {
   const name = $('#customer-name-field')?.value.trim();
   const email = $('#customer-email-field')?.value.trim();
   const phone = normalizePhone($('#customer-phone-field')?.value.trim());
@@ -1058,29 +1056,35 @@ function saveCustomer() {
   if (!address) return toast('Preencha o endereço');
   if (!strongPassword(password)) return toast('A senha precisa ter no mínimo 8 caracteres, com letras e números');
   if (password !== confirmPassword) return toast('As senhas do cadastro não conferem');
-  state.customer = { logged: true, name, email, phone, address, neighborhood, password };
-  save();
-  setPage('cliente');
-  toast('Cadastro salvo. Você já pode comprar');
+  try {
+    const result=await window.APETE_BACKEND.signUpCustomer({
+      email,password,fullName:name,phone:onlyDigits(phone),address,neighborhood,city:state.city
+    });
+    state.customer={logged:Boolean(result.session),name,email,phone,address,neighborhood};
+    save();
+    if(result.needsEmailConfirmation){
+      toast('Conta criada. Confirme o e-mail e depois faça login.','success');
+      setPage('entrar');
+      return;
+    }
+    setPage('cliente');
+    toast('Conta criada. Você já pode comprar.','success');
+  } catch(error) { toast(error.message||'Não foi possível criar a conta.'); }
 }
-function loginCustomer() {
+async function loginCustomer() {
   const identifier = ($('#login-identifier')?.value || '').trim();
   const password = $('#login-password')?.value || '';
   if (!identifier || !password) return toast('Informe o telefone ou e-mail e a senha');
   const usingEmail = identifier.includes('@');
   if (usingEmail ? !validEmail(identifier) : onlyDigits(identifier).length < 10 || onlyDigits(identifier).length > 11)
     return toast('Informe um telefone com DDD ou e-mail válido');
-  if (!state.customer.password) return toast('Conta ainda não cadastrada neste navegador. Clique em Criar conta.');
-  const matches = usingEmail
-    ? identifier.toLowerCase() === String(state.customer.email || '').toLowerCase()
-    : onlyDigits(identifier) === onlyDigits(state.customer.phone);
-  if (!matches || password !== state.customer.password) return toast('Telefone, e-mail ou senha incorretos');
-  state.customer.logged = true;
-  save();
-  setPage('cliente');
-  toast('Login realizado');
+  try {
+    await window.APETE_BACKEND.signIn(identifier,password);
+    await syncBackendState();
+    setPage('cliente');
+    toast('Login realizado.','success');
+  } catch(error) { toast(error.message||'Não foi possível entrar.'); }
 }
-
 function loginMerchant() {
   const owner = $('#merchant-owner')?.value.trim();
   const identifier = ($('#merchant-identifier')?.value || '').trim();
@@ -1320,8 +1324,49 @@ function selectRegion(){
   openModal('Onde você quer receber?',`<p>Escolha o município. Não presumimos entregas entre cidades.</p><label for="regional-city">Município</label><select id="regional-city" class="select">${REGIONAL_CITIES.map(city=>`<option ${state.city===city?'selected':''}>${esc(city)}</option>`).join('')}</select><p class="note">Os estabelecimentos são fictícios. As áreas de atendimento da Sabiá são cadastradas no servidor.</p><button class="primary-btn" data-action="save-region">Confirmar cidade</button>`);
 }
 
+async function syncBackendState({renderAfter=true}={}) {
+  if(!window.APETE_BACKEND?.configured()) return false;
+  try {
+    const current=await window.APETE_BACKEND.session();
+    if(!current){
+      state.customer={...state.customer,logged:false};
+      state.merchant={...state.merchant,logged:false};
+      save();
+      if(renderAfter) render();
+      return false;
+    }
+    const profile=await window.APETE_BACKEND.profile();
+    if(profile){
+      state.customer={
+        ...state.customer,logged:true,
+        name:profile.full_name||state.customer.name||'Cliente APETÊ',
+        email:current.user.email||state.customer.email||'',
+        phone:profile.phone||state.customer.phone||'',
+        address:profile.address||state.customer.address||'',
+        neighborhood:profile.neighborhood||state.customer.neighborhood||''
+      };
+    }
+    state.orders=await window.APETE_BACKEND.myOrders();
+    const memberships=await window.APETE_BACKEND.memberships();
+    if(memberships.length){
+      const membership=memberships[0],store=membership.store;
+      state.merchant={
+        ...state.merchant,logged:true,owner:state.customer.name,phone:state.customer.phone,email:state.customer.email,
+        storeId:Number(store.public_id),backendStoreId:store.id,role:membership.role,verified:Boolean(store.verified)
+      };
+    } else state.merchant={...state.merchant,logged:false};
+    save();
+    if(renderAfter) render();
+    return true;
+  } catch(error) {
+    console.warn('backend_sync_failed',error);
+    return false;
+  }
+}
+
 render();
 detectSabiaMode();
+syncBackendState();
 $('#content').addEventListener('click', (event) => {
   const button = event.target.closest('[data-action]');
   if (!button) return;
@@ -1345,11 +1390,16 @@ $('#content').addEventListener('click', (event) => {
   if (action === 'save-merchant-profile') saveMerchantProfile();
   if (action === 'advance-order') advanceOrder(button.dataset.id);
   if (action === 'cancel-order') cancelOrder(button.dataset.id);
-  if (action === 'logout-merchant') { state.merchant.logged = false; save(); setPage('comerciante-entrar'); }
+  if (action === 'logout-merchant') {
+    window.APETE_BACKEND?.signOut().catch(()=>{});
+    state.merchant={...state.merchant,logged:false};state.customer={...state.customer,logged:false};save();setPage('comerciante-entrar');
+  }
   if (action === 'logout-customer') {
+    window.APETE_BACKEND?.signOut().catch(()=>{});
     state.customer = state.customer.demo && state.ui.savedCustomerBeforeDemo
       ? {...state.ui.savedCustomerBeforeDemo, logged:false}
       : {...state.customer, logged:false};
+    state.merchant={...state.merchant,logged:false};
     state.ui.savedCustomerBeforeDemo=null;
     state.ui.demoOptOut=true;
     save();setPage('entrar');

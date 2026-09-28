@@ -178,3 +178,10 @@ test('total de conjunto multiplica quantidade mas cobra uma taxa por estabelecim
  assert.equal(bundleTotal(sameStore,'delivery','products'),13300);
  assert.equal(bundleTotal(sameStore,'pickup'),13300);
 });
+
+
+test('pedido saudável ou de dieta vaga exige esclarecimento em vez de inferir atributo',()=>{
+ assert.equal(localIntent('quero algo saudável').action,'clarify');
+ assert.equal(localIntent('quero almoço saudável').action,'clarify');
+ assert.equal(localIntent('quero algo pra dieta').action,'clarify');
+});

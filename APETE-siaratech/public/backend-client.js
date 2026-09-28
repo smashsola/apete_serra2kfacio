@@ -214,8 +214,147 @@
     };
   }
 
+  async function submitMerchantApplication({storeName,phone,city,document,instagram}) {
+    const session=await getSession();
+    if(!session?.user?.id)throw new Error('authentication_required');
+    const rows=await authed('/rest/v1/merchant_applications',{
+      method:'POST',
+      body:{user_id:session.user.id,store_name:storeName,phone,city,document,instagram,status:'pending'},
+      headers:{Prefer:'return=representation'}
+    });
+    return Array.isArray(rows)?rows[0]:rows;
+  }
+
+  async function getMerchantApplication() {
+    const session=await getSession();
+    if(!session?.user?.id)return null;
+    const rows=await authed('/rest/v1/merchant_applications?select=id,store_name,phone,city,document,instagram,status,reviewed_at,created_at&user_id=eq.'+encodeURIComponent(session.user.id)+'&order=created_at.desc&limit=1');
+    return rows?.[0]||null;
+  }
+
+  async function getMerchantMemberships() {
+    const session=await getSession();
+    if(!session?.user?.id)return [];
+    const select='store_id,role,stores(id,public_id,name,category,city,description,delivery_fee,producer,delivery,pickup,service_areas,cover,verified,active,instagram,contact_phone)';
+    const rows=await authed('/rest/v1/store_members?select='+encodeURIComponent(select)+'&user_id=eq.'+encodeURIComponent(session.user.id));
+    return (rows||[]).filter(row=>row.stores).map(row=>({
+      role:row.role,
+      store:{
+        backendId:row.stores.id,
+        id:Number(row.stores.public_id),
+        name:row.stores.name,
+        category:row.stores.category||'',
+        city:row.stores.city||'',
+        desc:row.stores.description||'',
+        fee:Number(row.stores.delivery_fee)||0,
+        producer:Boolean(row.stores.producer),
+        delivery:Boolean(row.stores.delivery),
+        pickup:Boolean(row.stores.pickup),
+        serviceAreas:Array.isArray(row.stores.service_areas)?row.stores.service_areas:[],
+        cover:row.stores.cover||'',
+        verified:Boolean(row.stores.verified),
+        open:Boolean(row.stores.active),
+        instagram:row.stores.instagram||'',
+        contactPhone:row.stores.contact_phone||''
+      }
+    }));
+  }
+
+  function mapOrder(order) {
+    const statusMap={pending:'pendente',accepted:'preparando',preparing:'preparando',ready:'pronto',out_for_delivery:'pronto',delivered:'concluido',cancelled:'cancelado'};
+    const paymentMap={pix:'Pix',card:'Cartão','card_on_delivery':'Cartão na entrega'};
+    return {
+      id:Number(order.public_number),
+      backendId:order.id,
+      createdAt:order.created_at,
+      storeId:Number(order.stores?.public_id)||0,
+      status:statusMap[order.status]||'pendente',
+      backendStatus:order.status,
+      items:(order.order_items||[]).map(item=>({
+        productId:null,backendProductId:item.product_id,name:item.product_name,
+        price:Number(item.unit_price)||0,qty:Number(item.quantity)||1
+      })),
+      subtotal:Number(order.subtotal)||0,
+      deliveryFee:Number(order.delivery_fee)||0,
+      total:Number(order.total)||0,
+      payment:order.payment_method,
+      paymentLabel:paymentMap[order.payment_method]||order.payment_method,
+      note:order.note||'',
+      customer:{
+        name:order.customer_name||'',phone:order.customer_phone||'',
+        address:order.address||'',neighborhood:order.neighborhood||''
+      }
+    };
+  }
+
+  async function loadMerchantOrders(storeBackendId) {
+    if(!storeBackendId)return [];
+    const select='id,public_number,store_id,status,mode,city,customer_name,customer_phone,address,neighborhood,note,payment_method,subtotal,delivery_fee,total,created_at,order_items(product_id,product_name,unit_price,quantity,line_subtotal),stores(public_id,name)';
+    const rows=await authed('/rest/v1/orders?select='+encodeURIComponent(select)+'&store_id=eq.'+encodeURIComponent(storeBackendId)+'&order=created_at.desc');
+    return (rows||[]).map(mapOrder);
+  }
+
+  async function updateOrderStatus(orderBackendId,status) {
+    const allowed=new Set(['pending','accepted','preparing','ready','out_for_delivery','delivered','cancelled']);
+    if(!allowed.has(status))throw new Error('invalid_order_status');
+    const rows=await authed('/rest/v1/orders?id=eq.'+encodeURIComponent(orderBackendId),{
+      method:'PATCH',body:{status},headers:{Prefer:'return=representation'}
+    });
+    return Array.isArray(rows)?rows[0]:rows;
+  }
+
+  async function updateStoreProfile(storeBackendId,values) {
+    const body={};
+    const map={name:'name',category:'category',city:'city',desc:'description',instagram:'instagram',contactPhone:'contact_phone'};
+    for(const [source,target] of Object.entries(map))if(values[source]!==undefined)body[target]=values[source];
+    const rows=await authed('/rest/v1/stores?id=eq.'+encodeURIComponent(storeBackendId),{
+      method:'PATCH',body,headers:{Prefer:'return=representation'}
+    });
+    return Array.isArray(rows)?rows[0]:rows;
+  }
+
+  async function saveMerchantProduct(storeBackendId,product) {
+    const body={
+      store_id:storeBackendId,
+      name:product.name,
+      description:product.desc||'',
+      category:product.cat||'',
+      price:Number(product.price)||0,
+      stock:Number(product.stock)||0,
+      image:product.image||'',
+      old_price:Number(product.oldPrice)||0,
+      last_batch:Boolean(product.lastBatch),
+      preferences:Array.isArray(product.preferences)?product.preferences:[],
+      serves:Number.isInteger(product.serves)&&product.serves>0?product.serves:null,
+      active:product.available!==false
+    };
+    if(product.backendId){
+      delete body.store_id;
+      const rows=await authed('/rest/v1/products?id=eq.'+encodeURIComponent(product.backendId),{
+        method:'PATCH',body,headers:{Prefer:'return=representation'}
+      });
+      return Array.isArray(rows)?rows[0]:rows;
+    }
+    const rows=await authed('/rest/v1/products',{
+      method:'POST',body,headers:{Prefer:'return=representation'}
+    });
+    return Array.isArray(rows)?rows[0]:rows;
+  }
+
+  async function updateMerchantProduct(productBackendId,values) {
+    const body={};
+    const map={price:'price',stock:'stock',oldPrice:'old_price',lastBatch:'last_batch',active:'active'};
+    for(const [source,target] of Object.entries(map))if(values[source]!==undefined)body[target]=values[source];
+    const rows=await authed('/rest/v1/products?id=eq.'+encodeURIComponent(productBackendId),{
+      method:'PATCH',body,headers:{Prefer:'return=representation'}
+    });
+    return Array.isArray(rows)?rows[0]:rows;
+  }
+
   window.APETE_BACKEND={
     hasStoredSession,getSession,getProfile,updateProfile,signUpCustomer,signInCustomer,signOut,
-    loadOrders,createOrder,loadCatalog
+    loadOrders,createOrder,loadCatalog,
+    submitMerchantApplication,getMerchantApplication,getMerchantMemberships,loadMerchantOrders,
+    updateOrderStatus,updateStoreProfile,saveMerchantProduct,updateMerchantProduct
   };
 })();

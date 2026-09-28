@@ -153,3 +153,16 @@ test('troca explícita limpa restrições semânticas antigas quando a nova inte
  assert.deepEqual(switched.exclusions,[]);
  assert.equal(switched.serves,null);
 });
+
+
+test('remover orçamento não apaga o assunto e fato curto continua no escopo anterior',()=>{
+ const meal=localIntent('quero almoço até 40');
+ const reset=localIntent('esquece o limite',meal);
+ assert.equal(reset.topic,'meal');
+ assert.equal(reset.keepPreviousContext,true);
+ const cheapest=localIntent('qual o mais barato?',meal);
+ assert.equal(cheapest.topic,'meal');
+ assert.equal(cheapest.action,'fact');
+ assert.equal(cheapest.fact,'cheapest');
+ assert.equal(cheapest.keepPreviousContext,true);
+});

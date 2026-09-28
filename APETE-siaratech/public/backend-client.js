@@ -2,6 +2,7 @@
   const SUPABASE_URL='https://inmpyytgyitqtcaococm.supabase.co';
   const SUPABASE_KEY='sb_publishable_L82vbDaHqkFdqplNgi1XtA_34Pus6MH';
   const SESSION_KEY='apete-supabase-session-v1';
+  const LEGAL_VERSIONS=Object.freeze({terms:'2026-09-28-v1',privacy:'2026-09-28-v1',merchant_terms:'2026-09-28-v1'});
 
   const readSession=()=>{
     try{
@@ -215,6 +216,36 @@
     };
   }
 
+  async function acceptLegalDocuments(documentTypes) {
+    const session=await getSession();
+    if(!session?.user?.id)throw new Error('authentication_required');
+    const unique=[...new Set((documentTypes||[]).filter(type=>LEGAL_VERSIONS[type]))];
+    if(!unique.length)return [];
+    const body=unique.map(type=>({
+      user_id:session.user.id,
+      document_type:type,
+      version:LEGAL_VERSIONS[type]
+    }));
+    await authed('/rest/v1/legal_acceptances?on_conflict=user_id,document_type,version',{
+      method:'POST',
+      body,
+      headers:{Prefer:'resolution=merge-duplicates,return=minimal'}
+    });
+    return unique;
+  }
+
+  async function getLegalAcceptances() {
+    const session=await getSession();
+    if(!session?.user?.id)return [];
+    const rows=await authed('/rest/v1/legal_acceptances?select=document_type,version,accepted_at&user_id=eq.'+encodeURIComponent(session.user.id)+'&order=accepted_at.desc');
+    return rows||[];
+  }
+
+  function hasCurrentLegalAcceptances(rows,documentTypes) {
+    const accepted=new Set((rows||[]).map(row=>row.document_type+':'+row.version));
+    return (documentTypes||[]).every(type=>accepted.has(type+':'+LEGAL_VERSIONS[type]));
+  }
+
   async function submitMerchantApplication({storeName,phone,city,document,instagram}) {
     const session=await getSession();
     if(!session?.user?.id)throw new Error('authentication_required');
@@ -353,7 +384,9 @@
   }
 
   window.APETE_BACKEND={
+    LEGAL_VERSIONS,
     hasStoredSession,getSession,getProfile,updateProfile,signUpCustomer,signInCustomer,signOut,
+    acceptLegalDocuments,getLegalAcceptances,hasCurrentLegalAcceptances,
     loadOrders,createOrder,loadCatalog,
     submitMerchantApplication,getMerchantApplication,getMerchantMemberships,loadMerchantOrders,
     updateOrderStatus,updateStoreProfile,saveMerchantProduct,updateMerchantProduct

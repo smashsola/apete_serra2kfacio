@@ -109,3 +109,22 @@ test('painel real altera somente status pela rota autenticada',async()=>{
   await backend.updateOrderStatus('order-id','ready');
   assert.deepEqual(sent,{status:'ready'});
 });
+
+
+test('aceites legais usam versão atual e JWT do próprio usuário',async()=>{
+  memory.clear();
+  await loginSession();
+  let sent=null;
+  globalThis.fetch=async(url,options)=>{
+    assert.match(String(url),/\/rest\/v1\/legal_acceptances\?on_conflict=/);
+    assert.equal(options.method,'POST');
+    assert.equal(options.headers.Authorization,'Bearer user-jwt');
+    sent=JSON.parse(options.body);
+    return response(null,204);
+  };
+  await backend.acceptLegalDocuments(['terms','privacy','terms']);
+  assert.equal(sent.length,2);
+  assert.deepEqual(sent.map(item=>item.document_type).sort(),['privacy','terms']);
+  assert.equal(sent.every(item=>item.user_id==='11111111-1111-1111-1111-111111111111'),true);
+  assert.equal(sent.every(item=>item.version==='2026-09-28-v1'),true);
+});

@@ -934,6 +934,8 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  if(!safeId(body.conversationId)||typeof body.question!=='string'||!body.question.trim()||body.question.length>1200||!validCity(body.city)||!['delivery','pickup'].includes(body.mode))return failure('invalid_request','Pergunta ou cidade inválida.',400);
  const immediateSemantic=localSemanticIntent(body.question);
  if(immediateSemantic.action==='chat')return response({text:'Oi! Posso te ajudar a encontrar algo do catálogo, comparar opções ou montar um pedido.',provider:'rules',model:'conversation-v1',products:[],stores:[],demo:true});
+ const vagueHealth=immediateSemantic.action==='clarify'&&(!immediateSemantic.preferences?.length)&&(immediateSemantic.modifiers?.includes('healthy')||/\b(?:dieta|regime)\b/.test(normalizedText(body.question)));
+ if(vagueHealth)return response({text:'Posso considerar uma preferência ou restrição cadastrada, como vegetariano ou vegano. O catálogo não classifica produtos como “saudáveis”, “fitness” ou bons para emagrecimento sem esse dado explícito.',provider:'rules',model:'health-guard-v1',products:[],stores:[],demo:true});
  const prior=messagesFor(body),baseConstraints=conversationConstraints(body.question,prior),fallbackIntent=conversationIntent(body.question,prior);
  const available=availableCatalog(body.city,body.mode),fallbackSemantic=semanticFallbackIntent(body.question,prior);
  const semanticMessages=[{role:'system',content:semanticContext(body.city,body.mode,baseConstraints,available,fallbackSemantic)},...prior,{role:'user',content:body.question.trim()}];

@@ -308,7 +308,8 @@ if (AUTH_PAGE === 'entrar' || AUTH_PAGE === 'cadastro') {
 
 function save() {
   const customer={...(state.customer||{}),password:''};
-  localStorage.setItem(KEY, JSON.stringify({...state,customer,chat:[]}));
+  const merchant={...(state.merchant||{}),password:''};
+  localStorage.setItem(KEY, JSON.stringify({...state,customer,merchant,chat:[]}));
 }
 
 async function hydrateCatalogFromBackend() {
@@ -422,6 +423,27 @@ async function refreshMerchantBackend({rerender=false}={}) {
     if(rerender&&state.page==='comerciante')render();
   }catch(error){
     console.warn('apete_backend_merchant_orders',{message:String(error?.message||error).slice(0,180)});
+  }
+}
+
+async function restoreMerchantFromBackend() {
+  if(!state.merchant?.backend||!window.APETE_BACKEND?.hasStoredSession?.())return;
+  try{
+    const memberships=await window.APETE_BACKEND.getMerchantMemberships();
+    const membership=memberships.find(item=>item.store.backendId===state.merchant.backendStoreId||item.store.id===state.merchant.storeId);
+    if(!membership)throw new Error('merchant_access_revoked');
+    applyMerchantMembership(membership,state.merchant.owner);
+    state.merchantOrders=await window.APETE_BACKEND.loadMerchantOrders(state.merchant.backendStoreId);
+    save();
+    if(AUTH_PAGE==='comerciante-entrar'||AUTH_PAGE==='comerciante-cadastro'){
+      location.replace('index.html#comerciante');
+      return;
+    }
+    if(state.page==='comerciante')render();
+  }catch(error){
+    state.merchant={...initialState().merchant};
+    state.merchantOrders=[];
+    save();
   }
 }
 function toast(message, tone = 'normal') {
@@ -853,7 +875,7 @@ function merchantEntry() {
   const tab = state.ui.merchantAuthTab;
   return `
     <section class="merchant-layout">
-      <article class="merchant-box"><div class="merchant-body"><div class="tabs"><button class="tab-btn ${tab === 'entrar' ? 'active' : ''}" data-action="switch-merchant-tab" data-tab="entrar">Entrar no painel</button><button class="tab-btn ${tab === 'cadastro' ? 'active' : ''}" data-action="switch-merchant-tab" data-tab="cadastro">Cadastrar loja</button></div>${tab === 'entrar' ? `<div class="field-grid"><div class="field"><label>Responsável <span class="required-mark">*</span></label><input id="merchant-owner" class="input" placeholder="Nome do responsável"></div><div class="field"><label>Telefone ou e-mail <span class="required-mark">*</span></label><input id="merchant-identifier" class="input" autocomplete="username" placeholder="DDD + número ou contato@loja.com"><small class="field-hint">Nos perfis de apresentação, entre com um telefone de teste e a senha indicada abaixo.</small></div><div class="field"><label>Escolha a loja</label><select id="merchant-store" class="select">${state.stores.map((store) => `<option value="${store.id}">${esc(store.name)}</option>`).join('')}</select></div><div class="field"><label>Senha do painel <span class="required-mark">*</span></label><input id="merchant-password" class="input" type="password" placeholder="Digite a senha do painel"></div></div><p class="note" style="margin-top:12px">Para os perfis base desta apresentação, use a senha <strong>1234</strong>.</p><div class="row" style="margin-top:14px"><button class="primary-btn" data-action="login-merchant">Entrar no painel</button></div>` : `<div class="field-grid"><div class="field"><label>Nome da loja <span class="required-mark">*</span></label><input id="merchant-register-store" class="input" placeholder="Minha loja da Serra"></div><div class="field"><label>Responsável <span class="required-mark">*</span></label><input id="merchant-register-owner" class="input" placeholder="Seu nome"></div><div class="field"><label>Telefone <span class="required-mark">*</span></label><input id="merchant-register-phone" class="input phone-only" inputmode="numeric" maxlength="11" placeholder="DDD + número, sem símbolos"></div><div class="field"><label>E-mail do responsável</label><input id="merchant-register-email" class="input" type="email" autocomplete="email" placeholder="contato@loja.com (opcional)"></div><div class="field"><label>Cidade</label><input id="merchant-register-city" class="input" placeholder="Guaraciaba do Norte"></div><div class="field"><label>Senha do painel <span class="required-mark">*</span></label><input id="merchant-register-password" class="input" type="password" placeholder="Mínimo 8 caracteres, com letras e números"></div><div class="field"><label>Confirmar senha <span class="required-mark">*</span></label><input id="merchant-register-password-confirm" class="input" type="password" placeholder="Repita a senha"></div></div><div class="field-grid" style="margin-top:12px"><div class="field"><label>CNPJ ou documento do empreendimento</label><input id="merchant-register-document" class="input" placeholder="CNPJ ou documento comercial"></div><div class="field"><label>Instagram da loja <span class="required-mark">*</span></label><input id="merchant-register-proof" class="input" placeholder="@sualoja" inputmode="text"></div></div><div class="field" style="margin-top:12px"><label>Base do painel</label><select id="merchant-register-base" class="select">${state.stores.map((store) => `<option value="${store.id}">${esc(store.name)}</option>`).join('')}</select></div><label class="check-line"><input id="merchant-register-confirm" type="checkbox"> <span>Confirmo que sou responsável oficial pelo empreendimento.</span></label><div class="row" style="margin-top:14px"><button class="primary-btn" data-action="register-merchant">Enviar cadastro</button></div>`}</div></article>
+      <article class="merchant-box"><div class="merchant-body"><div class="tabs"><button class="tab-btn ${tab === 'entrar' ? 'active' : ''}" data-action="switch-merchant-tab" data-tab="entrar">Entrar no painel</button><button class="tab-btn ${tab === 'cadastro' ? 'active' : ''}" data-action="switch-merchant-tab" data-tab="cadastro">Cadastrar loja</button></div>${tab === 'entrar' ? `<div class="field-grid"><div class="field"><label>Responsável <span class="required-mark">*</span></label><input id="merchant-owner" class="input" placeholder="Nome do responsável"></div><div class="field"><label>Telefone ou e-mail <span class="required-mark">*</span></label><input id="merchant-identifier" class="input" autocomplete="username" placeholder="DDD + número ou contato@loja.com"><small class="field-hint">Nos perfis de apresentação, entre com um telefone de teste e a senha indicada abaixo.</small></div><div class="field"><label>Escolha a loja</label><select id="merchant-store" class="select">${state.stores.map((store) => `<option value="${store.id}">${esc(store.name)}</option>`).join('')}</select></div><div class="field"><label>Senha do painel <span class="required-mark">*</span></label><input id="merchant-password" class="input" type="password" placeholder="Digite a senha do painel"></div></div><p class="note" style="margin-top:12px">Para os perfis base desta apresentação, use a senha <strong>1234</strong>.</p><div class="row" style="margin-top:14px"><button class="primary-btn" data-action="login-merchant">Entrar no painel</button></div>` : `<div class="field-grid"><div class="field"><label>Nome da loja <span class="required-mark">*</span></label><input id="merchant-register-store" class="input" placeholder="Minha loja da Serra"></div><div class="field"><label>Responsável <span class="required-mark">*</span></label><input id="merchant-register-owner" class="input" placeholder="Seu nome"></div><div class="field"><label>Telefone <span class="required-mark">*</span></label><input id="merchant-register-phone" class="input phone-only" inputmode="numeric" maxlength="11" placeholder="DDD + número, sem símbolos"></div><div class="field"><label>E-mail do responsável</label><input id="merchant-register-email" class="input" type="email" autocomplete="email" placeholder="contato@loja.com (opcional)"></div><div class="field"><label>Cidade</label><input id="merchant-register-city" class="input" placeholder="Guaraciaba do Norte"></div><div class="field"><label>Senha do painel <span class="required-mark">*</span></label><input id="merchant-register-password" class="input" type="password" placeholder="Mínimo 8 caracteres, com letras e números"></div><div class="field"><label>Confirmar senha <span class="required-mark">*</span></label><input id="merchant-register-password-confirm" class="input" type="password" placeholder="Repita a senha"></div></div><div class="field-grid" style="margin-top:12px"><div class="field"><label>CNPJ ou documento do empreendimento</label><input id="merchant-register-document" class="input" placeholder="CNPJ ou documento comercial"></div><div class="field"><label>Instagram da loja <span class="required-mark">*</span></label><input id="merchant-register-proof" class="input" placeholder="@sualoja" inputmode="text"></div></div><label class="check-line"><input id="merchant-register-confirm" type="checkbox"> <span>Confirmo que sou responsável oficial pelo empreendimento.</span></label><div class="row" style="margin-top:14px"><button class="primary-btn" data-action="register-merchant">Enviar cadastro</button></div>`}</div></article>
       <article class="merchant-box accent-box"><div class="merchant-body"><span class="chip plum">Área do comerciante</span><h3>Painel separado do cliente</h3><p>Pedidos pendentes, em preparo, prontos e concluídos ficam aqui, com todas as informações: itens, pagamento, endereço, telefone e observações.</p><ul class="kv"><li><strong>Abas</strong><span>Pendentes, Em preparo, Prontos, Concluídos, Produtos e Cadastro</span></li><li><strong>Pedidos</strong><span>Atualização de status em um clique</span></li><li><strong>Confirmação</strong><span>Senha do painel + identificação oficial do empreendimento</span></li></ul></div></article>
     </section>`;
 }
@@ -1574,6 +1596,7 @@ function selectRegion(){
 render();
 hydrateCatalogFromBackend();
 restoreCustomerFromBackend();
+restoreMerchantFromBackend();
 detectSabiaMode();
 $('#content').addEventListener('click', (event) => {
   const button = event.target.closest('[data-action]');

@@ -104,7 +104,7 @@ function isSearchModifier(text,constraints=requestConstraints(text)){
    .replace(/\b(?:so|somente|apenas)\s+(?:(?:a|o|os)\s+)?(?:comida|produtos?|itens)\b/g,'')
    .replace(/\b(?:com|incluindo)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa)\b/g,'')
    .replace(/\b(?:fora|excluindo|tirando|descontando)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa)\b/g,'')
-   .replace(/\b(?:pode ser|pode ficar|pode custar|ate|no maximo|orcamento(?: de)?|limite de|pode passar(?: de)?|nao precisa ser ate|sem limite|sem teto)\b/g,'')
+   .replace(/\b(?:pode ser|pode ficar|pode custar|ate|no maximo|orcamento(?: de)?|limite de|pode passar(?: de)?|nao precisa ser ate|sem limite|sem teto|(?:esquec\w*|tir\w*|remov\w*|ignor\w*)\s+(?:o\s+)?(?:limite|teto|orcamento))\b/g,'')
    .replace(/r\$|\d+(?:[.,]\d{1,2})?/g,'')
    .replace(/\b(?:quero|queria|um|uma|algo|alguma|coisa|opcao|item|reais|e|mas|entao|agora|cara|mano|ai|so|somente|apenas)\b|[\s,.;!?]/g,'');
  return !remainder&&(constraints.budgetChanged||constraints.budgetScope!==null);
@@ -935,12 +935,6 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  if(!safeId(body.conversationId)||typeof body.question!=='string'||!body.question.trim()||body.question.length>1200||!validCity(body.city)||!['delivery','pickup'].includes(body.mode))return failure('invalid_request','Pergunta ou cidade inválida.',400);
  const immediateSemantic=localSemanticIntent(body.question);
  if(immediateSemantic.action==='chat')return response({text:'Oi! Posso te ajudar a encontrar algo do catálogo, comparar opções ou montar um pedido.',provider:'rules',model:'conversation-v1',products:[],stores:[],demo:true});
- const factAnswer=catalogFactAnswer(body.city,body.mode,body.question);
- if(factAnswer){
-  const products=factAnswer.productIds.map(id=>productInfo(productById.get(id),body.city,body.mode)).filter(Boolean);
-  const {productIds,...publicAnswer}=factAnswer;
-  return response({...publicAnswer,products,stores:[],demo:true});
- }
  const prior=messagesFor(body),baseConstraints=conversationConstraints(body.question,prior),fallbackIntent=conversationIntent(body.question,prior);
  const available=availableCatalog(body.city,body.mode),fallbackSemantic=semanticFallbackIntent(body.question,prior);
  const semanticMessages=[{role:'system',content:semanticContext(body.city,body.mode,baseConstraints,available,fallbackSemantic)},...prior,{role:'user',content:body.question.trim()}];

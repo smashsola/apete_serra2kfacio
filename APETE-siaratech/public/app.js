@@ -173,6 +173,7 @@ function initialState() {
     products: JSON.parse(JSON.stringify(PRODUCTS)),
     cart: [],
     orders: [],
+    merchantOrders: [],
     demoOrders: makeDemoOrders(),
     customer: { logged: false, name: '', email: '', phone: '', address: '', neighborhood: '', password: '' },
     merchant: { logged: false, owner: '', storeId: 1, phone: '', email: '', password: '', document: '', officialProof: '', verified: false },
@@ -204,6 +205,7 @@ try {
     }
   }
   if (!Array.isArray(state.demoOrders)) state.demoOrders = makeDemoOrders();
+  if (!Array.isArray(state.merchantOrders)) state.merchantOrders = [];
   // Não reinicia pedidos que já foram aceitos ou concluídos em versões anteriores.
   const savedDemoIds = new Set(state.demoOrders.map(order => order.id));
   for (const order of extraPendingOrders()) {
@@ -386,6 +388,42 @@ async function restoreCustomerFromBackend() {
     save();
   }
 }
+
+function applyMerchantMembership(membership,owner='') {
+  const remote=membership?.store;
+  if(!remote)return false;
+  const current=getStore(remote.id);
+  if(current)Object.assign(current,remote);
+  else state.stores.push(remote);
+  state.merchant={
+    logged:true,
+    backend:true,
+    owner:owner||state.customer?.name||'Responsável',
+    storeId:remote.id,
+    backendStoreId:remote.backendId,
+    phone:remote.contactPhone||state.customer?.phone||'',
+    email:state.customer?.email||'',
+    password:'',
+    document:'',
+    officialProof:remote.instagram||'',
+    verified:Boolean(remote.verified),
+    role:membership.role||'staff'
+  };
+  state.ui.presentationMerchant=false;
+  state.ui.merchantPanelTab='pendentes';
+  return true;
+}
+
+async function refreshMerchantBackend({rerender=false}={}) {
+  if(!state.merchant?.backend||!state.merchant.backendStoreId||!window.APETE_BACKEND?.loadMerchantOrders)return;
+  try{
+    state.merchantOrders=await window.APETE_BACKEND.loadMerchantOrders(state.merchant.backendStoreId);
+    save();
+    if(rerender&&state.page==='comerciante')render();
+  }catch(error){
+    console.warn('apete_backend_merchant_orders',{message:String(error?.message||error).slice(0,180)});
+  }
+}
 function toast(message, tone = 'normal') {
   const el = $('#toast');
   el.textContent = message;
@@ -466,6 +504,7 @@ function setPage(next, storeId = null) {
   render();
   if(next==='sabia')detectSabiaMode();
   if(next==='pedidos')refreshCustomerOrders({rerender:true});
+  if(next==='comerciante'&&state.merchant?.backend)refreshMerchantBackend({rerender:true});
   if(next!=='sabia')window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
@@ -776,7 +815,7 @@ function merchantAuthPage(mode = 'entrar') {
       ${cadastro ? `<div class="field-grid">
         <div class="field"><label>Nome da loja <span class="required-mark">*</span></label><input id="merchant-register-store" class="input" placeholder="Nome do empreendimento"></div>
         <div class="field"><label>Responsável <span class="required-mark">*</span></label><input id="merchant-register-owner" class="input" placeholder="Seu nome"></div>
-        <div class="field"><label>Telefone <span class="required-mark">*</span></label><input id="merchant-register-phone" class="input phone-only" inputmode="numeric" maxlength="11" placeholder="DDD + número, sem símbolos"></div><div class="field"><label>E-mail do responsável</label><input id="merchant-register-email" class="input" type="email" autocomplete="email" placeholder="contato@loja.com (opcional)"></div>
+        <div class="field"><label>Telefone <span class="required-mark">*</span></label><input id="merchant-register-phone" class="input phone-only" inputmode="numeric" maxlength="11" placeholder="DDD + número, sem símbolos"></div><div class="field"><label>E-mail do responsável <span class="required-mark">*</span></label><input id="merchant-register-email" class="input" type="email" autocomplete="email" placeholder="contato@loja.com"></div>
         <div class="field"><label>Cidade</label><input id="merchant-register-city" class="input" placeholder="Sua cidade"></div>
         <div class="field"><label>Senha do painel <span class="required-mark">*</span></label><input id="merchant-register-password" class="input" type="password" autocomplete="new-password" placeholder="8 caracteres, letras e números"></div>
         <div class="field"><label>Confirmar senha <span class="required-mark">*</span></label><input id="merchant-register-password-confirm" class="input" type="password" autocomplete="new-password" placeholder="Repita a senha"><small id="merchant-password-feedback" class="field-hint" aria-live="polite"></small></div>
@@ -922,7 +961,9 @@ function merchantPage() {
   if (!merchantAccess()) return merchantAuthPage('entrar');
   const store=activeMerchantStore();
   const tab=state.ui.merchantPanelTab;
-  const allOrders=[...state.orders.filter(o=>o.storeId===store.id),...state.demoOrders.filter(o=>o.storeId===store.id)]
+  const allOrders=(state.merchant?.backend
+    ? [...state.merchantOrders]
+    : [...state.orders.filter(o=>o.storeId===store.id),...state.demoOrders.filter(o=>o.storeId===store.id)])
     .sort((a,b)=>Number(!!a.demo)-Number(!!b.demo)||new Date(b.createdAt)-new Date(a.createdAt));
   const pending=allOrders.filter(o=>o.status==='pendente');
   const preparing=allOrders.filter(o=>o.status==='preparando');
@@ -1265,6 +1306,7 @@ function saveMerchantProfile() {
 function findMerchantOrder(orderId) {
   const id=Number(orderId);
   const storeId=activeMerchantStore().id;
+  if(state.merchant?.backend)return state.merchantOrders.find(o=>o.id===id&&o.storeId===storeId);
   return state.orders.find(o=>o.id===id && o.storeId===storeId)
     || state.demoOrders.find(o=>o.id===id && o.storeId===storeId);
 }

@@ -119,3 +119,37 @@ test('tolera erro pequeno em palavra central sem depender da frase inteira',()=>
  }
  assert.equal(localIntent('uma bebda').topic,'drink');
 });
+
+
+test('captura exclusões naturais sem confundir entrega e orçamento',()=>{
+ for(const [text,expected] of [
+  ['quero almoço sem tomate','tomate'],
+  ['não quero carne','carne'],
+  ['evita queijo','queijo'],
+  ['tira coentro','coentro']
+ ]){
+  const intent=localIntent(text);
+  assert.ok(intent.exclusions.includes(expected),text);
+ }
+ assert.deepEqual(localIntent('até 40 sem contar entrega').exclusions,[]);
+ assert.deepEqual(localIntent('sem limite').exclusions,[]);
+});
+
+test('quantidade de pessoas é semântica e acompanha follow-up',()=>{
+ const initial=localIntent('quero almoço para duas pessoas');
+ assert.equal(initial.topic,'meal');
+ assert.equal(initial.serves,2);
+ const follow=localIntent('tem outra opção?',initial);
+ assert.equal(follow.serves,2);
+ assert.equal(follow.keepPreviousContext,true);
+ assert.equal(localIntent('somos 4 e quero lanche').serves,4);
+});
+
+test('troca explícita limpa restrições semânticas antigas quando a nova intenção substitui o pedido',()=>{
+ const initial=localIntent('quero almoço sem tomate para duas pessoas');
+ const switched=localIntent('na verdade quero sobremesa',initial);
+ assert.equal(switched.topic,'dessert');
+ assert.equal(switched.action,'switch');
+ assert.deepEqual(switched.exclusions,[]);
+ assert.equal(switched.serves,null);
+});

@@ -33,7 +33,7 @@ function requestConstraints(text){
  const clean=normalizedText(text);let budget=null,budgetChanged=false,budgetScope=null;
  // Process budget events in sentence order; a relaxation must not become a new cap.
  const events=[];
- const removal=/\b(?:pode(?:m)?\s+(?:passar|ultrapassar|exceder)(?:\s+(?:de|dos?))?(?:\s+r\$)?(?:\s*\d+(?:[.,]\d{1,2})?)?(?:\s*reais)?|nao\s+precisa\s+(?:ser|ficar|custar)?\s*(?:ate|abaixo de|no maximo)(?:\s+r\$)?(?:\s*\d+(?:[.,]\d{1,2})?)?(?:\s*reais)?|sem\s+(?:limite|teto|restricao de (?:preco|orcamento))|(?:remov\w*|tir\w*|ignor\w*)\s+(?:o\s+)?(?:limite|teto|orcamento)|qualquer\s+preco|nao\s+(?:tenho|ha)\s+limite)\b/g;
+ const removal=/\b(?:pode(?:m)?\s+(?:passar|ultrapassar|exceder)(?:\s+(?:de|dos?))?(?:\s+r\$)?(?:\s*\d+(?:[.,]\d{1,2})?)?(?:\s*reais)?|nao\s+precisa\s+(?:ser|ficar|custar)?\s*(?:ate|abaixo de|no maximo)(?:\s+r\$)?(?:\s*\d+(?:[.,]\d{1,2})?)?(?:\s*reais)?|sem\s+(?:limite|teto|restricao de (?:preco|orcamento))|(?:remov\w*|tir\w*|ignor\w*|esquec\w*)\s+(?:o\s+)?(?:limite|teto|orcamento)|qualquer\s+preco|nao\s+(?:tenho|ha)\s+limite)\b/g;
  const relaxations=[...clean.matchAll(removal)];
  for(const match of relaxations)events.push({index:match.index,budget:null});
  for(const pattern of [/r\$\s*(\d+(?:[.,]\d{1,2})?)/g,/(?:orcamento(?: de)?|ate|no maximo|limite de|teto de)\s*(?:r\$\s*)?(\d+(?:[.,]\d{1,2})?)/g,/(\d+(?:[.,]\d{1,2})?)\s*reais/g]){
@@ -409,7 +409,7 @@ async function callProvider(name,env,messages){
 
 const blocked=new Map(); // Best-effort per-isolate cooldown; no global quota promise.
 async function generate(env,messages,catalog,mode,constraints){
- // Cloudflare is the proven healthy primary in Preview. Reserve remains the last fallback.
+ // Provider order is deliberate: Groq → Gemini → Cloudflare → deterministic reserve.
  const choices=[['groq',env.GROQ_API_KEY],['gemini',env.GEMINI_API_KEY],['cloudflare',env.AI]].filter(([,binding])=>Boolean(binding));
  if(!choices.length)throw {code:'not_configured',status:503};
  let last=null;
@@ -892,7 +892,7 @@ async function generateSemantic(env,messages,city,mode,query,prior,baseConstrain
 }
 
 async function route(req,env){const url=new URL(req.url);const path=url.pathname;
- if(path==='/api/sabia/status'&&req.method==='GET'){const providers=[env.GROQ_API_KEY?'Groq':null,env.AI?'Cloudflare Workers AI':null,env.GEMINI_API_KEY?'Gemini':null].filter(Boolean);return response({mode:providers.length?'generative':'unavailable',configured:providers.length>0,providers,message:providers.length?'Sabiá online: '+providers.join(' → '):'Sabiá ainda não configurada. Catálogo disponível.'});}
+ if(path==='/api/sabia/status'&&req.method==='GET'){const providers=[env.GROQ_API_KEY?'Groq':null,env.GEMINI_API_KEY?'Gemini':null,env.AI?'Cloudflare Workers AI':null].filter(Boolean);return response({mode:providers.length?'generative':'unavailable',configured:providers.length>0,providers,message:providers.length?'Sabiá online: '+providers.join(' → '):'Sabiá ainda não configurada. Catálogo disponível.'});}
  if(path==='/api/catalog'&&req.method==='GET')return response({...CATALOG,demo:true});
  if(!['/api/sabia/session','/api/sabia','/api/sabia/product','/api/sabia/diagnostic'].includes(path)||req.method!=='POST')return failure('not_found','Operação não encontrada.',404);
  if(!authorizedOrigin(req,url))return failure('origin','Origem não autorizada.',403);

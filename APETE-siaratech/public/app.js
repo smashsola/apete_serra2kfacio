@@ -874,7 +874,7 @@ function merchantProductForm(product = null) {
   const title = product ? 'Editar produto' : 'Adicionar produto';
   const categories = store.producer ? ['Do produtor','Frutas','Verduras','Artesanal','Orgânicos'] : ['Regional','Caseiro','Padaria','Doces','Bebidas','Vegetariano','Acompanhamentos'];
   const chosen = product?.cat || (store.producer ? 'Do produtor' : 'Regional');
-  return `<section class="merchant-editor" id="merchant-product-editor"><div class="merchant-section-heading"><div><span class="merchant-eyebrow">Cardápio · ${esc(store.name)}</span><h3>${title}</h3><p>Preencha os campos e escolha uma foto do produto. A imagem será salva neste navegador para a apresentação.</p></div></div>
+  return `<section class="merchant-editor" id="merchant-product-editor"><div class="merchant-section-heading"><div><span class="merchant-eyebrow">Cardápio · ${esc(store.name)}</span><h3>${title}</h3><p>Preencha os campos e escolha uma foto do produto. A imagem acompanha o produto; em conta real, a alteração é salva no backend.</p></div></div>
     <form id="merchant-product-form" class="merchant-edit-form">
       <div class="field-grid">
         <div class="field"><label for="mp-name">Nome do produto *</label><input class="input" id="mp-name" maxlength="70" required value="${esc(product?.name||'')}" placeholder="Ex.: Bolo de milho"></div>
@@ -892,7 +892,7 @@ function merchantProductForm(product = null) {
 }
 function merchantProductsView(products) {
   const editing = state.ui.productEditor && products.find(p=>p.id===Number(state.ui.productEditor));
-  return `<div class="merchant-section-heading"><div><span class="merchant-eyebrow">Gestão de produtos</span><h3>Seu cardápio</h3><p>Adicione um item ou edite preços, fotos e disponibilidade. Alterações aparecem na visão do cliente neste navegador.</p></div><button class="ghost-btn strong" data-action="new-product">+ Novo produto</button></div>
+  return `<div class="merchant-section-heading"><div><span class="merchant-eyebrow">Gestão de produtos</span><h3>Seu cardápio</h3><p>Adicione um item ou edite preços, fotos e disponibilidade. Em conta real, as alterações são persistidas no backend.</p></div><button class="ghost-btn strong" data-action="new-product">+ Novo produto</button></div>
     ${merchantProductForm(editing || null)}<div class="merchant-section-heading below"><h3>Produtos publicados</h3><span>${products.length} itens</span></div><div class="product-grid">${products.map(productCard).join('')}</div>`;
 }
 function merchantOffersView(products) {
@@ -922,41 +922,76 @@ async function optimizeProductPhoto(file) {
   } finally { URL.revokeObjectURL(url); }
 }
 async function saveMerchantProduct(form) {
-  if(!merchantAccess()) return;
+  if(!merchantAccess())return;
   const store=activeMerchantStore();
   const existing=state.products.find(p=>p.id===Number(state.ui.productEditor)&&p.storeId===store.id);
-  const name=$('#mp-name')?.value.trim(); const desc=$('#mp-desc')?.value.trim();
-  const basePrice=parsePrice($('#mp-price')?.value); const stock=Number($('#mp-stock')?.value);
-  const discounted=$('#mp-offer')?.checked; const offerPrice=discounted?parsePrice($('#mp-offer-price')?.value):null;
+  const name=$('#mp-name')?.value.trim(),desc=$('#mp-desc')?.value.trim();
+  const basePrice=parsePrice($('#mp-price')?.value),stock=Number($('#mp-stock')?.value);
+  const discounted=$('#mp-offer')?.checked,offerPrice=discounted?parsePrice($('#mp-offer-price')?.value):null;
   const file=$('#mp-photo')?.files?.[0];
-  if(!name||!desc||!basePrice||!Number.isInteger(stock)||stock<0||stock>9999) return toast('Preencha nome, descrição, preço e estoque válidos.');
-  if(discounted && (!offerPrice||offerPrice>=basePrice)) return toast('O preço da oferta precisa ser menor que o preço normal.');
-  if(!file&&!existing) return toast('Escolha uma foto para o novo produto.');
-  let photo=existing?.image;
-  if(file) {try{photo=await optimizeProductPhoto(file);}catch(e){return toast(e.message||'Não foi possível ler a foto.');}}
-  const next={ id:existing?.id||Math.max(...state.products.map(p=>p.id),0)+1,storeId:store.id,name,desc,cat:$('#mp-category').value,
-    price:discounted?offerPrice:basePrice,stock,image:photo,oldPrice:discounted?basePrice:0,lastBatch:!!discounted };
-  if(existing) Object.assign(existing,next); else state.products.push(next);
+  if(!name||!desc||!basePrice||!Number.isInteger(stock)||stock<0||stock>9999)return toast('Preencha nome, descrição, preço e estoque válidos.');
+  if(discounted&&(!offerPrice||offerPrice>=basePrice))return toast('O preço da oferta precisa ser menor que o preço normal.');
+  if(!file&&!existing)return toast('Escolha uma foto para o novo produto.');
+  let photo=existing?.image||'';
+  if(file){try{photo=await optimizeProductPhoto(file);}catch(error){return toast(error.message||'Não foi possível ler a foto.');}}
+  const next={
+    id:existing?.id||Math.max(...state.products.map(p=>p.id),0)+1,
+    backendId:existing?.backendId,
+    storeId:store.id,name,desc,cat:$('#mp-category').value,
+    price:discounted?offerPrice:basePrice,stock,image:photo,
+    oldPrice:discounted?basePrice:0,lastBatch:Boolean(discounted),
+    preferences:existing?.preferences||[],serves:existing?.serves??null,available:true
+  };
+  if(state.merchant?.backend){
+    if(!store.backendId)return toast('Loja real ainda não sincronizada com o backend.');
+    try{
+      await window.APETE_BACKEND.saveMerchantProduct(store.backendId,next);
+      state.ui.productEditor=0;
+      await hydrateCatalogFromBackend();
+      render();
+      toast(existing?'Produto atualizado no banco.':'Produto publicado no banco.','success');
+    }catch(error){toast(friendlyBackendError(error,'Não foi possível salvar o produto no banco.'));}
+    return;
+  }
+  if(existing)Object.assign(existing,next);else state.products.push(next);
   state.ui.productEditor=0;
-  try{save();}catch(e){return toast('Espaço do navegador insuficiente para salvar a foto. Tente uma imagem menor.');}
+  try{save();}catch{return toast('Espaço do navegador insuficiente para salvar a foto. Tente uma imagem menor.');}
   render();toast(existing?'Produto atualizado no cardápio.':'Produto publicado no cardápio.','success');
 }
-function publishMerchantOffer() {
+
+async function publishMerchantOffer() {
   if(!merchantAccess())return;
   const product=state.products.find(p=>p.id===Number($('#mo-product')?.value)&&p.storeId===activeMerchantStore().id);
   const newPrice=parsePrice($('#mo-price')?.value);
-  if(!product||product.lastBatch||!newPrice||newPrice>=product.price) return toast('Escolha um produto e um preço menor que o valor atual.');
+  if(!product||product.lastBatch||!newPrice||newPrice>=product.price)return toast('Escolha um produto e um preço menor que o valor atual.');
+  if(state.merchant?.backend){
+    if(!product.backendId)return toast('Produto ainda não sincronizado com o backend.');
+    try{
+      await window.APETE_BACKEND.updateMerchantProduct(product.backendId,{oldPrice:product.price,price:newPrice,lastBatch:true});
+      await hydrateCatalogFromBackend();render();toast('Oferta publicada no banco.','success');
+    }catch(error){toast(friendlyBackendError(error,'Não foi possível publicar a oferta.'));}
+    return;
+  }
   product.oldPrice=product.price;product.price=newPrice;product.lastBatch=true;
   save();render();toast('Oferta publicada na Última Fornada.','success');
 }
-function endMerchantOffer(id) {
+
+async function endMerchantOffer(id) {
   if(!merchantAccess())return;
-  const p=state.products.find(p=>p.id===Number(id)&&p.storeId===activeMerchantStore().id&&p.lastBatch);
-  if(!p)return;
-  p.price=p.oldPrice||p.price;p.oldPrice=0;p.lastBatch=false;
+  const product=state.products.find(p=>p.id===Number(id)&&p.storeId===activeMerchantStore().id&&p.lastBatch);
+  if(!product)return;
+  const normalPrice=product.oldPrice||product.price;
+  if(state.merchant?.backend){
+    if(!product.backendId)return toast('Produto ainda não sincronizado com o backend.');
+    try{
+      await window.APETE_BACKEND.updateMerchantProduct(product.backendId,{price:normalPrice,oldPrice:0,lastBatch:false});
+      await hydrateCatalogFromBackend();render();toast('Oferta encerrada no banco.','success');
+    }catch(error){toast(friendlyBackendError(error,'Não foi possível encerrar a oferta.'));}
+    return;
+  }
+  product.price=normalPrice;product.oldPrice=0;product.lastBatch=false;
   save();render();toast('Oferta encerrada. Preço normal restaurado.','success');
 }
-
 function merchantPage() {
   if (!merchantAccess()) return merchantAuthPage('entrar');
   const store=activeMerchantStore();
@@ -1321,49 +1356,84 @@ async function registerMerchant() {
     toast(friendlyBackendError(error,'Não foi possível enviar o cadastro do estabelecimento.'));
   }
 }
-function saveMerchantProfile() {
-  const store = activeMerchantStore();
-  store.name = $('#merchant-edit-name')?.value.trim() || store.name;
-  store.category = $('#merchant-edit-category')?.value.trim() || store.category;
-  store.city = $('#merchant-edit-city')?.value.trim() || store.city;
-  store.desc = $('#merchant-edit-desc')?.value.trim() || store.desc;
-  state.merchant.phone = $('#merchant-edit-phone')?.value.trim() || state.merchant.phone;
-  const handle=instagramHandle($('#merchant-edit-instagram')?.value);
-  if(handle) {store.instagram='@'+handle; store.officialRef=store.instagram;}
-  save();
-  render();
-  toast('Dados da loja atualizados');
+async function saveMerchantProfile() {
+  const store=activeMerchantStore();
+  const values={
+    name:$('#merchant-edit-name')?.value.trim()||store.name,
+    category:$('#merchant-edit-category')?.value.trim()||store.category,
+    city:$('#merchant-edit-city')?.value.trim()||store.city,
+    desc:$('#merchant-edit-desc')?.value.trim()||store.desc,
+    contactPhone:normalizePhone($('#merchant-edit-phone')?.value.trim()||state.merchant.phone),
+    instagram:'@'+instagramHandle($('#merchant-edit-instagram')?.value)
+  };
+  if(state.merchant?.backend){
+    try{
+      await window.APETE_BACKEND.updateStoreProfile(store.backendId,values);
+      Object.assign(store,{name:values.name,category:values.category,city:values.city,desc:values.desc,contactPhone:values.contactPhone,instagram:values.instagram});
+      state.merchant.phone=values.contactPhone;
+      state.merchant.officialProof=values.instagram;
+      save();render();toast('Dados da loja atualizados no banco.','success');
+    }catch(error){toast(friendlyBackendError(error,'Não foi possível atualizar a loja.'));}
+    return;
+  }
+  Object.assign(store,{name:values.name,category:values.category,city:values.city,desc:values.desc,instagram:values.instagram,officialRef:values.instagram});
+  state.merchant.phone=values.contactPhone;
+  save();render();toast('Dados da loja atualizados');
 }
 
 function findMerchantOrder(orderId) {
-  const id=Number(orderId);
-  const storeId=activeMerchantStore().id;
-  if(state.merchant?.backend)return state.merchantOrders.find(o=>o.id===id&&o.storeId===storeId);
-  return state.orders.find(o=>o.id===id && o.storeId===storeId)
-    || state.demoOrders.find(o=>o.id===id && o.storeId===storeId);
+  const id=Number(orderId),storeId=activeMerchantStore().id;
+  if(state.merchant?.backend)return state.merchantOrders.find(order=>order.id===id&&order.storeId===storeId);
+  return state.orders.find(order=>order.id===id&&order.storeId===storeId)
+    ||state.demoOrders.find(order=>order.id===id&&order.storeId===storeId);
 }
 
-function advanceOrder(orderId) {
-  if (!merchantAccess()) return;
-  const order = findMerchantOrder(orderId);
-  if (!order) return;
-  if (order.status === 'pendente') order.status = 'preparando';
-  else if (order.status === 'preparando') order.status = 'pronto';
-  else if (order.status === 'pronto') order.status = 'concluido';
-  save();
-  render();
-  toast(`Pedido #${String(order.id).padStart(3,'0')} atualizado`);
-}
-function cancelOrder(orderId) {
-  if (!merchantAccess()) return;
-  const order = findMerchantOrder(orderId);
-  if (!order) return;
-  order.status = 'cancelado';
-  save();
-  render();
-  toast(`Pedido #${String(order.id).padStart(3,'0')} cancelado`);
+async function advanceOrder(orderId) {
+  if(!merchantAccess())return;
+  const order=findMerchantOrder(orderId);
+  if(!order)return;
+  if(state.merchant?.backend){
+    const next={pendente:'preparing',preparando:'ready',pronto:'delivered'}[order.status];
+    if(!next)return;
+    try{
+      await window.APETE_BACKEND.updateOrderStatus(order.backendId,next);
+      await refreshMerchantBackend({rerender:true});
+      toast(`Pedido #${String(order.id).padStart(3,'0')} atualizado no banco`,'success');
+    }catch(error){toast(friendlyBackendError(error,'Não foi possível atualizar o pedido.'));}
+    return;
+  }
+  if(order.status==='pendente')order.status='preparando';
+  else if(order.status==='preparando')order.status='pronto';
+  else if(order.status==='pronto')order.status='concluido';
+  save();render();toast(`Pedido #${String(order.id).padStart(3,'0')} atualizado`);
 }
 
+async function cancelOrder(orderId) {
+  if(!merchantAccess())return;
+  const order=findMerchantOrder(orderId);
+  if(!order)return;
+  if(state.merchant?.backend){
+    try{
+      await window.APETE_BACKEND.updateOrderStatus(order.backendId,'cancelled');
+      await refreshMerchantBackend({rerender:true});
+      toast(`Pedido #${String(order.id).padStart(3,'0')} cancelado no banco`,'success');
+    }catch(error){toast(friendlyBackendError(error,'Não foi possível cancelar o pedido.'));}
+    return;
+  }
+  order.status='cancelado';save();render();toast(`Pedido #${String(order.id).padStart(3,'0')} cancelado`);
+}
+
+async function logoutMerchant() {
+  if(state.merchant?.backend){
+    try{await window.APETE_BACKEND?.signOut?.();}catch{}
+    if(state.customer?.backend){state.customer={...initialState().customer};state.orders=[];}
+  }
+  state.merchant={...initialState().merchant};
+  state.merchantOrders=[];
+  state.ui.presentationMerchant=false;
+  save();
+  setPage('comerciante-entrar');
+}
 async function useMyLocation() {
   if (locating) return;
   if (!navigator.geolocation) return toast('Seu navegador não oferece geolocalização.');
@@ -1528,7 +1598,7 @@ $('#content').addEventListener('click', (event) => {
   if (action === 'save-merchant-profile') saveMerchantProfile();
   if (action === 'advance-order') advanceOrder(button.dataset.id);
   if (action === 'cancel-order') cancelOrder(button.dataset.id);
-  if (action === 'logout-merchant') { state.merchant.logged = false; save(); setPage('comerciante-entrar'); }
+  if (action === 'logout-merchant') logoutMerchant();
   if (action === 'logout-customer') logoutCustomer();
   if (action === 'send-suggestion') sendToSabia(button.dataset.text || '');
   if (action === 'sabia-check') detectSabiaMode();

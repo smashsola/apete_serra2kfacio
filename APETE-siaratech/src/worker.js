@@ -168,7 +168,9 @@ function summary(city,mode,query,constraints){
  for(const p of CATALOG.products){
   const x=productInfo(p,city,mode);
   if(!x||!x.available)continue;
-  const quantity=Number.isInteger(intent.serves)&&intent.serves>0&&Number.isInteger(x.serves)&&x.serves>0?Math.max(1,Math.ceil(intent.serves/x.serves)):1;
+  const requestedServes=Number.isInteger(intent.serves)&&intent.serves>0?intent.serves:null;
+  if(requestedServes&&!(Number.isInteger(x.serves)&&x.serves>0))continue;
+  const quantity=requestedServes?Math.max(1,Math.ceil(requestedServes/x.serves)):1;
   if(quantity>x.stock)continue;
   const products=x.price*quantity,total=products+x.fee;
   if(constraints.budget!==null&&(constraints.budgetScope==='products'?products:total)>constraints.budget)continue;

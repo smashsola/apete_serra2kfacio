@@ -156,15 +156,20 @@ function intentScore(item,intent,query){
  }
  return score||1;
 }
+function itemQuantity(item){return Number.isInteger(item?.quantity)&&item.quantity>0?item.quantity:1;}
 function summary(city,mode,query,constraints){
  const intent=constraints.intent||currentIntent(query),items=[];
  for(const p of CATALOG.products){
   const x=productInfo(p,city,mode);
-  if(!x||!x.available||constraints.budget!==null&&(constraints.budgetScope==='products'?x.price:x.total)>constraints.budget)continue;
+  if(!x||!x.available)continue;
+  const quantity=Number.isInteger(intent.serves)&&intent.serves>0&&Number.isInteger(x.serves)&&x.serves>0?Math.max(1,Math.ceil(intent.serves/x.serves)):1;
+  if(quantity>x.stock)continue;
+  const products=x.price*quantity,total=products+x.fee;
+  if(constraints.budget!==null&&(constraints.budgetScope==='products'?products:total)>constraints.budget)continue;
   const store=byStore.get(x.storeId);
   const searchable=normalizedWords(x.name+' '+x.description+' '+x.category+' '+x.storeName+' '+x.preferences.join(' '));
-  if(constraints.excluded.some(word=>searchable.includes(word)))continue;
-  const data={id:x.id,name:x.name,description:x.description.slice(0,110),category:x.category,producer:store.producer,priceReais:(x.price/100).toFixed(2),store:x.storeName,storeId:x.storeId,city:x.city,feeReais:(x.fee/100).toFixed(2),totalReais:(x.total/100).toFixed(2),serves:x.serves,stock:x.stock,preferences:x.preferences};
+  if((constraints.excluded||[]).some(word=>searchable.includes(word)))continue;
+  const data={id:x.id,name:x.name,description:x.description.slice(0,110),category:x.category,producer:store.producer,priceReais:(x.price/100).toFixed(2),productsReais:(products/100).toFixed(2),store:x.storeName,storeId:x.storeId,city:x.city,feeReais:(x.fee/100).toFixed(2),totalReais:(total/100).toFixed(2),quantity,serves:x.serves,stock:x.stock,preferences:x.preferences};
   const score=intentScore(data,intent,query);
   if(score)items.push({score,data});
  }
@@ -289,17 +294,18 @@ function catalogAnswer(options,mode,constraints,basic=false,another=false){
  if(!options.length)return {text:prefix+'Não encontrei '+(another?'outra opção':'produto')+' compatível com sua intenção, cidade, modalidade e restrições atuais.',productIds:[]};
  const money=v=>Number(v).toFixed(2).replace('.',',');
  const lines=options.map((item,index)=>{
-  const delivery=mode==='pickup'?'retirada sem taxa':'taxa de entrega de R$ '+money(item.feeReais);
-  return (index+1)+'. '+item.name+' — 1 unidade por R$ '+money(item.priceReais)+', '+delivery+'; total de R$ '+money(item.totalReais)+'.'+(!basic&&item.reason?' '+item.reason:'');
+  const quantity=itemQuantity(item),unit=Number(item.priceReais),products=unit*quantity,fee=mode==='pickup'?0:Number(item.feeReais),total=products+fee;
+  const quantityText=quantity===1?'1 unidade por R$ '+money(unit):quantity+' unidades × R$ '+money(unit)+' = R$ '+money(products);
+  const delivery=mode==='pickup'?'retirada sem taxa':'taxa de entrega de R$ '+money(fee);
+  return (index+1)+'. '+item.name+' — '+quantityText+', '+delivery+'; total de R$ '+money(total)+'.'+(!basic&&item.reason?' '+item.reason:'');
  });
  const budgetNote=constraints.budget!==null&&constraints.budgetScope==='products'?' O limite considera só o produto; a entrega está discriminada à parte.':'';
  let intro=basic?'Estas são opções individuais, para escolher uma.':(options.message||'Encontrei algumas opções que combinam com o pedido.');
  if(constraints.intent?.withDrink){
   const sameStore=options.length>=2&&options[0].storeId===options[1].storeId;
   if(options.length>=2){
-   const productsTotal=options.slice(0,2).reduce((sum,item)=>sum+Number(item.priceReais),0);
-   const fee=mode==='pickup'?0:(sameStore?Number(options[0].feeReais):options.slice(0,2).reduce((sum,item)=>sum+Number(item.feeReais),0));
-   intro=(basic?'':sameStore?'Separei um prato e uma bebida do mesmo estabelecimento. ':'Separei um prato e uma bebida de estabelecimentos diferentes. ')+'Juntos, os produtos somam R$ '+money(productsTotal)+' e '+(mode==='pickup'?'a retirada não tem taxa':'a entrega cadastrada soma R$ '+money(fee))+'; total do conjunto: R$ '+money(productsTotal+fee)+'.';
+   const pair=options.slice(0,2),productsTotal=bundleTotal(pair,mode,'products')/100,payable=bundleTotal(pair,mode,'total')/100,fee=payable-productsTotal;
+   intro=(basic?'':sameStore?'Separei um prato e uma bebida do mesmo estabelecimento. ':'Separei um prato e uma bebida de estabelecimentos diferentes. ')+'Juntos, os produtos somam R$ '+money(productsTotal)+' e '+(mode==='pickup'?'a retirada não tem taxa':'a entrega cadastrada soma R$ '+money(fee))+'; total do conjunto: R$ '+money(payable)+'.';
   }else intro='Separei um prato e uma bebida compatíveis com o pedido.';
  }
  return {text:prefix+intro+budgetNote+'\n'+lines.join('\n'),productIds:options.map(item=>item.id)};
@@ -542,6 +548,7 @@ function semanticToLegacy(semantic,fallback){
   completeBreakfast:(semantic.topic==='breakfast'||components.includes('breakfast'))&&modifiers.has('complete'),
   completeSnack:(semantic.topic==='snack'||components.includes('snack'))&&modifiers.has('complete'),
   organic:modifiers.has('organic'),garden:modifiers.has('garden'),juice:modifiers.has('juice'),
+  serves:semantic.serves,
   another:semantic.action==='alternative'||(semantic.keepPreviousContext&&Boolean(fallback.another)),components,semanticAction:semantic.action,semanticFact:semantic.fact};
 }
 function semanticContext(city,mode,constraints,catalog,fallback){
@@ -675,7 +682,7 @@ function bundleAnswer(bundle,mode,constraints,data,basic=false){
  const fees=new Map();for(const item of bundle.items)fees.set(item.storeId,{name:item.store,fee:mode==='pickup'?0:Math.round(Number(item.feeReais)*100)});
  let intro=safeExplanation(data?.message||'',bundle.items)||'Montei uma combinação compatível com o pedido.';
  if(bundle.overBudget&&constraints.budget!==null)intro='Não encontrei uma combinação dentro de '+money(constraints.budget)+(constraints.budgetScope==='products'?' considerando só os produtos':' contando a entrega')+'. A opção mais próxima ultrapassa o limite em '+money(scoped-constraints.budget)+'.';
- const lines=bundle.items.map((item,index)=>(index+1)+'. '+item.name+' — 1 unidade por '+money(Math.round(Number(item.priceReais)*100))+' — '+item.store+'.'+(reasons.get(item.id)?' '+reasons.get(item.id):''));
+ const lines=bundle.items.map((item,index)=>{const quantity=itemQuantity(item),unit=Math.round(Number(item.priceReais)*100),products=unit*quantity;return (index+1)+'. '+item.name+' — '+(quantity===1?'1 unidade por '+money(unit):quantity+' unidades × '+money(unit)+' = '+money(products))+' — '+item.store+'.'+(reasons.get(item.id)?' '+reasons.get(item.id):'');});
  const delivery=mode==='pickup'?'Retirada sem taxa.':'Entregas: '+[...fees.values()].map(entry=>entry.name+' '+money(entry.fee)).join('; ')+'.';
  const totals=constraints.budgetScope==='products'?'Produtos: '+money(productsTotal)+'; total com entrega: '+money(payable)+'.':'Produtos: '+money(productsTotal)+'; '+(mode==='pickup'?'total na retirada: ':'total com entrega: ')+money(payable)+'.';
  return {text:(basic?'Estou em modo básico. ':'')+intro+'\n'+lines.join('\n')+'\n'+delivery+' '+totals,productIds:bundle.items.map(item=>item.id)};
@@ -728,7 +735,7 @@ function budgetNoMatchAnswer(city,mode,query,constraints){
  const unconstrained={...constraints,budget:null};
  const candidates=summary(city,mode,query,unconstrained);
  if(!candidates.length)return null;
- const scope=constraints.budgetScope==='products'?'priceReais':'totalReais';
+ const scope=constraints.budgetScope==='products'?'productsReais':'totalReais';
  const closest=[...candidates].sort((a,b)=>Number(a[scope])-Number(b[scope])||a.id-b.id)[0];
  const value=Math.round(Number(closest[scope])*100);
  const over=value-constraints.budget;

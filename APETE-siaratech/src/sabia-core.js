@@ -94,7 +94,7 @@ export function localIntent(current,previous=null){
   const stop=new Set(['tem','nao','sim','aqui','isso','esse','essa','esses','essas','algo','alguma','coisa','pra','para','com','sem','uma','uns','umas','voces','vcs','catalogo','disponivel','disponiveis','vende','vendem','oferece','oferecem','existe','qual','quais','quanto','quantos','custa','custam','preco','valor','reais']);
   searchTerms=tokens(clean).filter(word=>word.length>=3&&!stop.has(word)&&!/^(?:r\$)?\d/.test(word)).slice(0,4);
  }
- const inherited=Boolean(topic==='catalog'&&previous&&!switching&&!conversational&&(alternative||action==='recommend'||action==='list'||action==='confirm'||action==='fact'));
+ const inherited=Boolean(topic==='catalog'&&previous&&!switching&&!conversational&&(alternative||action==='recommend'||action==='refine'||action==='list'||action==='confirm'||action==='fact'));
  if(inherited){
   topic=previous.topic||topic;
   components=previous.components||components;

@@ -158,6 +158,35 @@
     if(error) throw fail(error);
     return data;
   }
+  async function saveProduct(storeId,product){
+    const payload={
+      store_id:storeId,
+      name:product.name,
+      description:product.description||'',
+      category:product.category||'',
+      price:Number(product.price),
+      stock:Number(product.stock),
+      image:product.image||'',
+      old_price:Number(product.oldPrice||0),
+      last_batch:Boolean(product.lastBatch),
+      preferences:Array.isArray(product.preferences)?product.preferences:[],
+      serves:product.serves||null,
+      active:product.active!==false
+    };
+    if(product.backendId){
+      delete payload.store_id;
+      const {data,error}=await requireClient().from('products').update(payload).eq('id',product.backendId).select('*').single();
+      if(error) throw fail(error);
+      return data;
+    }
+    const {data,error}=await requireClient().from('products').insert(payload).select('*').single();
+    if(error) throw fail(error);
+    return data;
+  }
+  async function deleteProduct(productBackendId){
+    const {error}=await requireClient().from('products').delete().eq('id',productBackendId);
+    if(error) throw fail(error);
+  }
   async function productsForStore(storeId){
     const {data,error}=await requireClient().from('products').select('*').eq('store_id',storeId).order('public_id');
     if(error) throw fail(error);
@@ -166,6 +195,6 @@
   window.APETE_BACKEND={
     configured,session,currentUser,profile,updateProfile,signUpCustomer,signIn,signOut,
     createOrder,myOrders,memberships,storeOrders,updateOrderStatus,submitMerchantApplication,
-    updateStore,productsForStore,statusToUi,statusToDb
+    updateStore,productsForStore,saveProduct,deleteProduct,statusToUi,statusToDb
   };
 })();

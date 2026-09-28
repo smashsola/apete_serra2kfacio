@@ -47,8 +47,14 @@ function requestConstraints(text){
  for(const match of clean.matchAll(/\b(?:(?:sem(?:\s+(?:contar|incluir|considerar))?|nao\s+(?:contar|incluir|considerar))\s+(?:(?:a|o)\s+)?(?:taxa(?: de entrega)?|entrega|frete)|(?:so|somente|apenas)\s+(?:(?:a|o|os)\s+)?(?:comida|produto[s]?|itens)|(?:fora|excluindo|tirando|descontando)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa))\b/g))scopeEvents.push({index:match.index,scope:'products'});
  for(const match of clean.matchAll(/\b(?:(?:incluindo|com|contando)\s+(?:(?:a|o)\s+)?(?:entrega|frete|taxa)|total|tudo junto)\b/g))scopeEvents.push({index:match.index,scope:'total'});
  for(const event of scopeEvents.sort((a,b)=>a.index-b.index))budgetScope=event.scope;
- const excluded=[];
- for(const match of clean.matchAll(/\bsem\s+(?:ser\s+)?(?:nada\s+)?(?:(?:da|de|do)\s+)?([a-z]+)/g))if(!['contar','incluir','considerar','limite','teto','restricao','entrega','frete','taxa'].includes(match[1]))excluded.push(match[1]);
+ const excluded=[],reserved=new Set(['contar','incluir','considerar','limite','teto','restricao','entrega','frete','taxa','orcamento']);
+ for(const pattern of [
+  /\bsem\s+(?:ser\s+)?(?:nada\s+(?:de\s+)?)?(?:(?:da|de|do)\s+)?([a-z][a-z0-9-]{2,})/g,
+  /\bnao\s+(?:quero|gosto|curto)(?:\s+de)?\s+(?:o\s+|a\s+|os\s+|as\s+)?([a-z][a-z0-9-]{2,})/g,
+  /\b(?:evita|evite|evitar|tira|tire|tirar|retira|retire|retirar|exclui|excluir)\s+(?:o\s+|a\s+|os\s+|as\s+)?([a-z][a-z0-9-]{2,})/g
+ ]){
+  for(const match of clean.matchAll(pattern))if(!reserved.has(match[1]))excluded.push(match[1]);
+ }
  return {budget,budgetChanged,budgetScope,excluded:[...new Set(excluded)],meal:/\b(almoco|refeicao|pratos?|jantar|comida)\b/.test(clean)};
 }
 function conversationConstraints(question,prior){
@@ -145,7 +151,7 @@ function intentScore(item,intent,query){
  if(intent.vegetarian){if(category!=='Vegetariano'&&!item.preferences.includes('vegetariano'))return 0;score+=100;}
  if(intent.vegan){if(!item.preferences.includes('vegano')&&!item.preferences.includes('vegan'))return 0;score+=120;}
  if(intent.producer){if(!item.producer)return 0;if(intent.organic&&!/organic/.test(normalizedText(item.name+' '+item.store)))return 0;if(intent.garden&&!/horta|hortalica|alface|tomate|cenoura|legume|verdura/.test(normalizedText(item.name+' '+item.description)))return 0;score+=100;}
- if(intent.healthy){if(category!=='Vegetariano'&&!/\b(banana|hortalicas|tomate|alface|cenoura|legumes|verduras)\b/.test(name))return 0;score+=100;}
+ if(intent.healthy)return 0; // No product is treated as healthy without explicit catalog metadata.
  const words=new Set(normalizedWords(query));
  score+=normalizedWords(item.name+' '+item.category).filter(word=>words.has(word)).length*5;
  score+=normalizedWords(item.description+' '+item.store+' '+item.preferences.join(' ')).filter(word=>words.has(word)).length;
@@ -202,41 +208,25 @@ function parseProviderObject(text){
 }
 // Only non-commercial conversational language is free-form. Exact selected product
 // names/descriptions may be quoted; unknown claims are omitted, not sent to clients.
-const explanationWords=new Set(normalizedText(`
- a o as os um uma uns umas de da do das dos em na no nas nos
- para pra por pelo pela pelos pelas com sem e ou mas que se seu sua seus suas
- voce voces te lhe eu minha meu ao aos esta este estas estes essa esse essas esses isso
- isto aqui agora tambem ja ainda mais bem muito pouco pode podem poderia quer queria quiser procura busca
- pediu pedido preferencia preferencias vontade fome momento hoje manha tarde noite almoco jantar refeicao cafe lanche lanchinho sobremesa
- bebida saudavel vegetariano vegetariana completo completa combina combinam combinar atende atendem atender encaixa encaixam encaixar escolhi escolher selecionei
- pensei sugiro sugerir recomendo recomendar preferi priorizei priorizar considero considerar alternativa alternativas opcao opcoes sugestao sugestoes escolha escolhas
- proposta propostas pratica pratico praticas praticos simples variedade variar experimentar aproveitar acompanhar compartilhar individual individuais principal principais diferente
- diferentes sabor sabores textura texturas contraste leve leveza doce salgado aconchegante acolhedora pausa rotina praticidade equilibrio equilibrar desejo
- estilo gosto gostos gostoso gostosa agradavel interessante prefere preferir deseja desejar buscando fazer ter ser estar sao vez
- como quando porque assim entao caso conforme pensando vale pena funciona funcionar junto juntas juntos abaixo seguinte seguintes
- disponiveis entre delas deles bem-vindo ola bom boa dia obrigado obrigada entendi claro certo sim vamos posso ajudar
- ajuda olhar conferir explorar encontrar encontrei selecionadas selecionados indicada indicado indicadas indicados nesta neste nesse nessa dentro respeitando
- respeita restricoes intencao contexto foco perfil priorizando pois reune inclui tem traz oferece oferecer junta permite saboroso saborosa
- rapida rapido satisfazer apetite saciar pequena pequeno tamanho seja tanto quanto ate so nao especialmente destaca destaque combinacao
- forma maneira servir servido fresca fresco feitas feita feito feitos
-`).trim().split(/\s+/));
+const explanationConnectors=new Set(['de','da','do','das','dos','e','a','o','as','os','um','uma','uns','umas','em','na','no','nas','nos','para','pra','por','com']);
 function safeExplanation(value,items,groundDescription=false){
  if(typeof value!=='string')return '';
  const text=value.trim().slice(0,420);
  if(!text)return '';
  return text.split(/(?<=[.!?])\s+/).slice(0,2).filter(sentence=>{
   let remaining=sentence;
-  for(const item of items)for(const literal of [item.name,item.description])if(literal)remaining=remaining.split(literal).join(' ');
+  for(const item of items)for(const literal of [item.name,item.description,item.store,item.storeName])if(literal)remaining=remaining.split(literal).join(' ');
   const normalized=normalizedText(remaining);
   if(/https?:\/\/|www\.|@/.test(remaining))return false;
-  if(/\d|r\$|\b(preco|precos|reais|custa|custam|gratis|gratuito|gratuita|taxa|frete|estoque|desconto|promocao|promocoes|cupom|calorias|proteina|proteinas|carboidrato|carboidratos|vitamina|vitaminas|garantido|garantida|cura|trata|tratamento)\b/.test(normalized))return false;
+  if(/\d|r\$|\b(preco|precos|reais|custa|custam|gratis|gratuito|gratuita|taxa|frete|estoque|desconto|promocao|promocoes|cupom|calorias|proteina|proteinas|carboidrato|carboidratos|vitamina|vitaminas|fitness|saudavel|saudaveis|emagrecer|emagrecimento|nutritivo|nutritiva|garantido|garantida|cura|trata|tratamento)\b/.test(normalized))return false;
+  if(/\b(restaurante|loja|mercado|estabelecimento|padaria|sitio)\b/.test(normalized))return false;
   if(groundDescription){
    const grounded=new Set();
-   for(const item of items)for(const word of normalizedWords(item.description+' '+item.name+' '+item.category))grounded.add(word);
-   const factual=/\b(tem|leva|feito|feita|feitos|feitas|com|contendo|acompanha|recheado|recheada|ingrediente|ingredientes)\b/.test(normalized);
+   for(const item of items)for(const word of normalizedWords((item.description||'')+' '+(item.name||'')+' '+(item.category||'')))grounded.add(word);
+   const factual=normalized.match(/\b(?:tem|leva|feito|feita|feitos|feitas|contendo|acompanha|recheado|recheada|ingrediente|ingredientes)\b\s*(.*)$/)||normalized.match(/^\s*com\s+(.+)$/);
    if(factual){
-    const content=normalizedWords(remaining).filter(word=>!explanationWords.has(word));
-    if(content.some(word=>!grounded.has(word)))return false;
+    const claims=normalizedWords(factual[1]||'').filter(word=>!explanationConnectors.has(word));
+    if(claims.some(word=>!grounded.has(word)))return false;
    }
   }
   return normalizedWords(remaining).length>0;

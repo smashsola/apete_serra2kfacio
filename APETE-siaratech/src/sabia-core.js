@@ -88,7 +88,7 @@ export function localIntent(current,previous=null){
  else if(!alternative&&!listing&&/\b(?:tem|ha|existe|disponiv|vende|vendem|oferece|oferecem)\b/.test(clean))fact='availability';
  const affirmative=isAffirmative(clean);
  let action=conversational?'chat':fact!=='none'?'fact':switching?'switch':alternative?'alternative':constraintOnlyReset?'refine':listing?'list':affirmative&&components.length===0?'confirm':'recommend';
- if(!conversational&&action!=='confirm'&&/\bdieta\b|\bregime\b/.test(clean)&&!preferences.length)action='clarify';
+ if(!conversational&&action!=='confirm'&&(/\bdieta\b|\bregime\b/.test(clean)||modifiers.includes('healthy'))&&!preferences.length)action='clarify';
  let searchTerms=[];
  if(['availability','price'].includes(fact)&&!preferences.length){
   const stop=new Set(['tem','nao','sim','aqui','isso','esse','essa','esses','essas','algo','alguma','coisa','pra','para','com','sem','uma','uns','umas','voces','vcs','catalogo','disponivel','disponiveis','vende','vendem','oferece','oferecem','existe','qual','quais','quanto','quantos','custa','custam','preco','valor','reais']);

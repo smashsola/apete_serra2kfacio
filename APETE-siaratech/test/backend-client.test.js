@@ -54,7 +54,7 @@ test('catálogo remoto usa apenas chave publicável e converte IDs públicos',as
   assert.equal(catalog.products[0].storeId,5);
   assert.equal(catalog.products[0].id,25);
   assert.equal(calls.every(call=>call.options.headers.apikey.startsWith('sb_publishable_')),true);
-  assert.equal(calls.every(call=>!call.options.headers.Authorization),true);
+  assert.equal(calls.every(call=>String(call.options.headers.Authorization||'').startsWith('Bearer sb_publishable_')),true);
 });
 
 test('login salva sessão e leitura de perfil usa JWT do usuário',async()=>{
@@ -145,4 +145,18 @@ test('revisão de comerciante usa RPC autenticada e decisão permitida',async()=
   assert.deepEqual(sent,{p_application_id:'app-id',p_decision:'approve'});
   assert.equal(result.application_status,'approved');
   await assert.rejects?.(()=>backend.reviewMerchantApplication('app-id','anything'));
+});
+
+
+test('signup anônimo envia Authorization com a chave publicável',async()=>{
+  memory.clear();
+  let auth='';
+  globalThis.fetch=async(url,options)=>{
+    assert.match(String(url),/\/auth\/v1\/signup$/);
+    auth=options.headers.Authorization;
+    return response({user:{id:'new-user',email:'novo@apete.test'},session:null});
+  };
+  const result=await backend.signUpCustomer({email:'novo@apete.test',password:'abcdef123',name:'Novo Cliente',phone:'88999999999',address:'Rua A',neighborhood:'Centro',city:'Guaraciaba do Norte'});
+  assert.equal(String(auth).startsWith('Bearer sb_publishable_'),true);
+  assert.equal(result.confirmationRequired,true);
 });

@@ -128,3 +128,21 @@ test('aceites legais usam versão atual e JWT do próprio usuário',async()=>{
   assert.equal(sent.every(item=>item.user_id==='11111111-1111-1111-1111-111111111111'),true);
   assert.equal(sent.every(item=>item.version==='2026-09-28-v1'),true);
 });
+
+
+test('revisão de comerciante usa RPC autenticada e decisão permitida',async()=>{
+  memory.clear();
+  await loginSession();
+  let sent=null;
+  globalThis.fetch=async(url,options)=>{
+    assert.match(String(url),/\/rest\/v1\/rpc\/review_merchant_application$/);
+    assert.equal(options.method,'POST');
+    assert.equal(options.headers.Authorization,'Bearer user-jwt');
+    sent=JSON.parse(options.body);
+    return response([{application_id:'app-id',application_status:'approved',created_store_id:'store-id'}]);
+  };
+  const result=await backend.reviewMerchantApplication('app-id','approve');
+  assert.deepEqual(sent,{p_application_id:'app-id',p_decision:'approve'});
+  assert.equal(result.application_status,'approved');
+  await assert.rejects?.(()=>backend.reviewMerchantApplication('app-id','anything'));
+});

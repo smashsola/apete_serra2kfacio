@@ -366,6 +366,12 @@ function friendlyBackendError(error,fallback='Não foi possível concluir agora.
   if(/product_unavailable/.test(message))return 'Um dos produtos não está mais disponível.';
   if(/store_unavailable|delivery_unavailable|city_unavailable/.test(message))return 'Esse pedido não está disponível para a entrega selecionada.';
   if(/legal_acceptance_required/.test(message))return 'Você precisa aceitar os Termos de Uso e a Política de Privacidade atuais antes de continuar.';
+  if(/email.*rate limit|rate limit.*email/.test(message))return 'Muitas tentativas de e-mail em pouco tempo. Aguarde um pouco e tente novamente.';
+  if(/signup.*disabled|signups? not allowed/.test(message))return 'O cadastro de novas contas está desativado no backend.';
+  if(/error sending confirmation email|smtp/.test(message))return 'A conta não pôde ser criada porque o e-mail de confirmação não foi enviado.';
+  if(/database error saving new user/.test(message))return 'O Auth criou a tentativa, mas houve erro ao salvar o perfil no banco.';
+  if(/invalid api key|api key/.test(message))return 'O aplicativo não conseguiu autenticar com o backend. Atualize a página e tente novamente.';
+  if(/password.*at least|weak password/.test(message))return 'A senha foi recusada pelo backend. Use pelo menos 8 caracteres com letras e números.';
   return fallback;
 }
 

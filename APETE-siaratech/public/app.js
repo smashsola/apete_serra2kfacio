@@ -304,6 +304,24 @@ if (AUTH_PAGE === 'entrar' || AUTH_PAGE === 'cadastro') {
 }
 
 function save() { localStorage.setItem(KEY, JSON.stringify({...state,chat:[]})); }
+
+async function hydrateCatalogFromBackend() {
+  if(!window.APETE_BACKEND?.loadCatalog)return;
+  try {
+    const remote=await window.APETE_BACKEND.loadCatalog();
+    if(!remote?.stores?.length||!remote?.products?.length)return;
+    const localStores=new Map(state.stores.map(store=>[Number(store.id),store]));
+    const localProducts=new Map(state.products.map(product=>[Number(product.id),product]));
+    state.stores=remote.stores.map(store=>({...localStores.get(Number(store.id)),...store}));
+    state.products=remote.products.map(product=>({...localProducts.get(Number(product.id)),...product}));
+    const validIds=new Set(state.products.map(product=>Number(product.id)));
+    state.cart=(state.cart||[]).filter(item=>validIds.has(Number(item.productId)));
+    save();
+    render();
+  } catch(error) {
+    console.warn('apete_backend_catalog_fallback',{message:String(error?.message||error).slice(0,180)});
+  }
+}
 function toast(message, tone = 'normal') {
   const el = $('#toast');
   el.textContent = message;
@@ -1321,6 +1339,7 @@ function selectRegion(){
 }
 
 render();
+hydrateCatalogFromBackend();
 detectSabiaMode();
 $('#content').addEventListener('click', (event) => {
   const button = event.target.closest('[data-action]');

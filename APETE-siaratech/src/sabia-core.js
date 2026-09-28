@@ -51,6 +51,17 @@ export function localIntent(current,previous=null){
  let preferences=[];
  if(hasStem(clean,['vegan']))preferences.push('vegano');
  if(hasStem(clean,['vegetarian']))preferences.push('vegetariano');
+ const exclusions=[];
+ for(const pattern of [
+  /\bsem\s+(?!(?:entrega|frete|taxa|limite|teto|orcamento|contar|incluir|considerar)\b)(?:nada\s+de\s+)?(?:o\s+|a\s+|os\s+|as\s+)?([a-z][a-z0-9-]{2,})/g,
+  /\bnao\s+(?:quero|gosto|curto)(?:\s+de)?\s+(?:o\s+|a\s+|os\s+|as\s+)?([a-z][a-z0-9-]{2,})/g,
+  /\b(?:evita|evite|evitar|tira|tire|tirar|retira|retire|retirar|exclui|excluir)\s+(?:o\s+|a\s+|os\s+|as\s+)?([a-z][a-z0-9-]{2,})/g
+ ]){
+  for(const match of clean.matchAll(pattern))exclusions.push(match[1]);
+ }
+ const peopleWords={um:1,uma:1,dois:2,duas:2,tres:3,quatro:4,cinco:5,seis:6,sete:7,oito:8,nove:9,dez:10};
+ const servesMatch=clean.match(/\b(?:para|pra)\s+(\d{1,2}|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)\s+(?:pessoas?|gente)\b/)||clean.match(/\bsomos\s+(\d{1,2}|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)\b/);
+ const serves=servesMatch?Math.min(20,Number(servesMatch[1])||peopleWords[servesMatch[1]]||0)||null:null;
  const modifiers=[];
  if(hasStem(clean,['produtor','roca'])||hasNearWord(clean,['produtor','roca']))modifiers.push('producer');
  if(hasStem(clean,['horta','hortal','verdura','legume']))modifiers.push('garden','producer');
@@ -88,9 +99,11 @@ export function localIntent(current,previous=null){
   components=previous.components||components;
   if(!preferences.length)preferences=[...(previous.preferences||[])];
   if(!modifiers.length)modifiers.push(...(previous.modifiers||[]));
+  if(!exclusions.length)exclusions.push(...(previous.exclusions||[]));
  }
- const confidence=conversational||fact!=='none'?0.9:components.length||preferences.length||modifiers.length?0.82:inherited?0.62:0.18;
- return {topic,action,fact,categories:[],preferences:unique(preferences),modifiers:unique(modifiers),exclusions:[],searchTerms:unique(searchTerms,4),components,serves:null,keepPreviousContext:inherited,confidence};
+ const resolvedServes=serves||(inherited&&Number.isInteger(previous?.serves)?previous.serves:null);
+ const confidence=conversational||fact!=='none'?0.9:components.length||preferences.length||modifiers.length||exclusions.length||resolvedServes?0.82:inherited?0.62:0.18;
+ return {topic,action,fact,categories:[],preferences:unique(preferences),modifiers:unique(modifiers),exclusions:unique(exclusions,6),searchTerms:unique(searchTerms,4),components,serves:resolvedServes,keepPreviousContext:inherited,confidence};
 }
 
 export function normalizeIntent(value,fallback=localIntent('')){

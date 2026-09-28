@@ -805,25 +805,29 @@ async function optimizeProductPhoto(file) {
     return canvas.toDataURL('image/webp',.77);
   } finally { URL.revokeObjectURL(url); }
 }
-async function saveMerchantProduct(form) {
-  if(!merchantAccess()) return;
+async async function saveMerchantProduct(form) {
+  if(!merchantAccess()||!state.merchant.backendStoreId) return toast('Acesso comercial real necessário.');
   const store=activeMerchantStore();
   const existing=state.products.find(p=>p.id===Number(state.ui.productEditor)&&p.storeId===store.id);
-  const name=$('#mp-name')?.value.trim(); const desc=$('#mp-desc')?.value.trim();
-  const basePrice=parsePrice($('#mp-price')?.value); const stock=Number($('#mp-stock')?.value);
-  const discounted=$('#mp-offer')?.checked; const offerPrice=discounted?parsePrice($('#mp-offer-price')?.value):null;
+  const name=$('#mp-name')?.value.trim(),desc=$('#mp-desc')?.value.trim();
+  const basePrice=parsePrice($('#mp-price')?.value),stock=Number($('#mp-stock')?.value);
+  const discounted=$('#mp-offer')?.checked,offerPrice=discounted?parsePrice($('#mp-offer-price')?.value):null;
   const file=$('#mp-photo')?.files?.[0];
   if(!name||!desc||!basePrice||!Number.isInteger(stock)||stock<0||stock>9999) return toast('Preencha nome, descrição, preço e estoque válidos.');
-  if(discounted && (!offerPrice||offerPrice>=basePrice)) return toast('O preço da oferta precisa ser menor que o preço normal.');
+  if(discounted&&(!offerPrice||offerPrice>=basePrice)) return toast('O preço da oferta precisa ser menor que o preço normal.');
   if(!file&&!existing) return toast('Escolha uma foto para o novo produto.');
-  let photo=existing?.image;
-  if(file) {try{photo=await optimizeProductPhoto(file);}catch(e){return toast(e.message||'Não foi possível ler a foto.');}}
-  const next={ id:existing?.id||Math.max(...state.products.map(p=>p.id),0)+1,storeId:store.id,name,desc,cat:$('#mp-category').value,
-    price:discounted?offerPrice:basePrice,stock,image:photo,oldPrice:discounted?basePrice:0,lastBatch:!!discounted };
-  if(existing) Object.assign(existing,next); else state.products.push(next);
-  state.ui.productEditor=0;
-  try{save();}catch(e){return toast('Espaço do navegador insuficiente para salvar a foto. Tente uma imagem menor.');}
-  render();toast(existing?'Produto atualizado no cardápio.':'Produto publicado no cardápio.','success');
+  let photo=existing?.image||'';
+  if(file){try{photo=await optimizeProductPhoto(file);}catch(e){return toast(e.message||'Não foi possível ler a foto.');}}
+  try{
+    const saved=await window.APETE_BACKEND.saveProduct(state.merchant.backendStoreId,{
+      backendId:existing?.backendId,name,description:desc,category:$('#mp-category').value,
+      price:discounted?offerPrice:basePrice,stock,image:photo,oldPrice:discounted?basePrice:0,lastBatch:Boolean(discounted)
+    });
+    const next={id:Number(saved.public_id),backendId:saved.id,storeId:store.id,name,desc,cat:saved.category,
+      price:saved.price,stock:saved.stock,image:saved.image,oldPrice:saved.old_price,lastBatch:saved.last_batch};
+    if(existing) Object.assign(existing,next); else state.products.push(next);
+    state.ui.productEditor=0;save();render();toast(existing?'Produto atualizado no cardápio.':'Produto publicado no cardápio.','success');
+  }catch(error){toast(error.message||'Não foi possível salvar o produto.');}
 }
 function publishMerchantOffer() {
   if(!merchantAccess())return;
@@ -1085,80 +1089,87 @@ async function loginCustomer() {
     toast('Login realizado.','success');
   } catch(error) { toast(error.message||'Não foi possível entrar.'); }
 }
-function loginMerchant() {
+async function loginMerchant() {
   const owner = $('#merchant-owner')?.value.trim();
   const identifier = ($('#merchant-identifier')?.value || '').trim();
   const storeId = Number($('#merchant-store')?.value || 1);
   const password = $('#merchant-password')?.value || '';
-  const store = getStore(storeId);
   if (!owner) return toast('Informe o nome do responsável');
-  if (!identifier) return toast('Informe um telefone ou e-mail');
-  const usingEmail = identifier.includes('@');
-  if (usingEmail ? !validEmail(identifier) : onlyDigits(identifier).length < 10 || onlyDigits(identifier).length > 11)
-    return toast('Informe um telefone com DDD ou e-mail válido');
-  if (!store || !password) return toast('Selecione a loja e informe a senha');
-  const isRegisteredStore = Boolean(store.contactEmail);
-  if (usingEmail && (!isRegisteredStore || identifier.toLowerCase() !== store.contactEmail.toLowerCase()))
-    return toast('E-mail não cadastrado para este estabelecimento. Use o telefone de apresentação.');
-  if (isRegisteredStore && !usingEmail && store.contactPhone && onlyDigits(identifier) !== onlyDigits(store.contactPhone))
-    return toast('Telefone não cadastrado para este estabelecimento');
-  if (password !== (store.panelPassword || '1234')) return toast('Senha do painel incorreta');
-  const phone = usingEmail ? (store.contactPhone || '') : normalizePhone(identifier);
-  state.merchant = { ...state.merchant, logged: true, owner, phone, email: isRegisteredStore ? store.contactEmail : '', storeId, password, verified: !!store.verified, document: store.officialRef || '', officialProof: store.officialRef || '' };
-  state.ui.merchantPanelTab = 'pendentes';
-  save();
-  setPage('comerciante');
-  toast('Painel do comerciante liberado');
+  if (!identifier || !password) return toast('Informe e-mail/telefone e senha');
+  try {
+    await window.APETE_BACKEND.signIn(identifier,password);
+    const memberships=await window.APETE_BACKEND.memberships();
+    const membership=memberships.find(entry=>Number(entry.store?.public_id)===storeId);
+    if(!membership){
+      await window.APETE_BACKEND.signOut();
+      return toast('Essa conta não possui acesso a este estabelecimento.');
+    }
+    state.merchant={
+      ...state.merchant,logged:true,owner,phone:state.customer.phone||'',email:identifier.includes('@')?identifier:'',
+      storeId,backendStoreId:membership.store.id,role:membership.role,verified:Boolean(membership.store.verified)
+    };
+    state.ui.merchantPanelTab='pendentes';
+    await syncBackendState({renderAfter:false});
+    save();
+    setPage('comerciante');
+    toast('Painel do comerciante liberado.','success');
+  } catch(error) { toast(error.message||'Não foi possível entrar no painel.'); }
 }
-
-function registerMerchant() {
+async function registerMerchant() {
   const storeName = $('#merchant-register-store')?.value.trim();
   const owner = $('#merchant-register-owner')?.value.trim();
   const phone = normalizePhone($('#merchant-register-phone')?.value.trim());
-  const city = $('#merchant-register-city')?.value.trim();
+  const city = $('#merchant-register-city')?.value.trim() || state.city;
   const merchantEmail = $('#merchant-register-email')?.value.trim() || '';
   const password = $('#merchant-register-password')?.value || '';
   const confirmPassword = $('#merchant-register-password-confirm')?.value || '';
   const documentId = $('#merchant-register-document')?.value.trim();
   const officialProof = $('#merchant-register-proof')?.value.trim();
   const confirmed = $('#merchant-register-confirm')?.checked;
-  const baseId = Number($('#merchant-register-base')?.value || 1);
   if (!storeName || !owner) return toast('Preencha nome da loja e responsável');
   if (onlyDigits(phone).length < 10) return toast('Digite um telefone válido');
-  if (merchantEmail && !validEmail(merchantEmail)) return toast('Digite um e-mail comercial válido');
-  if (!strongPassword(password)) return toast('A senha do painel precisa ter no mínimo 8 caracteres, com letras e números');
-  if (password !== confirmPassword) return toast('As senhas do painel não conferem');
-  if (!documentId || !instagramHandle(officialProof) || !confirmed) return toast('Informe o documento, Instagram da loja e a confirmação');
-  const store = getStore(baseId);
-  store.name = storeName;
-  if (city) store.city = city;
-  store.panelPassword = password;
-  store.contactEmail = merchantEmail.toLowerCase();
-  store.contactPhone = phone;
-  store.verified = false; // Self-declaration is not real verification.
-  store.instagram = '@' + instagramHandle(officialProof);
-  store.officialRef = store.instagram;
-  state.merchant = { logged: true, owner, phone, email: merchantEmail, storeId: store.id, password, document: documentId, officialProof, verified: false };
-  state.ui.merchantPanelTab = 'cadastro';
-  save();
-  setPage('comerciante');
-  toast('Cadastro da loja concluído');
+  if (!validEmail(merchantEmail)) return toast('Informe um e-mail válido para criar o acesso');
+  if (!strongPassword(password)) return toast('A senha precisa ter no mínimo 8 caracteres, com letras e números');
+  if (password !== confirmPassword) return toast('As senhas não conferem');
+  if (!documentId || !instagramHandle(officialProof) || !confirmed) return toast('Informe documento, Instagram e confirme a representação');
+  try {
+    const result=await window.APETE_BACKEND.signUpCustomer({
+      email:merchantEmail,password,fullName:owner,phone:onlyDigits(phone),address:'',neighborhood:'',city
+    });
+    if(result.needsEmailConfirmation){
+      state.customer={...state.customer,logged:false,name:owner,email:merchantEmail,phone};
+      save();
+      toast('Conta criada. Confirme o e-mail e depois envie a solicitação comercial pelo login.','success');
+      setPage('comerciante-entrar');
+      return;
+    }
+    await window.APETE_BACKEND.submitMerchantApplication({
+      storeName,phone:onlyDigits(phone),city,document:documentId,instagram:'@'+instagramHandle(officialProof)
+    });
+    await window.APETE_BACKEND.signOut();
+    state.merchant={...state.merchant,logged:false};
+    state.customer={...state.customer,logged:false};
+    save();
+    setPage('comerciante-entrar');
+    toast('Solicitação comercial enviada para análise.','success');
+  } catch(error) { toast(error.message||'Não foi possível enviar o cadastro comercial.'); }
 }
-
-function saveMerchantProfile() {
+async function saveMerchantProfile() {
+  if(!merchantAccess()||!state.merchant.backendStoreId) return toast('Acesso comercial real necessário.');
   const store = activeMerchantStore();
-  store.name = $('#merchant-edit-name')?.value.trim() || store.name;
-  store.category = $('#merchant-edit-category')?.value.trim() || store.category;
-  store.city = $('#merchant-edit-city')?.value.trim() || store.city;
-  store.desc = $('#merchant-edit-desc')?.value.trim() || store.desc;
-  state.merchant.phone = $('#merchant-edit-phone')?.value.trim() || state.merchant.phone;
-  const handle=instagramHandle($('#merchant-edit-instagram')?.value);
-  if(handle) {store.instagram='@'+handle; store.officialRef=store.instagram;}
-  save();
-  render();
-  toast('Dados da loja atualizados');
+  const next={
+    name:$('#merchant-edit-name')?.value.trim() || store.name,
+    category:$('#merchant-edit-category')?.value.trim() || store.category,
+    city:$('#merchant-edit-city')?.value.trim() || store.city,
+    description:$('#merchant-edit-desc')?.value.trim() || store.desc
+  };
+  try {
+    await window.APETE_BACKEND.updateStore(state.merchant.backendStoreId,next);
+    store.name=next.name;store.category=next.category;store.city=next.city;store.desc=next.description;
+    state.merchant.phone=$('#merchant-edit-phone')?.value.trim()||state.merchant.phone;
+    save();render();toast('Dados da loja atualizados.','success');
+  } catch(error){toast(error.message||'Não foi possível atualizar a loja.');}
 }
-
 function findMerchantOrder(orderId) {
   const id=Number(orderId);
   const storeId=activeMerchantStore().id;
@@ -1166,27 +1177,28 @@ function findMerchantOrder(orderId) {
     || state.demoOrders.find(o=>o.id===id && o.storeId===storeId);
 }
 
-function advanceOrder(orderId) {
+async function advanceOrder(orderId) {
   if (!merchantAccess()) return;
   const order = findMerchantOrder(orderId);
-  if (!order) return;
-  if (order.status === 'pendente') order.status = 'preparando';
-  else if (order.status === 'preparando') order.status = 'pronto';
-  else if (order.status === 'pronto') order.status = 'concluido';
-  save();
-  render();
-  toast(`Pedido #${String(order.id).padStart(3,'0')} atualizado`);
+  if (!order?.backendId) return toast('Este pedido de demonstração não está no backend.');
+  const next=order.status==='pendente'?'preparing':order.status==='preparando'?'ready':order.status==='pronto'?'delivered':null;
+  if(!next) return;
+  try{
+    await window.APETE_BACKEND.updateOrderStatus(order.backendId,next);
+    await syncBackendState({renderAfter:false});
+    render();toast(`Pedido #${String(order.id).padStart(3,'0')} atualizado`,'success');
+  }catch(error){toast(error.message||'Não foi possível atualizar o pedido.');}
 }
-function cancelOrder(orderId) {
+async function cancelOrder(orderId) {
   if (!merchantAccess()) return;
   const order = findMerchantOrder(orderId);
-  if (!order) return;
-  order.status = 'cancelado';
-  save();
-  render();
-  toast(`Pedido #${String(order.id).padStart(3,'0')} cancelado`);
+  if (!order?.backendId) return toast('Este pedido de demonstração não está no backend.');
+  try{
+    await window.APETE_BACKEND.updateOrderStatus(order.backendId,'cancelled');
+    await syncBackendState({renderAfter:false});
+    render();toast(`Pedido #${String(order.id).padStart(3,'0')} cancelado`,'success');
+  }catch(error){toast(error.message||'Não foi possível cancelar o pedido.');}
 }
-
 async function useMyLocation() {
   if (locating) return;
   if (!navigator.geolocation) return toast('Seu navegador não oferece geolocalização.');
@@ -1354,6 +1366,16 @@ async function syncBackendState({renderAfter=true}={}) {
         ...state.merchant,logged:true,owner:state.customer.name,phone:state.customer.phone,email:state.customer.email,
         storeId:Number(store.public_id),backendStoreId:store.id,role:membership.role,verified:Boolean(store.verified)
       };
+      const localStore=getStore(Number(store.public_id));
+      if(localStore){localStore.backendId=store.id;localStore.name=store.name;localStore.city=store.city;localStore.category=store.category;localStore.desc=store.description||localStore.desc;localStore.fee=store.delivery_fee;}
+      const dbProducts=await window.APETE_BACKEND.productsForStore(store.id);
+      for(const dbp of dbProducts){
+        const local=getProduct(Number(dbp.public_id));
+        if(local){local.backendId=dbp.id;local.price=dbp.price;local.stock=dbp.stock;local.name=dbp.name;local.desc=dbp.description;local.cat=dbp.category;local.oldPrice=dbp.old_price;local.lastBatch=dbp.last_batch;}
+      }
+      const liveOrders=await window.APETE_BACKEND.storeOrders(Number(store.public_id));
+      state.demoOrders=state.demoOrders.filter(order=>order.demo);
+      state.demoOrders.unshift(...liveOrders);
     } else state.merchant={...state.merchant,logged:false};
     save();
     if(renderAfter) render();

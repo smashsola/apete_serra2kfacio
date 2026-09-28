@@ -250,10 +250,10 @@ if (AUTH_PAGE) {
   if (AUTH_PAGE === 'comerciante-entrar') state.ui.merchantAuthTab = 'entrar';
 } else {
   const pageFromHash = location.hash.replace(/^#/, '');
-  state.page = ['inicio','estabelecimentos','cardapio','fornada','produtores','sabia','pedidos','cliente','comerciante','loja'].includes(pageFromHash)
+  state.page = ['inicio','estabelecimentos','cardapio','fornada','produtores','sabia','pedidos','entrar','cadastro','cliente','comerciante','loja'].includes(pageFromHash)
     ? pageFromHash
     : (!state.page || AUTH_ROUTES[state.page] ? 'inicio' : state.page);
-  if (state.page === 'cliente' && !state.customer.logged) state.page = 'inicio';
+  if (state.page === 'cliente' && !(state.customer.logged && !state.customer.demo && window.APETE_BACKEND?.hasStoredSession?.())) state.page = 'inicio';
   if (state.page === 'comerciante' && !state.merchant.logged) state.page = 'inicio';
 }
 let cartStep = 'cart';
@@ -498,28 +498,39 @@ function strongPassword(value) { return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(Str
 function setPage(next, storeId = null) {
   closeModal();
   closeSidebar();
-  if (isCustomerLogged() && (next === 'entrar' || next === 'cadastro')) next = 'cliente';
+
+  if (isRealCustomerLogged() && (next === 'entrar' || next === 'cadastro')) next = 'cliente';
   if (isMerchantLogged() && (next === 'comerciante-entrar' || next === 'comerciante-cadastro')) next = 'comerciante';
-  if (AUTH_ROUTES[next]) {
+
+  // Cliente usa uma única aplicação: login/cadastro ficam em index.html#entrar/#cadastro.
+  if (next === 'entrar' || next === 'cadastro') {
+    if (AUTH_PAGE) {
+      location.assign(`index.html#${encodeURIComponent(next)}`);
+      return;
+    }
+  } else if (AUTH_ROUTES[next]) {
     location.assign(AUTH_ROUTES[next]);
     return;
   }
-  if (next === 'cliente' && !isCustomerLogged()) {
-    location.assign(AUTH_ROUTES.entrar);
-    return;
+
+  if (next === 'cliente' && !isRealCustomerLogged()) {
+    next = 'entrar';
   }
   if (next === 'comerciante' && !merchantAccess()) {
     location.assign(AUTH_ROUTES['comerciante-entrar']);
     return;
   }
+
   if (next !== 'pedidos') state.ui.orderSuccessId = null;
   state.page = next;
   if (storeId) state.storeViewId = Number(storeId);
   save();
+
   if (AUTH_PAGE) {
     location.assign(`index.html#${encodeURIComponent(next)}`);
     return;
   }
+
   if (location.hash !== `#${next}`) history.replaceState(null, '', `#${next}`);
   render();
   if(next==='sabia')detectSabiaMode();
@@ -527,7 +538,6 @@ function setPage(next, storeId = null) {
   if(next==='comerciante'&&state.merchant?.backend)refreshMerchantBackend({rerender:true});
   if(next!=='sabia')window.scrollTo({ top: 0, behavior: 'instant' });
 }
-
 function closeSidebar() {
   $('#sidebar').classList.remove('is-open');
   $('#scrim').hidden = true;
@@ -820,7 +830,7 @@ function customerAuthPage(mode = 'entrar') {
         <div class="field"><label for="login-password">Senha <span class="required-mark" aria-label="obrigatório">*</span></label><input id="login-password" class="input" type="password" autocomplete="current-password" placeholder="Sua senha"></div>
         </div><button class="primary-btn auth-submit" data-action="login-customer">Entrar</button>`}
       <div class="auth-links">
-        <p>${cadastro ? 'Já tem conta?' : 'Ainda não tem conta?'} <a href="${cadastro ? 'entrar.html' : 'cadastro.html'}">${cadastro ? 'Fazer login' : 'Criar conta'}</a></p>
+        <p>${cadastro ? 'Já tem conta?' : 'Ainda não tem conta?'} <a href="${cadastro ? 'index.html#entrar' : 'index.html#cadastro'}" data-action="go-page" data-page="${cadastro ? 'entrar' : 'cadastro'}">${cadastro ? 'Fazer login' : 'Criar conta'}</a></p>
         <a href="comerciante-entrar.html">Área do comerciante ↗</a>
       </div>
     </section>`;
@@ -880,7 +890,7 @@ function merchantEntry() {
 function loginPage() { return customerAuthPage('entrar'); }
 
 function ordersPage() {
-  if (!isCustomerLogged()) return `${pageHead('Meus pedidos', 'Faça login para acompanhar seus pedidos e conferir o andamento das compras realizadas.')}<div class="empty"><b>Entre na sua conta</b> Você precisa fazer login para ver seus pedidos. <div class="row" style="justify-content:center;margin-top:16px"><button class="primary-btn" data-action="go-page" data-page="cliente">Ir para minha conta</button></div></div>`;
+  if (!isRealCustomerLogged()) return `${pageHead('Meus pedidos', 'Faça login para acompanhar seus pedidos e conferir o andamento das compras realizadas.')}<div class="empty"><b>Entre na sua conta</b> Você precisa fazer login para ver seus pedidos. <div class="row" style="justify-content:center;margin-top:16px"><button class="primary-btn" data-action="go-page" data-page="cliente">Ir para minha conta</button></div></div>`;
   const orders = (window.APETE_BACKEND?.hasStoredSession?.()?state.orders:state.orders.filter((order) => order.customer.phone === state.customer.phone)).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
   const inProgress = orders.filter((order) => ['pendente','preparando','pronto'].includes(order.status)).length;
   const concluded = orders.filter((order) => order.status === 'concluido').length;
@@ -1075,8 +1085,8 @@ function render() {
   const content = $('#content');
   const page = state.page;
   $('#location-label').textContent = state.city || 'Guaraciaba do Norte';
-  $('#customer-name').textContent = (isMerchantView() || isCustomerLogged()) ? 'Minha conta' : 'Entrar';
-  $('#user-button').setAttribute('aria-label', (isMerchantView() || isCustomerLogged()) ? 'Minha conta' : 'Entrar');
+  $('#customer-name').textContent = (isMerchantView() || isRealCustomerLogged()) ? 'Minha conta' : 'Entrar';
+  $('#user-button').setAttribute('aria-label', (isMerchantView() || isRealCustomerLogged()) ? 'Minha conta' : 'Entrar');
   $('#cart-count').textContent = String(state.cart.reduce((sum, item) => sum + item.qty, 0));
   $('#demo-client-tab')?.classList.toggle('active',!isMerchantView());
   $('#demo-merchant-tab')?.classList.toggle('active',isMerchantView());
@@ -1089,8 +1099,8 @@ function render() {
   else if (page === 'produtores') html = producersPage();
   else if (page === 'sabia') html = sabiaPage();
   else if (page === 'pedidos') html = ordersPage();
-  else if (page === 'entrar') html = isCustomerLogged() ? accountPage() : customerAuthPage('entrar');
-  else if (page === 'cadastro') html = isCustomerLogged() ? accountPage() : customerAuthPage('cadastro');
+  else if (page === 'entrar') html = isRealCustomerLogged() ? accountPage() : customerAuthPage('entrar');
+  else if (page === 'cadastro') html = isRealCustomerLogged() ? accountPage() : customerAuthPage('cadastro');
   else if (page === 'comerciante-entrar') html = isMerchantLogged() ? merchantPage() : merchantAuthPage('entrar');
   else if (page === 'comerciante-cadastro') html = isMerchantLogged() ? merchantPage() : merchantAuthPage('cadastro');
   else if (page === 'cliente') html = accountPage();
@@ -1100,14 +1110,14 @@ function render() {
 
   if(page==='sabia'&&$('#sabia-form'))updateSabiaView(html);
   else {content.innerHTML = html;if(page==='sabia')renderedSabiaMessages=sabiaChat.map(entry=>entry.role+'\0'+entry.content);}
-  const visualPage = ((page === 'entrar' || page === 'cadastro') && isCustomerLogged()) ? 'cliente' : (((page === 'comerciante-entrar' || page === 'comerciante-cadastro') && isMerchantLogged()) ? 'comerciante' : page);
+  const visualPage = ((page === 'entrar' || page === 'cadastro') && isRealCustomerLogged()) ? 'cliente' : (((page === 'comerciante-entrar' || page === 'comerciante-cadastro') && isMerchantLogged()) ? 'comerciante' : page);
   $('#page-title').textContent = visualPage === 'loja' ? getStore(state.storeViewId).name : (PAGE_TITLES[visualPage] || 'APETÊ');
   const enterLink = $('#customer-nav-link');
   if (enterLink) {
     const profileReady = isMerchantView();
-    const logged = profileReady || isCustomerLogged();
+    const logged = profileReady || isRealCustomerLogged();
     enterLink.dataset.page = profileReady ? 'comerciante' : (logged ? 'cliente' : 'entrar');
-    enterLink.href = profileReady ? 'index.html#comerciante' : (logged ? 'index.html#cliente' : 'entrar.html');
+    enterLink.href = profileReady ? 'index.html#comerciante' : (logged ? 'index.html#cliente' : 'index.html#entrar');
     const label = enterLink.querySelector('.customer-nav-label');
     if (label) label.textContent = logged ? 'Minha conta' : 'Entrar';
     enterLink.setAttribute('aria-label', logged ? 'Minha conta' : 'Entrar');

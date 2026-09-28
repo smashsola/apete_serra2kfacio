@@ -216,9 +216,10 @@ try {
   // Invalid test accounts from earlier versions should not appear as signed in.
   if (!state.customer || !/^[A-Za-zÀ-ÿ' ]{2,}$/.test(String(state.customer.name||'').trim())
       || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(state.customer.email||''))
-      || String(state.customer.phone||'').replace(/\D/g,'').length < 10
-      || !/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(String(state.customer.password||''))) {
+      || String(state.customer.phone||'').replace(/\D/g,'').length < 10) {
     state.customer = initialState().customer;
+  } else if (!window.APETE_BACKEND?.hasStoredSession?.() && !state.customer.demo) {
+    state.customer.logged = false;
   }
 } catch {
   state = initialState();
@@ -294,7 +295,7 @@ function prepareClientForVideo() {
 }
 // Na abertura da vitrine para gravação, mostrar Minha conta, mantendo os
 // arquivos entrar.html e cadastro.html para quem desejar usar o fluxo comum.
-if (!AUTH_PAGE && !isCustomerLogged() && !state.ui.demoOptOut && !state.customer?.password) {
+if (!AUTH_PAGE && !isCustomerLogged() && !state.ui.demoOptOut && !state.customer?.password && !window.APETE_BACKEND?.hasStoredSession?.()) {
   prepareClientForVideo();
 }
 
@@ -303,7 +304,10 @@ if (AUTH_PAGE === 'entrar' || AUTH_PAGE === 'cadastro') {
   if (isCustomerLogged()) location.replace('index.html#cliente');
 }
 
-function save() { localStorage.setItem(KEY, JSON.stringify({...state,chat:[]})); }
+function save() {
+  const customer={...(state.customer||{}),password:''};
+  localStorage.setItem(KEY, JSON.stringify({...state,customer,chat:[]}));
+}
 
 async function hydrateCatalogFromBackend() {
   if(!window.APETE_BACKEND?.loadCatalog)return;
@@ -320,6 +324,66 @@ async function hydrateCatalogFromBackend() {
     render();
   } catch(error) {
     console.warn('apete_backend_catalog_fallback',{message:String(error?.message||error).slice(0,180)});
+  }
+}
+
+function applyBackendCustomer(profile) {
+  if(!profile)return false;
+  state.customer={
+    logged:true,
+    name:String(profile.full_name||profile.email?.split('@')[0]||'Cliente APETÊ').trim(),
+    email:String(profile.email||'').trim(),
+    phone:normalizePhone(profile.phone||''),
+    address:String(profile.address||''),
+    neighborhood:String(profile.neighborhood||''),
+    password:'',
+    demo:false,
+    backend:true
+  };
+  state.ui.savedCustomerBeforeDemo=null;
+  state.ui.demoOptOut=true;
+  return true;
+}
+
+function friendlyBackendError(error,fallback='Não foi possível concluir agora.') {
+  const message=String(error?.message||'').toLowerCase();
+  if(/invalid login credentials/.test(message))return 'E-mail ou senha incorretos.';
+  if(/email not confirmed/.test(message))return 'Confirme seu e-mail antes de entrar.';
+  if(/user already registered|already been registered/.test(message))return 'Esse e-mail já possui cadastro.';
+  if(/authentication_required|jwt|unauthorized/.test(message))return 'Sua sessão expirou. Entre novamente.';
+  if(/insufficient_stock/.test(message))return 'Um dos produtos não tem mais essa quantidade em estoque.';
+  if(/product_unavailable/.test(message))return 'Um dos produtos não está mais disponível.';
+  if(/store_unavailable|delivery_unavailable|city_unavailable/.test(message))return 'Esse pedido não está disponível para a entrega selecionada.';
+  return fallback;
+}
+
+async function refreshCustomerOrders({rerender=false}={}) {
+  if(!window.APETE_BACKEND?.loadOrders||!window.APETE_BACKEND?.hasStoredSession?.())return;
+  try {
+    state.orders=await window.APETE_BACKEND.loadOrders();
+    save();
+    if(rerender&&state.page==='pedidos')render();
+  } catch(error) {
+    console.warn('apete_backend_orders',{message:String(error?.message||error).slice(0,180)});
+  }
+}
+
+async function restoreCustomerFromBackend() {
+  if(!window.APETE_BACKEND?.hasStoredSession?.())return;
+  try {
+    const profile=await window.APETE_BACKEND.getProfile();
+    if(!applyBackendCustomer(profile))throw new Error('profile_unavailable');
+    state.orders=await window.APETE_BACKEND.loadOrders();
+    save();
+    if(AUTH_PAGE==='entrar'||AUTH_PAGE==='cadastro'){
+      location.replace('index.html#cliente');
+      return;
+    }
+    render();
+  } catch(error) {
+    state.customer={...initialState().customer};
+    state.orders=[];
+    save();
   }
 }
 function toast(message, tone = 'normal') {
@@ -401,6 +465,7 @@ function setPage(next, storeId = null) {
   if (location.hash !== `#${next}`) history.replaceState(null, '', `#${next}`);
   render();
   if(next==='sabia')detectSabiaMode();
+  if(next==='pedidos')refreshCustomerOrders({rerender:true});
   if(next!=='sabia')window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
@@ -692,7 +757,7 @@ function customerAuthPage(mode = 'entrar') {
         <div class="field"><label for="customer-password-confirm">Confirmar senha <span class="required-mark" aria-label="obrigatório">*</span></label><input id="customer-password-confirm" class="input" type="password" autocomplete="new-password" placeholder="Repita a senha"><small id="customer-password-feedback" class="field-hint" aria-live="polite"></small></div>
         <div class="field auth-wide"><label for="customer-address-field">Endereço de entrega <span class="required-mark" aria-label="obrigatório">*</span></label><input id="customer-address-field" class="input" autocomplete="street-address" placeholder="Rua, número e referência" value="${esc(state.customer.address)}"></div>
         </div><button class="primary-btn auth-submit" data-action="save-customer">Criar conta</button>` : `<div class="field-grid">
-        <div class="field"><label for="login-identifier">Telefone ou e-mail <span class="required-mark" aria-label="obrigatório">*</span></label><input id="login-identifier" class="input" type="text" autocomplete="username" placeholder="DDD + número ou voce@email.com" value="" required><small class="field-hint">Use o telefone ou e-mail informado no cadastro.</small></div>
+        <div class="field"><label for="login-identifier">E-mail <span class="required-mark" aria-label="obrigatório">*</span></label><input id="login-identifier" class="input" type="email" autocomplete="username" placeholder="voce@email.com" value="" required><small class="field-hint">Use o e-mail informado no cadastro.</small></div>
         <div class="field"><label for="login-password">Senha <span class="required-mark" aria-label="obrigatório">*</span></label><input id="login-password" class="input" type="password" autocomplete="current-password" placeholder="Sua senha"></div>
         </div><button class="primary-btn auth-submit" data-action="login-customer">Entrar</button>`}
       <div class="auth-links">
@@ -758,7 +823,7 @@ function loginPage() { return customerAuthPage('entrar'); }
 
 function ordersPage() {
   if (!isCustomerLogged()) return `${pageHead('Meus pedidos', 'Faça login para acompanhar seus pedidos e conferir o andamento das compras realizadas.')}<div class="empty"><b>Entre na sua conta</b> Você precisa fazer login para ver seus pedidos. <div class="row" style="justify-content:center;margin-top:16px"><button class="primary-btn" data-action="go-page" data-page="cliente">Ir para minha conta</button></div></div>`;
-  const orders = state.orders.filter((order) => order.customer.phone === state.customer.phone).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const orders = (window.APETE_BACKEND?.hasStoredSession?.()?state.orders:state.orders.filter((order) => order.customer.phone === state.customer.phone)).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
   const inProgress = orders.filter((order) => ['pendente','preparando','pronto'].includes(order.status)).length;
   const concluded = orders.filter((order) => order.status === 'concluido').length;
   const totalSpent = orders.filter((order) => order.status !== 'cancelado').reduce((sum, order) => sum + order.total, 0);
@@ -989,7 +1054,7 @@ function removeCartItem(productId) {
 }
 function openCartModal() { cartStep = 'cart'; renderCartModal(); }
 function goCheckout() {
-  if (!isCustomerLogged()) {
+  if (!isCustomerLogged() || state.customer.demo || !window.APETE_BACKEND?.hasStoredSession?.()) {
     closeModal();
     state.ui.accountRole = 'cliente';
     state.ui.accountTab = 'entrar';
@@ -1026,79 +1091,103 @@ function renderCartModal() {
   openModal('Sua sacola', `${items.map((item) => `<div class="cart-line"><div class="cart-thumb">${imgTag(item.product.image, item.product.name, getStore(item.product.storeId).producer ? 'producer' : 'food')}</div><div><strong>${esc(item.product.name)}</strong><p class="note">${esc(getStore(item.product.storeId).name)}</p><div class="qty-row"><button data-action="qty-cart" data-id="${item.productId}" data-step="-1">−</button><strong>${item.qty}</strong><button data-action="qty-cart" data-id="${item.productId}" data-step="1">+</button><button class="link-danger" data-action="remove-cart" data-id="${item.productId}">Remover</button></div></div><strong>${money(item.product.price * item.qty)}</strong></div>`).join('')}<div class="summary-card"><div class="total-row"><span>Subtotal</span><strong>${money(subtotal)}</strong></div><div class="total-row"><span>Entrega</span><strong>${money(deliveryFee)}</strong></div><div class="total-row final"><span>Total</span><strong>${money(total)}</strong></div><div class="row" style="margin-top:16px"><button class="ghost-btn strong" data-action="close">Continuar navegando</button><button class="primary-btn" data-action="go-checkout">Finalizar compra</button></div></div>`);
 }
 
-function placeOrder() {
-  const name = $('#checkout-name')?.value.trim();
-  const phone = $('#checkout-phone')?.value.trim();
-  const neighborhood = $('#checkout-neighborhood')?.value.trim();
-  const address = $('#checkout-address')?.value.trim();
-  const note = $('#checkout-note')?.value.trim();
-  if (!name || !phone || !address) return toast('Preencha nome, telefone e endereço para finalizar');
-  const items = state.cart.map((item) => ({ ...item, product: getProduct(item.productId) })).filter((item) => item.product);
-  const store = getStore(items[0].product.storeId);
-  const subtotal = items.reduce((sum, item) => sum + item.product.price * item.qty, 0);
-  const total = subtotal + store.fee;
-  const paymentLabel = { pix: 'Pix', cartao: 'Cartão', 'cartao-entrega': 'Cartão na entrega' }[selectedPayment];
-  const order = {
-    id: state.orders.length ? Math.max(...state.orders.map((item) => item.id)) + 1 : 1,
-    createdAt: new Date().toISOString(),
-    storeId: store.id,
-    items: items.map((item) => ({ productId: item.product.id, name: item.product.name, price: item.product.price, qty: item.qty })),
-    subtotal,
-    deliveryFee: store.fee,
-    total,
-    status: 'pendente',
-    note,
-    payment: selectedPayment,
-    paymentLabel,
-    customer: { name, phone, address, neighborhood }
-  };
-  state.customer = { ...state.customer, logged: true, name, phone, address, neighborhood };
-  state.orders.unshift(order);
-  state.ui.orderSuccessId=order.id;
-  state.cart = [];
-  save();
-  closeModal();
-  setPage('pedidos');
-  toast('✓ Pedido enviado! Acompanhe em Meus pedidos.', 'success');
+async function placeOrder() {
+  if(!window.APETE_BACKEND?.createOrder||state.customer.demo||!window.APETE_BACKEND.hasStoredSession()) {
+    closeModal();setPage('entrar');return toast('Entre na sua conta real para concluir a compra.');
+  }
+  const name=$('#checkout-name')?.value.trim();
+  const phone=normalizePhone($('#checkout-phone')?.value.trim());
+  const neighborhood=$('#checkout-neighborhood')?.value.trim();
+  const address=$('#checkout-address')?.value.trim();
+  const note=$('#checkout-note')?.value.trim();
+  if(!name||onlyDigits(phone).length<10||!address)return toast('Preencha nome, telefone e endereço para finalizar');
+  const items=state.cart.map(item=>({...item,product:getProduct(item.productId)})).filter(item=>item.product);
+  if(!items.length)return toast('Sua sacola está vazia.');
+  const store=getStore(items[0].product.storeId);
+  if(!store)return toast('Estabelecimento indisponível.');
+  try {
+    const created=await window.APETE_BACKEND.createOrder({
+      storeId:store.id,city:state.city,mode:'delivery',
+      customer:{name,phone,address,neighborhood},note,payment:selectedPayment,
+      items:items.map(item=>({productId:item.product.id,qty:item.qty}))
+    });
+    state.customer={...state.customer,name,phone,address,neighborhood};
+    try{await window.APETE_BACKEND.updateProfile({full_name:name,phone,address,neighborhood,city:state.city});}catch{}
+    state.orders=await window.APETE_BACKEND.loadOrders();
+    state.ui.orderSuccessId=Number(created?.public_number)||state.orders[0]?.id||null;
+    state.cart=[];
+    save();
+    closeModal();
+    setPage('pedidos');
+    toast('✓ Pedido enviado e salvo no APETÊ!', 'success');
+    hydrateCatalogFromBackend();
+  } catch(error) {
+    toast(friendlyBackendError(error,'Não foi possível registrar o pedido. Confira os dados e tente novamente.'));
+  }
+}
+async function saveCustomer() {
+  const name=$('#customer-name-field')?.value.trim();
+  const email=$('#customer-email-field')?.value.trim().toLowerCase();
+  const phone=normalizePhone($('#customer-phone-field')?.value.trim());
+  const neighborhood=$('#customer-neighborhood-field')?.value.trim();
+  const address=$('#customer-address-field')?.value.trim();
+  const password=$('#customer-password-field')?.value||'';
+  const confirmPassword=$('#customer-password-confirm')?.value||'';
+  if(!validCustomerName(name))return toast('Digite um nome válido, sem números');
+  if(!validEmail(email))return toast('Digite um e-mail válido com @');
+  if(onlyDigits(phone).length<10)return toast('Digite um telefone válido');
+  if(!address)return toast('Preencha o endereço');
+  if(!strongPassword(password))return toast('A senha precisa ter no mínimo 8 caracteres, com letras e números');
+  if(password!==confirmPassword)return toast('As senhas do cadastro não conferem');
+  if(!window.APETE_BACKEND?.signUpCustomer)return toast('Backend de cadastro indisponível.');
+  try {
+    const result=await window.APETE_BACKEND.signUpCustomer({email,password,name,phone,address,neighborhood,city:state.city});
+    if(result.confirmationRequired){
+      state.customer={...initialState().customer,name,email,phone,address,neighborhood};
+      state.ui.demoOptOut=true;save();
+      toast('Cadastro criado. Confira seu e-mail para confirmar a conta.','success');
+      setPage('entrar');
+      return;
+    }
+    const profile=await window.APETE_BACKEND.getProfile();
+    applyBackendCustomer(profile||{full_name:name,email,phone,address,neighborhood,city:state.city});
+    state.orders=[];
+    save();
+    setPage('cliente');
+    toast('Cadastro criado e conta conectada.','success');
+  } catch(error) {
+    toast(friendlyBackendError(error,'Não foi possível criar a conta. Tente novamente.'));
+  }
 }
 
-function saveCustomer() {
-  const name = $('#customer-name-field')?.value.trim();
-  const email = $('#customer-email-field')?.value.trim();
-  const phone = normalizePhone($('#customer-phone-field')?.value.trim());
-  const neighborhood = $('#customer-neighborhood-field')?.value.trim();
-  const address = $('#customer-address-field')?.value.trim();
-  const password = $('#customer-password-field')?.value || '';
-  const confirmPassword = $('#customer-password-confirm')?.value || '';
-  if (!validCustomerName(name)) return toast('Digite um nome válido, sem números');
-  if (!validEmail(email)) return toast('Digite um e-mail válido com @');
-  if (onlyDigits(phone).length < 10) return toast('Digite um telefone válido');
-  if (!address) return toast('Preencha o endereço');
-  if (!strongPassword(password)) return toast('A senha precisa ter no mínimo 8 caracteres, com letras e números');
-  if (password !== confirmPassword) return toast('As senhas do cadastro não conferem');
-  state.customer = { logged: true, name, email, phone, address, neighborhood, password };
-  save();
-  setPage('cliente');
-  toast('Cadastro salvo. Você já pode comprar');
-}
-function loginCustomer() {
-  const identifier = ($('#login-identifier')?.value || '').trim();
-  const password = $('#login-password')?.value || '';
-  if (!identifier || !password) return toast('Informe o telefone ou e-mail e a senha');
-  const usingEmail = identifier.includes('@');
-  if (usingEmail ? !validEmail(identifier) : onlyDigits(identifier).length < 10 || onlyDigits(identifier).length > 11)
-    return toast('Informe um telefone com DDD ou e-mail válido');
-  if (!state.customer.password) return toast('Conta ainda não cadastrada neste navegador. Clique em Criar conta.');
-  const matches = usingEmail
-    ? identifier.toLowerCase() === String(state.customer.email || '').toLowerCase()
-    : onlyDigits(identifier) === onlyDigits(state.customer.phone);
-  if (!matches || password !== state.customer.password) return toast('Telefone, e-mail ou senha incorretos');
-  state.customer.logged = true;
-  save();
-  setPage('cliente');
-  toast('Login realizado');
+async function loginCustomer() {
+  const email=($('#login-identifier')?.value||'').trim().toLowerCase();
+  const password=$('#login-password')?.value||'';
+  if(!validEmail(email)||!password)return toast('Informe seu e-mail e sua senha.');
+  if(!window.APETE_BACKEND?.signInCustomer)return toast('Backend de login indisponível.');
+  try {
+    await window.APETE_BACKEND.signInCustomer({email,password});
+    const profile=await window.APETE_BACKEND.getProfile();
+    if(!profile)throw new Error('profile_unavailable');
+    applyBackendCustomer(profile);
+    state.orders=await window.APETE_BACKEND.loadOrders();
+    save();
+    setPage('cliente');
+    toast('Login realizado.','success');
+  } catch(error) {
+    toast(friendlyBackendError(error,'Não foi possível entrar agora.'));
+  }
 }
 
+async function logoutCustomer() {
+  try{await window.APETE_BACKEND?.signOut?.();}catch{}
+  state.customer={...initialState().customer};
+  state.orders=[];
+  state.ui.savedCustomerBeforeDemo=null;
+  state.ui.demoOptOut=true;
+  save();
+  setPage('entrar');
+}
 function loginMerchant() {
   const owner = $('#merchant-owner')?.value.trim();
   const identifier = ($('#merchant-identifier')?.value || '').trim();
@@ -1340,6 +1429,7 @@ function selectRegion(){
 
 render();
 hydrateCatalogFromBackend();
+restoreCustomerFromBackend();
 detectSabiaMode();
 $('#content').addEventListener('click', (event) => {
   const button = event.target.closest('[data-action]');
@@ -1365,14 +1455,7 @@ $('#content').addEventListener('click', (event) => {
   if (action === 'advance-order') advanceOrder(button.dataset.id);
   if (action === 'cancel-order') cancelOrder(button.dataset.id);
   if (action === 'logout-merchant') { state.merchant.logged = false; save(); setPage('comerciante-entrar'); }
-  if (action === 'logout-customer') {
-    state.customer = state.customer.demo && state.ui.savedCustomerBeforeDemo
-      ? {...state.ui.savedCustomerBeforeDemo, logged:false}
-      : {...state.customer, logged:false};
-    state.ui.savedCustomerBeforeDemo=null;
-    state.ui.demoOptOut=true;
-    save();setPage('entrar');
-  }
+  if (action === 'logout-customer') logoutCustomer();
   if (action === 'send-suggestion') sendToSabia(button.dataset.text || '');
   if (action === 'sabia-check') detectSabiaMode();
   if (action === 'sabia-diagnostic') runSabiaDiagnostic(button.dataset.provider);

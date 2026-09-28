@@ -264,6 +264,20 @@
     return rows?.[0]||null;
   }
 
+  async function loadAdminMerchantApplications() {
+    const rows=await authed('/rest/v1/merchant_applications?select=id,user_id,store_name,phone,city,document,instagram,status,reviewed_at,created_at&order=created_at.desc');
+    return rows||[];
+  }
+
+  async function reviewMerchantApplication(applicationId,decision) {
+    if(!['approve','reject'].includes(decision))throw new Error('invalid_review_decision');
+    const rows=await authed('/rest/v1/rpc/review_merchant_application',{
+      method:'POST',
+      body:{p_application_id:applicationId,p_decision:decision}
+    });
+    return Array.isArray(rows)?rows[0]:rows;
+  }
+
   async function getMerchantMemberships() {
     const session=await getSession();
     if(!session?.user?.id)return [];
@@ -389,6 +403,7 @@
     acceptLegalDocuments,getLegalAcceptances,hasCurrentLegalAcceptances,
     loadOrders,createOrder,loadCatalog,
     submitMerchantApplication,getMerchantApplication,getMerchantMemberships,loadMerchantOrders,
+    loadAdminMerchantApplications,reviewMerchantApplication,
     updateOrderStatus,updateStoreProfile,saveMerchantProduct,updateMerchantProduct
   };
 })();

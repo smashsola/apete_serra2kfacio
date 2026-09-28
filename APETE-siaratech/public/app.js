@@ -285,19 +285,13 @@ const merchantAccess = () => isMerchantLogged() || (state.ui.presentationMerchan
 const isMerchantView = () => state.page === 'comerciante' && merchantAccess();
 
 function prepareClientForVideo() {
-  state.ui.presentationMerchant = false;
-  // Ativar apenas pelo seletor de apresentação, nunca usar a senha da conta real.
-  if (!isCustomerLogged()) {
-    if (state.customer && !state.customer.demo && state.customer.password) {
-      state.ui.savedCustomerBeforeDemo = {...state.customer};
-    }
-    state.customer = {...VIDEO_CUSTOMER};
-  }
+  state.ui.presentationMerchant=false;
+  if(!isCustomerLogged())state.customer={...VIDEO_CUSTOMER};
   save();
 }
-// Na abertura da vitrine para gravação, mostrar Minha conta, mantendo os
-// arquivos entrar.html e cadastro.html para quem desejar usar o fluxo comum.
-if (!AUTH_PAGE && !isCustomerLogged() && !state.ui.demoOptOut && !state.customer?.password && !window.APETE_BACKEND?.hasStoredSession?.()) {
+// Na abertura da vitrine para gravação, mostrar Minha conta somente quando
+// não existe sessão real do Supabase.
+if(!AUTH_PAGE&&!isCustomerLogged()&&!state.ui.demoOptOut&&!window.APETE_BACKEND?.hasStoredSession?.()){
   prepareClientForVideo();
 }
 
@@ -843,7 +837,6 @@ function merchantAuthPage(mode = 'entrar') {
         <div class="field"><label>Confirmar senha <span class="required-mark">*</span></label><input id="merchant-register-password-confirm" class="input" type="password" autocomplete="new-password" placeholder="Repita a senha"><small id="merchant-password-feedback" class="field-hint" aria-live="polite"></small></div>
         <div class="field"><label>Documento do empreendimento <span class="required-mark">*</span></label><input id="merchant-register-document" class="input" placeholder="CNPJ ou documento comercial"></div>
         <div class="field"><label>Instagram da loja <span class="required-mark">*</span></label><input id="merchant-register-proof" class="input" placeholder="@sualoja"></div>
-        <div class="field auth-wide"><label>Perfil de referência <span class="required-mark">*</span></label><select id="merchant-register-base" class="select">${state.stores.map(store=>`<option value="${store.id}">${esc(store.name)}</option>`).join('')}</select></div>
       </div><label class="check-line"><input id="merchant-register-confirm" type="checkbox"> <span>Confirmo que represento o empreendimento informado. <span class="required-mark">*</span></span></label><button class="primary-btn auth-submit" data-action="register-merchant">Enviar cadastro</button>` : `<div class="field-grid">
         <div class="field"><label>Responsável <span class="required-mark">*</span></label><input id="merchant-owner" class="input" placeholder="Seu nome"></div>
         <div class="field"><label>Telefone ou e-mail <span class="required-mark">*</span></label><input id="merchant-identifier" class="input" autocomplete="username" placeholder="DDD + número ou contato@loja.com"><small class="field-hint">Nos perfis de apresentação, entre com um telefone de teste e a senha indicada abaixo.</small></div>

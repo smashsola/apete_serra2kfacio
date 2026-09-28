@@ -721,3 +721,15 @@ a.instagram-badge:hover { background: #e6dbe8; text-decoration: underline; }
   .footer-legal{width:100%}
   .legal-section{padding:16px}
 }
+
+/* Administração de comerciantes */
+.admin-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 22px}
+.admin-summary article{display:grid;gap:3px;padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.admin-summary strong{font-size:28px;color:var(--ink)}
+.admin-summary span{font-size:13px;color:var(--muted)}
+.admin-applications{display:grid;gap:14px}
+.admin-application{padding:20px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}
+.admin-application-head h3{margin:8px 0 4px}
+.admin-application-head p{margin:0;color:var(--muted);font-size:13px}
+.admin-id{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px;overflow-wrap:anywhere}
+@media(max-width:640px){.admin-summary{grid-template-columns:1fr}.admin-application{padding:16px}}

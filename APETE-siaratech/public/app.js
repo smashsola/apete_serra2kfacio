@@ -280,24 +280,28 @@ const getStore = (id) => state.stores.find((item) => item.id === Number(id));
 const getProduct = (id) => state.products.find((item) => item.id === Number(id));
 const activeMerchantStore = () => getStore(state.merchant.storeId || 1);
 const isCustomerLogged = () => Boolean(state.customer.logged && state.customer.phone);
+const isRealCustomerLogged = () => Boolean(state.customer.logged && !state.customer.demo && window.APETE_BACKEND?.hasStoredSession?.());
 const isMerchantLogged = () => Boolean(state.merchant.logged && state.merchant.storeId);
 const merchantAccess = () => isMerchantLogged() || (state.ui.presentationMerchant && !AUTH_PAGE);
 const isMerchantView = () => state.page === 'comerciante' && merchantAccess();
 
 function prepareClientForVideo() {
   state.ui.presentationMerchant=false;
-  if(!isCustomerLogged())state.customer={...VIDEO_CUSTOMER};
+  if(!isRealCustomerLogged())state.customer={...VIDEO_CUSTOMER};
   save();
 }
-// Na abertura da vitrine para gravação, mostrar Minha conta somente quando
-// não existe sessão real do Supabase.
-if(!AUTH_PAGE&&!isCustomerLogged()&&!state.ui.demoOptOut&&!window.APETE_BACKEND?.hasStoredSession?.()){
-  prepareClientForVideo();
+
+// A conta ilustrativa só existe quando o usuário ativa manualmente a demonstração.
+// Identidades de apresentação salvas por versões anteriores nunca contam como login.
+if(state.customer?.demo && !window.APETE_BACKEND?.hasStoredSession?.()){
+  state.customer={...initialState().customer};
+  state.ui.savedCustomerBeforeDemo=null;
+  save();
 }
 
-// Direct links to login should open the existing account when already signed in.
-if (AUTH_PAGE === 'entrar' || AUTH_PAGE === 'cadastro') {
-  if (isCustomerLogged()) location.replace('index.html#cliente');
+// Páginas de login/cadastro só redirecionam quando há sessão real do Supabase.
+if(AUTH_PAGE==='entrar'||AUTH_PAGE==='cadastro'){
+  if(isRealCustomerLogged())location.replace('index.html#cliente');
 }
 
 function save() {
@@ -798,7 +802,7 @@ function sabiaPage() {
 }
 
 function customerAuthPage(mode = 'entrar') {
-  if (isCustomerLogged()) return `${pageHead('Você já entrou', 'Sua conta está pronta para acompanhar pedidos e finalizar compras.')}<section class="auth-form-card"><h3>Olá, ${esc(state.customer.name.split(' ')[0])}</h3><p>Você pode continuar navegando no APETÊ.</p><button class="primary-btn" data-action="go-page" data-page="cliente">Abrir minha conta</button><button class="ghost-btn strong" data-action="logout-customer">Sair desta conta</button></section>`;
+  if (isRealCustomerLogged()) return `${pageHead('Você já entrou', 'Sua conta está pronta para acompanhar pedidos e finalizar compras.')}<section class="auth-form-card"><h3>Olá, ${esc(state.customer.name.split(' ')[0])}</h3><p>Você pode continuar navegando no APETÊ.</p><button class="primary-btn" data-action="go-page" data-page="cliente">Abrir minha conta</button><button class="ghost-btn strong" data-action="logout-customer">Sair desta conta</button></section>`;
   const cadastro = mode === 'cadastro';
   return `${pageHead(cadastro ? 'Criar conta' : 'Entrar na sua conta', cadastro ? 'Preencha seus dados para finalizar pedidos e acompanhar suas compras.' : 'Entre para acompanhar seus pedidos ou finalizar sua sacola.')}
     <section class="auth-form-card">
@@ -1145,7 +1149,7 @@ function removeCartItem(productId) {
 }
 function openCartModal() { cartStep = 'cart'; renderCartModal(); }
 function goCheckout() {
-  if (!isCustomerLogged() || state.customer.demo || !window.APETE_BACKEND?.hasStoredSession?.()) {
+  if (!isRealCustomerLogged()) {
     closeModal();
     state.ui.accountRole = 'cliente';
     state.ui.accountTab = 'entrar';
@@ -1662,7 +1666,7 @@ $('#demo-merchant-tab')?.addEventListener('click', () => {state.ui.presentationM
 $('#cart-button').addEventListener('click', openCartModal);
 $('#user-button').addEventListener('click', () => {
   if (isMerchantView()) {state.ui.merchantPanelTab='cadastro';save();setPage('comerciante');}
-  else setPage(isCustomerLogged() ? 'cliente' : 'entrar');
+  else setPage(isRealCustomerLogged() ? 'cliente' : 'entrar');
 });
 $('#locate').addEventListener('click', selectRegion);
 $('#menu-toggle').addEventListener('click', openSidebar);

@@ -169,7 +169,8 @@ const PAGE_TITLES = {
   privacidade: 'Privacidade',
   cookies: 'Cookies e armazenamento',
   cancelamentos: 'Cancelamentos e reembolsos',
-  'regras-comerciante': 'Regras do comerciante'
+  'regras-comerciante': 'Regras do comerciante',
+  admin: 'Administração'
 };
 
 function initialState() {
@@ -179,6 +180,7 @@ function initialState() {
     cart: [],
     orders: [],
     merchantOrders: [],
+    adminApplications: [],
     demoOrders: makeDemoOrders(),
     customer: { logged: false, name: '', email: '', phone: '', address: '', neighborhood: '', password: '' },
     merchant: { logged: false, owner: '', storeId: 1, phone: '', email: '', password: '', document: '', officialProof: '', verified: false },
@@ -211,6 +213,7 @@ try {
   }
   if (!Array.isArray(state.demoOrders)) state.demoOrders = makeDemoOrders();
   if (!Array.isArray(state.merchantOrders)) state.merchantOrders = [];
+  if (!Array.isArray(state.adminApplications)) state.adminApplications = [];
   // Não reinicia pedidos que já foram aceitos ou concluídos em versões anteriores.
   const savedDemoIds = new Set(state.demoOrders.map(order => order.id));
   for (const order of extraPendingOrders()) {
@@ -255,7 +258,7 @@ if (AUTH_PAGE) {
   if (AUTH_PAGE === 'comerciante-entrar') state.ui.merchantAuthTab = 'entrar';
 } else {
   const pageFromHash = location.hash.replace(/^#/, '');
-  state.page = ['inicio','estabelecimentos','cardapio','fornada','produtores','sabia','pedidos','entrar','cadastro','comerciante-entrar','comerciante-cadastro','cliente','comerciante','loja','termos','privacidade','cookies','cancelamentos','regras-comerciante'].includes(pageFromHash)
+  state.page = ['inicio','estabelecimentos','cardapio','fornada','produtores','sabia','pedidos','entrar','cadastro','comerciante-entrar','comerciante-cadastro','cliente','comerciante','loja','termos','privacidade','cookies','cancelamentos','regras-comerciante','admin'].includes(pageFromHash)
     ? pageFromHash
     : (!state.page || AUTH_ROUTES[state.page] ? 'inicio' : state.page);
   if (state.page === 'cliente' && !(state.customer.logged && !state.customer.demo && window.APETE_BACKEND?.hasStoredSession?.())) state.page = 'inicio';
@@ -287,6 +290,7 @@ const activeMerchantStore = () => getStore(state.merchant.storeId || 1);
 const isCustomerLogged = () => Boolean(state.customer.logged && state.customer.phone);
 const isRealCustomerLogged = () => Boolean(state.customer.logged && !state.customer.demo && window.APETE_BACKEND?.hasStoredSession?.());
 const isMerchantLogged = () => Boolean(state.merchant.logged && state.merchant.storeId);
+const isAdmin = () => Boolean(isRealCustomerLogged() && state.customer.role === 'admin');
 const merchantAccess = () => isMerchantLogged() || (state.ui.presentationMerchant && !AUTH_PAGE);
 const isMerchantView = () => state.page === 'comerciante' && merchantAccess();
 
@@ -344,7 +348,8 @@ function applyBackendCustomer(profile) {
     neighborhood:String(profile.neighborhood||''),
     password:'',
     demo:false,
-    backend:true
+    backend:true,
+    role:String(profile.role||'customer')
   };
   state.ui.savedCustomerBeforeDemo=null;
   state.ui.demoOptOut=true;
@@ -368,6 +373,9 @@ async function refreshCustomerOrders({rerender=false}={}) {
   if(!window.APETE_BACKEND?.loadOrders||!window.APETE_BACKEND?.hasStoredSession?.())return;
   try {
     state.orders=await window.APETE_BACKEND.loadOrders();
+    if(profile.role==='admin'&&window.APETE_BACKEND?.loadAdminMerchantApplications){
+      try{state.adminApplications=await window.APETE_BACKEND.loadAdminMerchantApplications();}catch{}
+    }
     save();
     if(rerender&&state.page==='pedidos')render();
   } catch(error) {
@@ -427,6 +435,29 @@ async function refreshMerchantBackend({rerender=false}={}) {
     if(rerender&&state.page==='comerciante')render();
   }catch(error){
     console.warn('apete_backend_merchant_orders',{message:String(error?.message||error).slice(0,180)});
+  }
+}
+
+async function refreshAdminApplications({rerender=false}={}) {
+  if(!isAdmin()||!window.APETE_BACKEND?.loadAdminMerchantApplications)return;
+  try{
+    state.adminApplications=await window.APETE_BACKEND.loadAdminMerchantApplications();
+    save();
+    if(rerender&&state.page==='admin')render();
+  }catch(error){
+    console.warn('apete_admin_applications',{message:String(error?.message||error).slice(0,180)});
+  }
+}
+
+async function reviewMerchantApplication(applicationId,decision) {
+  if(!isAdmin())return toast('Acesso de administrador necessário.');
+  try{
+    await window.APETE_BACKEND.reviewMerchantApplication(applicationId,decision);
+    await refreshAdminApplications({rerender:true});
+    await hydrateCatalogFromBackend();
+    toast(decision==='approve'?'Comerciante aprovado e loja criada.':'Solicitação rejeitada.','success');
+  }catch(error){
+    toast(friendlyBackendError(error,'Não foi possível revisar a solicitação.'));
   }
 }
 
@@ -526,6 +557,9 @@ function setPage(next, storeId = null) {
   if (next === 'comerciante' && !merchantAccess()) {
     next = 'comerciante-entrar';
   }
+  if (next === 'admin' && !isAdmin()) {
+    next = isRealCustomerLogged() ? 'cliente' : 'entrar';
+  }
 
   if (next !== 'pedidos') state.ui.orderSuccessId = null;
   state.page = next;
@@ -542,6 +576,7 @@ function setPage(next, storeId = null) {
   if(next==='sabia')detectSabiaMode();
   if(next==='pedidos')refreshCustomerOrders({rerender:true});
   if(next==='comerciante'&&state.merchant?.backend)refreshMerchantBackend({rerender:true});
+  if(next==='admin'&&isAdmin())refreshAdminApplications({rerender:true});
   if(next!=='sabia')window.scrollTo({ top: 0, behavior: 'instant' });
 }
 function closeSidebar() {
@@ -817,6 +852,28 @@ function sabiaPage() {
     </section>`;
 }
 
+function adminPage() {
+  if(!isAdmin())return `${pageHead('Administração','Acesso restrito.')}<div class="empty"><b>Acesso não autorizado</b> Esta área é exclusiva para administradores do APETÊ.</div>`;
+  const applications=[...(state.adminApplications||[])];
+  const pending=applications.filter(item=>item.status==='pending');
+  const reviewed=applications.filter(item=>item.status!=='pending').slice(0,20);
+  const card=item=>`<article class="admin-application">
+    <div class="admin-application-head"><div><span class="chip soft">${item.status==='pending'?'Aguardando análise':item.status==='approved'?'Aprovado':'Rejeitado'}</span><h3>${esc(item.store_name)}</h3><p>${esc(item.city)} · enviada em ${dateTime(item.created_at)}</p></div></div>
+    <div class="order-detail-grid">
+      <div class="order-detail"><b>Telefone</b><span>${esc(item.phone)}</span></div>
+      <div class="order-detail"><b>Documento informado</b><span>${esc(item.document)}</span></div>
+      <div class="order-detail"><b>Instagram</b><span>${esc(item.instagram)}</span></div>
+      <div class="order-detail"><b>ID da conta</b><span class="admin-id">${esc(item.user_id)}</span></div>
+    </div>
+    ${item.status==='pending'? `<div class="row" style="margin-top:14px"><button class="primary-btn" data-action="admin-review-merchant" data-id="${item.id}" data-decision="approve">Aprovar e criar loja</button><button class="ghost-btn strong" data-action="admin-review-merchant" data-id="${item.id}" data-decision="reject">Rejeitar</button></div>` : ''}
+  </article>`;
+  return `${pageHead('Administração','Revise solicitações antes de liberar uma loja real no APETÊ.')}
+    <section class="admin-summary"><article><strong>${pending.length}</strong><span>Aguardando análise</span></article><article><strong>${applications.filter(item=>item.status==='approved').length}</strong><span>Aprovadas</span></article><article><strong>${applications.filter(item=>item.status==='rejected').length}</strong><span>Rejeitadas</span></article></section>
+    <div class="merchant-section-heading"><div><span class="merchant-eyebrow">Comerciantes</span><h3>Solicitações pendentes</h3><p>Aprovar cria a loja, vincula o solicitante como proprietário e libera o painel real.</p></div></div>
+    <section class="admin-applications">${pending.length?pending.map(card).join(''):'<div class="empty"><b>Nenhuma solicitação pendente</b> Novos cadastros aparecerão aqui.</div>'}</section>
+    ${reviewed.length?`<div class="merchant-section-heading below"><h3>Revisadas recentemente</h3></div><section class="admin-applications">${reviewed.map(card).join('')}</section>`:''}`;
+}
+
 function legalPage(kind) {
   const pages={
     termos:{
@@ -941,12 +998,12 @@ function merchantAuthPage(mode = 'entrar') {
 }
 
 function accountPage() {
-  if (!isCustomerLogged()) return customerAuthPage('entrar');
+  if (!isRealCustomerLogged()) return customerAuthPage('entrar');
   const customer = state.customer;
-  if (isCustomerLogged()) {
+  if (isRealCustomerLogged()) {
     return `${pageHead('Minha conta', 'Área do cliente separada do painel do comerciante.')}
       <section class="account-layout single-col">
-        <article class="account-box accent-box"><div class="account-body"><span class="chip soft">Conta do cliente</span><h3>Olá, ${esc(customer.name.split(' ')[0])}</h3><p>Quando você estiver logado, a compra pode ser finalizada com endereço, forma de pagamento e observações do pedido.</p><ul class="kv"><li><strong>Nome</strong><span>${esc(customer.name)}</span></li><li><strong>E-mail</strong><span>${esc(customer.email || 'Ainda não informado')}</span></li><li><strong>Telefone</strong><span>${esc(customer.phone)}</span></li><li><strong>Endereço</strong><span>${esc(customer.address || 'Ainda não informado')}</span></li><li><strong>Status</strong><span>Conta pronta para comprar</span></li></ul><div class="row" style="margin-top:14px"><button class="ghost-btn strong" data-action="go-page" data-page="pedidos">Meus pedidos</button><button class="primary-btn" data-action="go-page" data-page="cardapio">Ir ao cardápio</button><button class="ghost-btn strong" data-action="logout-customer">Sair</button></div></div></article>
+        <article class="account-box accent-box"><div class="account-body"><span class="chip soft">Conta do cliente</span><h3>Olá, ${esc(customer.name.split(' ')[0])}</h3><p>Quando você estiver logado, a compra pode ser finalizada com endereço, forma de pagamento e observações do pedido.</p><ul class="kv"><li><strong>Nome</strong><span>${esc(customer.name)}</span></li><li><strong>E-mail</strong><span>${esc(customer.email || 'Ainda não informado')}</span></li><li><strong>Telefone</strong><span>${esc(customer.phone)}</span></li><li><strong>Endereço</strong><span>${esc(customer.address || 'Ainda não informado')}</span></li><li><strong>Status</strong><span>Conta pronta para comprar</span></li></ul><div class="row" style="margin-top:14px"><button class="ghost-btn strong" data-action="go-page" data-page="pedidos">Meus pedidos</button><button class="primary-btn" data-action="go-page" data-page="cardapio">Ir ao cardápio</button>${isAdmin()?'<button class="ghost-btn strong" data-action="go-page" data-page="admin">Administração</button>':''}<button class="ghost-btn strong" data-action="logout-customer">Sair</button></div></div></article>
       </section>`;
   }
   const activeTab = state.ui.accountTab;
@@ -1180,6 +1237,7 @@ function render() {
   else if (page === 'cookies') html = legalPage('cookies');
   else if (page === 'cancelamentos') html = legalPage('cancelamentos');
   else if (page === 'regras-comerciante') html = legalPage('merchant');
+  else if (page === 'admin') html = adminPage();
   else html = homePage();
 
   if(page==='sabia'&&$('#sabia-form'))updateSabiaView(html);
@@ -1714,6 +1772,7 @@ $('#content').addEventListener('click', (event) => {
   if (action === 'login-customer') loginCustomer();
   if (action === 'login-merchant') loginMerchant();
   if (action === 'register-merchant') registerMerchant();
+  if (action === 'admin-review-merchant') reviewMerchantApplication(button.dataset.id,button.dataset.decision);
   if (action === 'save-merchant-profile') saveMerchantProfile();
   if (action === 'advance-order') advanceOrder(button.dataset.id);
   if (action === 'cancel-order') cancelOrder(button.dataset.id);

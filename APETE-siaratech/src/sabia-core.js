@@ -87,7 +87,7 @@ export function localIntent(current,previous=null){
  else if(/\bpreco\b|\bquanto custa\b/.test(clean))fact='price';
  else if(!alternative&&!listing&&/\b(?:tem|ha|existe|disponiv|vende|vendem|oferece|oferecem)\b/.test(clean))fact='availability';
  const affirmative=isAffirmative(clean);
- let action=conversational?'chat':fact!=='none'?'fact':switching?'switch':alternative?'alternative':listing?'list':affirmative&&components.length===0?'confirm':'recommend';
+ let action=conversational?'chat':fact!=='none'?'fact':switching?'switch':alternative?'alternative':constraintOnlyReset?'refine':listing?'list':affirmative&&components.length===0?'confirm':'recommend';
  if(!conversational&&action!=='confirm'&&/\bdieta\b|\bregime\b/.test(clean)&&!preferences.length)action='clarify';
  let searchTerms=[];
  if(['availability','price'].includes(fact)&&!preferences.length){
@@ -136,7 +136,8 @@ export function bundleTotal(items,mode,budgetScope='total'){
   const value=Number(item?.[reaisKey]);
   return Number.isFinite(value)?Math.round(value*100):0;
  };
- const products=items.reduce((sum,item)=>sum+cents(item,'price','priceReais'),0);
+ const quantity=item=>Number.isInteger(item?.quantity)&&item.quantity>0?item.quantity:1;
+ const products=items.reduce((sum,item)=>sum+cents(item,'price','priceReais')*quantity(item),0);
  if(mode==='pickup'||budgetScope==='products')return products;
  const fees=new Map();
  for(const item of items)fees.set(item.storeId,cents(item,'fee','feeReais'));

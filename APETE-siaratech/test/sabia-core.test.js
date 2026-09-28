@@ -159,10 +159,22 @@ test('remover orçamento não apaga o assunto e fato curto continua no escopo an
  const meal=localIntent('quero almoço até 40');
  const reset=localIntent('esquece o limite',meal);
  assert.equal(reset.topic,'meal');
+ assert.equal(reset.action,'refine');
  assert.equal(reset.keepPreviousContext,true);
  const cheapest=localIntent('qual o mais barato?',meal);
  assert.equal(cheapest.topic,'meal');
  assert.equal(cheapest.action,'fact');
  assert.equal(cheapest.fact,'cheapest');
  assert.equal(cheapest.keepPreviousContext,true);
+});
+
+
+test('total de conjunto multiplica quantidade mas cobra uma taxa por estabelecimento',()=>{
+ const sameStore=[
+  {price:6200,quantity:2,storeId:1,fee:600},
+  {price:900,quantity:1,storeId:1,fee:600}
+ ];
+ assert.equal(bundleTotal(sameStore,'delivery'),13900);
+ assert.equal(bundleTotal(sameStore,'delivery','products'),13300);
+ assert.equal(bundleTotal(sameStore,'pickup'),13300);
 });

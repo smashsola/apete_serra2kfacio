@@ -164,7 +164,12 @@ const PAGE_TITLES = {
   entrar: 'Entrar',
   cliente: 'Minha conta',
   comerciante: 'Painel do comerciante',
-  loja: 'Perfil'
+  loja: 'Perfil',
+  termos: 'Termos de Uso',
+  privacidade: 'Privacidade',
+  cookies: 'Cookies e armazenamento',
+  cancelamentos: 'Cancelamentos e reembolsos',
+  'regras-comerciante': 'Regras do comerciante'
 };
 
 function initialState() {
@@ -250,7 +255,7 @@ if (AUTH_PAGE) {
   if (AUTH_PAGE === 'comerciante-entrar') state.ui.merchantAuthTab = 'entrar';
 } else {
   const pageFromHash = location.hash.replace(/^#/, '');
-  state.page = ['inicio','estabelecimentos','cardapio','fornada','produtores','sabia','pedidos','entrar','cadastro','comerciante-entrar','comerciante-cadastro','cliente','comerciante','loja'].includes(pageFromHash)
+  state.page = ['inicio','estabelecimentos','cardapio','fornada','produtores','sabia','pedidos','entrar','cadastro','comerciante-entrar','comerciante-cadastro','cliente','comerciante','loja','termos','privacidade','cookies','cancelamentos','regras-comerciante'].includes(pageFromHash)
     ? pageFromHash
     : (!state.page || AUTH_ROUTES[state.page] ? 'inicio' : state.page);
   if (state.page === 'cliente' && !(state.customer.logged && !state.customer.demo && window.APETE_BACKEND?.hasStoredSession?.())) state.page = 'inicio';
@@ -355,6 +360,7 @@ function friendlyBackendError(error,fallback='Não foi possível concluir agora.
   if(/insufficient_stock/.test(message))return 'Um dos produtos não tem mais essa quantidade em estoque.';
   if(/product_unavailable/.test(message))return 'Um dos produtos não está mais disponível.';
   if(/store_unavailable|delivery_unavailable|city_unavailable/.test(message))return 'Esse pedido não está disponível para a entrega selecionada.';
+  if(/legal_acceptance_required/.test(message))return 'Você precisa aceitar os Termos de Uso e a Política de Privacidade atuais antes de continuar.';
   return fallback;
 }
 
@@ -811,6 +817,71 @@ function sabiaPage() {
     </section>`;
 }
 
+function legalPage(kind) {
+  const pages={
+    termos:{
+      title:'Termos de Uso',
+      intro:'Regras gerais para usar o APETÊ como cliente.',
+      sections:[
+        ['1. Uso da plataforma','O APETÊ conecta clientes a estabelecimentos e produtores cadastrados. O usuário deve fornecer informações verdadeiras, manter sua conta segura e usar a plataforma de forma lícita.'],
+        ['2. Pedidos e preços','Preços, disponibilidade, estoque, taxa de entrega e total são confirmados pelo sistema no momento do pedido. O estabelecimento é responsável pelas informações comerciais e pelo preparo ou fornecimento do produto que oferece.'],
+        ['3. Conta e segurança','A conta é pessoal. O APETÊ pode limitar ou suspender acessos em caso de fraude, abuso, tentativa de burlar pagamentos, invasão de contas ou uso indevido da plataforma.'],
+        ['4. Atendimento e direitos do consumidor','Nada nestes Termos elimina direitos obrigatórios previstos na legislação brasileira. Dúvidas sobre pedido, cancelamento ou reembolso devem ser tratadas pelos canais disponibilizados na plataforma.'],
+        ['5. Alterações','Quando houver mudança relevante nestes Termos, uma nova versão poderá exigir novo aceite antes de continuar usando funções que dependam da conta.']
+      ]
+    },
+    privacidade:{
+      title:'Política de Privacidade',
+      intro:'Como o APETÊ trata dados pessoais.',
+      sections:[
+        ['Dados tratados','Podemos tratar nome, e-mail, telefone, endereço de entrega, cidade, dados da conta, pedidos e informações necessárias para operar o serviço. Comerciantes também podem fornecer dados de contato e comprovação do estabelecimento.'],
+        ['Finalidades','Os dados são usados para autenticação, processamento e acompanhamento de pedidos, comunicação, prevenção de fraude, segurança, atendimento, gestão de comerciantes e cumprimento de obrigações aplicáveis.'],
+        ['Compartilhamento','Dados de um pedido podem ser disponibilizados ao estabelecimento e, quando necessário, ao responsável pela entrega. O APETÊ não deve vender dados pessoais para publicidade.'],
+        ['Retenção e segurança','Os dados devem ser mantidos apenas pelo período necessário às finalidades do serviço, segurança e obrigações aplicáveis, com controles de acesso e proteção compatíveis com o risco.'],
+        ['Direitos do titular','O usuário pode solicitar informações e exercer os direitos previstos na legislação de proteção de dados pelos canais oficiais do APETÊ.']
+      ]
+    },
+    cookies:{
+      title:'Cookies e armazenamento local',
+      intro:'O que o site salva no navegador hoje.',
+      sections:[
+        ['Sem rastreamento publicitário nesta versão','O APETÊ não usa, nesta versão, cookies de publicidade, Pixel da Meta ou Google Analytics.'],
+        ['Armazenamento necessário','O site usa armazenamento local e de sessão do navegador para manter sessão autenticada, sacola, preferências da interface e dados temporários da Sabiá. Esses recursos são necessários para o funcionamento atual do aplicativo.'],
+        ['Se isso mudar','Se forem adicionadas ferramentas opcionais de analytics, publicidade ou rastreamento que dependam de escolha do usuário, o APETÊ deverá apresentar controles adequados antes de ativá-las.']
+      ]
+    },
+    cancelamentos:{
+      title:'Cancelamentos e reembolsos',
+      intro:'Regras operacionais para problemas com pedidos.',
+      sections:[
+        ['Antes do preparo','Quando o pedido ainda não tiver avançado no preparo, o cancelamento poderá ser solicitado pelos canais disponibilizados.'],
+        ['Depois do preparo ou entrega','A análise depende do motivo, do estágio do pedido e dos direitos aplicáveis ao consumidor. Produto incorreto, indisponível, não entregue ou com problema deve ser tratado com prioridade.'],
+        ['Pagamento','Quando houver pagamento online real, o estorno deve seguir o meio de pagamento e o provedor utilizado. A seleção visual de Pix ou cartão na demonstração não representa pagamento confirmado.'],
+        ['Registro','Pedidos, status, cancelamentos e valores devem permanecer registrados para permitir atendimento e auditoria do caso.']
+      ]
+    },
+    merchant:{
+      title:'Regras do comerciante',
+      intro:'Condições para vender pelo APETÊ.',
+      sections:[
+        ['Cadastro e aprovação','Qualquer interessado pode enviar uma solicitação, mas a loja só recebe acesso real após análise e aprovação do APETÊ. Enviar cadastro não garante aprovação.'],
+        ['Informações verdadeiras','O responsável deve fornecer dados verdadeiros do estabelecimento e manter nome, contato, preços, estoque, disponibilidade e demais informações comerciais atualizados.'],
+        ['Produtos e alimentos','O comerciante é responsável pela qualidade, origem, conservação, preparo, descrição e entrega dos produtos que oferece, além de cumprir as exigências sanitárias e comerciais aplicáveis à sua atividade.'],
+        ['Pedidos','Pedidos aceitos devem ser tratados de forma diligente. O comerciante só pode acessar dados de pedidos vinculados à própria loja e deve usar esses dados apenas para execução e atendimento do pedido.'],
+        ['Suspensão','O APETÊ pode suspender ou remover estabelecimentos em caso de fraude, informações falsas, descumprimento reiterado, risco ao consumidor ou uso indevido da plataforma.'],
+        ['Dados pessoais','Dados de clientes não podem ser reutilizados para finalidades incompatíveis com o pedido ou compartilhados indevidamente.']
+      ]
+    }
+  };
+  const page=pages[kind]||pages.termos;
+  return `${pageHead(page.title,page.intro)}
+    <section class="legal-page">
+      <div class="legal-version">Versão 2026-09-28-v1 · conteúdo operacional sujeito a revisão antes de produção pública.</div>
+      ${page.sections.map(([title,text])=>`<article class="legal-section"><h3>${esc(title)}</h3><p>${esc(text)}</p></article>`).join('')}
+      <p class="legal-review-note">Este texto organiza as regras do produto e não substitui revisão jurídica profissional para lançamento comercial.</p>
+    </section>`;
+}
+
 function customerAuthPage(mode = 'entrar') {
   if (isRealCustomerLogged()) return `${pageHead('Você já entrou', 'Sua conta está pronta para acompanhar pedidos e finalizar compras.')}<section class="auth-form-card"><h3>Olá, ${esc(state.customer.name.split(' ')[0])}</h3><p>Você pode continuar navegando no APETÊ.</p><button class="primary-btn" data-action="go-page" data-page="cliente">Abrir minha conta</button><button class="ghost-btn strong" data-action="logout-customer">Sair desta conta</button></section>`;
   const cadastro = mode === 'cadastro';
@@ -825,7 +896,10 @@ function customerAuthPage(mode = 'entrar') {
         <div class="field"><label for="customer-password-field">Senha <span class="required-mark" aria-label="obrigatório">*</span></label><input id="customer-password-field" class="input" type="password" autocomplete="new-password" placeholder="8 caracteres, letras e números"></div>
         <div class="field"><label for="customer-password-confirm">Confirmar senha <span class="required-mark" aria-label="obrigatório">*</span></label><input id="customer-password-confirm" class="input" type="password" autocomplete="new-password" placeholder="Repita a senha"><small id="customer-password-feedback" class="field-hint" aria-live="polite"></small></div>
         <div class="field auth-wide"><label for="customer-address-field">Endereço de entrega <span class="required-mark" aria-label="obrigatório">*</span></label><input id="customer-address-field" class="input" autocomplete="street-address" placeholder="Rua, número e referência" value="${esc(state.customer.address)}"></div>
-        </div><button class="primary-btn auth-submit" data-action="save-customer">Criar conta</button>` : `<div class="field-grid">
+        </div>
+        <label class="check-line legal-check"><input id="customer-accept-terms" type="checkbox"> <span>Li e aceito os <a href="index.html#termos" data-action="go-page" data-page="termos">Termos de Uso</a>. <span class="required-mark">*</span></span></label>
+        <label class="check-line legal-check"><input id="customer-accept-privacy" type="checkbox"> <span>Li a <a href="index.html#privacidade" data-action="go-page" data-page="privacidade">Política de Privacidade</a>. <span class="required-mark">*</span></span></label>
+        <button class="primary-btn auth-submit" data-action="save-customer">Criar conta</button>` : `<div class="field-grid">
         <div class="field"><label for="login-identifier">E-mail <span class="required-mark" aria-label="obrigatório">*</span></label><input id="login-identifier" class="input" type="email" autocomplete="username" placeholder="voce@email.com" value="" required><small class="field-hint">Use o e-mail informado no cadastro.</small></div>
         <div class="field"><label for="login-password">Senha <span class="required-mark" aria-label="obrigatório">*</span></label><input id="login-password" class="input" type="password" autocomplete="current-password" placeholder="Sua senha"></div>
         </div><button class="primary-btn auth-submit" data-action="login-customer">Entrar</button>`}
@@ -851,7 +925,12 @@ function merchantAuthPage(mode = 'entrar') {
         <div class="field"><label>Confirmar senha <span class="required-mark">*</span></label><input id="merchant-register-password-confirm" class="input" type="password" autocomplete="new-password" placeholder="Repita a senha"><small id="merchant-password-feedback" class="field-hint" aria-live="polite"></small></div>
         <div class="field"><label>Documento do empreendimento <span class="required-mark">*</span></label><input id="merchant-register-document" class="input" placeholder="CNPJ ou documento comercial"></div>
         <div class="field"><label>Instagram da loja <span class="required-mark">*</span></label><input id="merchant-register-proof" class="input" placeholder="@sualoja"></div>
-      </div><label class="check-line"><input id="merchant-register-confirm" type="checkbox"> <span>Confirmo que represento o empreendimento informado. <span class="required-mark">*</span></span></label><button class="primary-btn auth-submit" data-action="register-merchant">Enviar cadastro</button>` : `<div class="field-grid">
+      </div>
+      <label class="check-line"><input id="merchant-register-confirm" type="checkbox"> <span>Confirmo que represento o empreendimento informado. <span class="required-mark">*</span></span></label>
+      <label class="check-line legal-check"><input id="merchant-accept-terms" type="checkbox"> <span>Aceito os <a href="index.html#termos" data-action="go-page" data-page="termos">Termos de Uso</a>. <span class="required-mark">*</span></span></label>
+      <label class="check-line legal-check"><input id="merchant-accept-privacy" type="checkbox"> <span>Li a <a href="index.html#privacidade" data-action="go-page" data-page="privacidade">Política de Privacidade</a>. <span class="required-mark">*</span></span></label>
+      <label class="check-line legal-check"><input id="merchant-accept-rules" type="checkbox"> <span>Aceito as <a href="index.html#regras-comerciante" data-action="go-page" data-page="regras-comerciante">Regras do Comerciante</a>. <span class="required-mark">*</span></span></label>
+      <button class="primary-btn auth-submit" data-action="register-merchant">Enviar cadastro</button>` : `<div class="field-grid">
         <div class="field"><label>Responsável <span class="required-mark">*</span></label><input id="merchant-owner" class="input" placeholder="Seu nome"></div>
         <div class="field"><label>Telefone ou e-mail <span class="required-mark">*</span></label><input id="merchant-identifier" class="input" autocomplete="username" placeholder="DDD + número ou contato@loja.com"><small class="field-hint">Nos perfis de apresentação, entre com um telefone de teste e a senha indicada abaixo.</small></div>
         <div class="field"><label>Estabelecimento <span class="required-mark">*</span></label><select id="merchant-store" class="select">${state.stores.map(store=>`<option value="${store.id}">${esc(store.name)}</option>`).join('')}</select></div>
@@ -1106,6 +1185,11 @@ function render() {
   else if (page === 'cliente') html = accountPage();
   else if (page === 'comerciante') html = merchantPage();
   else if (page === 'loja') html = storeDetailPage();
+  else if (page === 'termos') html = legalPage('termos');
+  else if (page === 'privacidade') html = legalPage('privacidade');
+  else if (page === 'cookies') html = legalPage('cookies');
+  else if (page === 'cancelamentos') html = legalPage('cancelamentos');
+  else if (page === 'regras-comerciante') html = legalPage('merchant');
   else html = homePage();
 
   if(page==='sabia'&&$('#sabia-form'))updateSabiaView(html);
@@ -1244,16 +1328,19 @@ async function saveCustomer() {
   if(!address)return toast('Preencha o endereço');
   if(!strongPassword(password))return toast('A senha precisa ter no mínimo 8 caracteres, com letras e números');
   if(password!==confirmPassword)return toast('As senhas do cadastro não conferem');
+  if(!$('#customer-accept-terms')?.checked||!$('#customer-accept-privacy')?.checked)return toast('Aceite os Termos de Uso e leia a Política de Privacidade para criar a conta.');
   if(!window.APETE_BACKEND?.signUpCustomer)return toast('Backend de cadastro indisponível.');
   try {
     const result=await window.APETE_BACKEND.signUpCustomer({email,password,name,phone,address,neighborhood,city:state.city});
     if(result.confirmationRequired){
       state.customer={...initialState().customer,name,email,phone,address,neighborhood};
+      state.ui.pendingLegalAcceptances=['terms','privacy'];
       state.ui.demoOptOut=true;save();
       toast('Cadastro criado. Confira seu e-mail para confirmar a conta.','success');
       setPage('entrar');
       return;
     }
+    await window.APETE_BACKEND.acceptLegalDocuments(['terms','privacy']);
     const profile=await window.APETE_BACKEND.getProfile();
     applyBackendCustomer(profile||{full_name:name,email,phone,address,neighborhood,city:state.city});
     state.orders=[];
@@ -1272,6 +1359,10 @@ async function loginCustomer() {
   if(!window.APETE_BACKEND?.signInCustomer)return toast('Backend de login indisponível.');
   try {
     await window.APETE_BACKEND.signInCustomer({email,password});
+    if(Array.isArray(state.ui.pendingLegalAcceptances)&&state.ui.pendingLegalAcceptances.length){
+      await window.APETE_BACKEND.acceptLegalDocuments(state.ui.pendingLegalAcceptances);
+      state.ui.pendingLegalAcceptances=null;
+    }
     const profile=await window.APETE_BACKEND.getProfile();
     if(!profile)throw new Error('profile_unavailable');
     applyBackendCustomer(profile);
@@ -1321,6 +1412,10 @@ async function loginMerchant() {
     let memberships=await window.APETE_BACKEND.getMerchantMemberships();
     if(!memberships.length&&state.ui.merchantApplicationDraft){
       try{
+        if(Array.isArray(state.ui.pendingLegalAcceptances)&&state.ui.pendingLegalAcceptances.length){
+          await window.APETE_BACKEND.acceptLegalDocuments(state.ui.pendingLegalAcceptances);
+          state.ui.pendingLegalAcceptances=null;
+        }
         await window.APETE_BACKEND.submitMerchantApplication(state.ui.merchantApplicationDraft);
         state.ui.merchantApplicationDraft=null;
       }catch{}
@@ -1362,6 +1457,8 @@ async function registerMerchant() {
   if(!strongPassword(password))return toast('A senha do painel precisa ter no mínimo 8 caracteres, com letras e números');
   if(password!==confirmPassword)return toast('As senhas do painel não conferem');
   if(!documentId||!instagram||!confirmed)return toast('Informe o documento, Instagram da loja e a confirmação');
+  if(!$('#merchant-accept-terms')?.checked||!$('#merchant-accept-privacy')?.checked||!$('#merchant-accept-rules')?.checked)
+    return toast('Aceite os Termos, a Política de Privacidade e as Regras do Comerciante.');
   const draft={storeName,phone,city,document:documentId,instagram:'@'+instagram};
   try{
     const result=await window.APETE_BACKEND.signUpCustomer({
@@ -1369,11 +1466,13 @@ async function registerMerchant() {
     });
     if(result.confirmationRequired){
       state.ui.merchantApplicationDraft=draft;
+      state.ui.pendingLegalAcceptances=['terms','privacy','merchant_terms'];
       state.merchant={...initialState().merchant};
       save();
       toast('Conta criada. Confirme o e-mail e depois entre no painel para enviar a solicitação.','success');
       return;
     }
+    await window.APETE_BACKEND.acceptLegalDocuments(['terms','privacy','merchant_terms']);
     await window.APETE_BACKEND.submitMerchantApplication(draft);
     await window.APETE_BACKEND.signOut();
     state.customer={...initialState().customer};

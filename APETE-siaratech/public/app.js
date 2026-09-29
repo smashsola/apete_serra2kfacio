@@ -590,6 +590,7 @@ function fieldError(selector,message) {
 
 function setPage(next, storeId = null, options = {}) {
   const { fromHistory=false, replaceHistory=false, scroll=true } = options;
+  closeRegionSelector();
   closeModal({restoreFocus:false});
   closeSidebar();
 
@@ -644,6 +645,7 @@ function closeSidebar() {
   $('#menu-toggle')?.setAttribute('aria-expanded','false');
 }
 function openSidebar() {
+  closeRegionSelector();
   closeModal({restoreFocus:false});
   $('#sidebar')?.classList.add('is-open');
   $('#scrim').hidden = false;
@@ -666,6 +668,7 @@ function closeModal({restoreFocus=true}={}) {
   modalReturnFocus=null;
 }
 function openModal(title, html) {
+  closeRegionSelector();
   const modal=$('#modal');
   if(!modal)return;
   const wasHidden=modal.hidden;
@@ -1957,8 +1960,24 @@ function confirmSabiaAdd(){
   if(!local||local.stock<current+p.quantity)return toast('Quantidade indisponível.');
   closeModal();for(let i=0;i<p.quantity;i++)addToCart(p.id);sabiaPendingProduct=null;
 }
+function closeRegionSelector(){
+  const popover=$('#region-popover');
+  if(!popover)return;
+  popover.hidden=true;
+  $('#locate')?.setAttribute('aria-expanded','false');
+}
 function selectRegion(){
-  openModal('Onde você quer receber?',`<p>Escolha o município. Não presumimos entregas entre cidades.</p><div class="field"><label for="regional-city">Município</label><select id="regional-city" class="select">${REGIONAL_CITIES.map(city=>`<option ${state.city===city?'selected':''}>${esc(city)}</option>`).join('')}</select></div><p class="note">Os estabelecimentos são fictícios. As áreas de atendimento da Sabiá são cadastradas no servidor.</p><div class="row modal-actions"><button class="ghost-btn strong" data-action="close">Agora não</button><button class="primary-btn" data-action="save-region">Confirmar cidade</button></div>`);
+  const popover=$('#region-popover');
+  const select=$('#regional-city-inline');
+  if(!popover||!select)return;
+  const opening=popover.hidden;
+  if(!opening){closeRegionSelector();return;}
+  closeSidebar();
+  select.innerHTML=REGIONAL_CITIES.map(city=>`<option value="${esc(city)}">${esc(city)}</option>`).join('');
+  select.value=REGIONAL_CITIES.includes(state.city)?state.city:REGIONAL_CITIES[0];
+  popover.hidden=false;
+  $('#locate')?.setAttribute('aria-expanded','true');
+  requestAnimationFrame(()=>select.focus({preventScroll:true}));
 }
 
 if(!AUTH_PAGE){
@@ -2004,6 +2023,18 @@ $('#content').addEventListener('click', (event) => {
   if (action === 'sabia-review') reviewSabiaProduct(button.dataset.entry,button.dataset.id);
   if (action === 'sabia-retry') sendToSabia(sabiaLastQuestion);
   if (action === 'sabia-new'&&!sabiaBusy) {sabiaSession=null;sabiaError='';sabiaDraft='';sessionStorage.removeItem('apete-sabia-history');ensureSabiaSession(true).then(()=>render()).catch(e=>{sabiaError=e.message;render();});}
+});
+
+$('#regional-city-inline')?.addEventListener('change',(event)=>{
+  const city=event.target.value;
+  if(!REGIONAL_CITIES.includes(city))return;
+  state.city=city;
+  state.location=city;
+  save();
+  $('#location-label').textContent=city;
+  closeRegionSelector();
+  if(state.page==='sabia')render();
+  toast(`Cidade de entrega: ${city}`,'success');
 });
 
 $('#content').addEventListener('change', (event) => {
@@ -2096,13 +2127,13 @@ $('#modal').addEventListener('click', (event) => {
   if (action === 'back-to-cart') { captureCheckoutDraft();cartStep = 'cart';renderCartModal(); }
   if (action === 'place-order') runBusyAction(button,'place-order',placeOrder);
   if (action === 'sabia-confirm-add') confirmSabiaAdd();
-  if (action === 'save-region') {const city=$('#regional-city')?.value;if(REGIONAL_CITIES.includes(city)){state.city=city;state.location=city;save();closeModal();render();}}
   if (action === 'select-payment') { captureCheckoutDraft();selectedPayment = button.dataset.pay;renderCartModal(); }
 });
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
-    if (!$('#modal').hidden) {event.preventDefault();closeModal();}
+    if(!$('#region-popover')?.hidden){event.preventDefault();closeRegionSelector();}
+    else if (!$('#modal').hidden) {event.preventDefault();closeModal();}
     else if($('#sidebar')?.classList.contains('is-open')) {event.preventDefault();closeSidebar();}
   }
 });
@@ -2119,4 +2150,10 @@ window.addEventListener('unhandledrejection',(event)=>{
   const message=String(event.reason?.message||event.reason||'');
   if(/abort|network|fetch/i.test(message))return;
   console.error('apete_unhandled_rejection',event.reason);
+});
+
+
+document.addEventListener('pointerdown',(event)=>{
+  const control=event.target.closest?.('.location-control');
+  if(!control&&!$('#region-popover')?.hidden)closeRegionSelector();
 });

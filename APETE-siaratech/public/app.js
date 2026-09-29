@@ -4,6 +4,17 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const KEY = 'apete_serra_v14';
 const REGIONAL_CITIES = ['Guaraciaba do Norte','Tianguá','São Benedito','Ubajara','Ibiapina','Viçosa do Ceará','Carnaubal','Croatá','Ipu'];
+const REGIONAL_CITY_CENTERS = Object.freeze({
+  'Guaraciaba do Norte':[-4.16694,-40.7475],
+  'Tianguá':[-3.73222,-40.99167],
+  'São Benedito':[-4.0496,-40.9459],
+  'Ubajara':[-3.8534,-40.9186],
+  'Ibiapina':[-3.92333,-40.88944],
+  'Viçosa do Ceará':[-3.5652,-41.0919],
+  'Carnaubal':[-4.1624,-40.9421],
+  'Croatá':[-4.41317,-40.90254],
+  'Ipu':[-4.32222,-40.71083]
+});
 
 const money = (cents) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((cents || 0) / 100);
 const dateTime = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -780,7 +791,7 @@ function storeCard(store) {
       <div class="store-body">
         <div class="chip-row"><span class="chip orange">${store.open ? 'Aberto agora' : 'Fechado'}</span><span class="chip soft">Entrega ${money(store.fee)}</span></div>
         <p>${esc(storeDescription(store))}</p>
-        <div class="fact-row">${instagramBadge(store)}<span>${esc(store.city)}</span></div>
+        <div class="fact-row">${instagramBadge(store)}<span>${esc(store.address||store.city)}</span></div>
         <div class="mini-products-row">${items}</div>
         <div class="row" style="margin-top:16px"><button class="primary-btn" data-action="goto-store" data-id="${store.id}">Ver cardápio</button><button class="ghost-btn strong" data-action="filter-store" data-id="${store.id}">Filtrar no catálogo</button></div>
       </div>
@@ -811,6 +822,7 @@ function producerCard(store) {
       <div class="producer-body">
         <div class="chip-row"><span class="chip soft producer-chip">Colheita local</span><span class="chip producer-alt">Entrega ${money(store.fee)}</span></div>
         <p>${esc(storeDescription(store))}</p>
+        <p class="store-address">${esc(store.address||store.city)}</p>
         <ul class="kv producer-list with-thumbs">${products}</ul>
         <div class="row" style="margin-top:16px"><button class="primary-btn producer-btn" data-action="goto-store" data-id="${store.id}">Ver produtos</button></div>
       </div>
@@ -1299,7 +1311,7 @@ function merchantPage() {
   if(panels[tab]) body=panels[tab].length?panels[tab].map(o=>orderCard(o,true)).join(''):`<div class="empty"><b>Nenhum pedido nesta etapa</b> Você pode avançar um pedido pela etapa anterior.</div>`;
   if(tab==='produtos')body=merchantProductsView(products);
   if(tab==='fornada')body=merchantOffersView(products);
-  if(tab==='cadastro')body=`<section class="merchant-editor"><div class="merchant-section-heading"><div><span class="merchant-eyebrow">Configurações do perfil</span><h3>Dados de ${esc(store.name)}</h3><p>Personalize as informações exibidas na vitrine do estabelecimento.</p></div></div><form id="merchant-profile-form" class="merchant-edit-form"><div class="field-grid"><div class="field"><label>Nome da loja *</label><input id="merchant-edit-name" class="input" required value="${esc(store.name)}"></div><div class="field"><label>Categoria</label><input id="merchant-edit-category" class="input" value="${esc(storeCategoryLabel(store))}"></div><div class="field"><label>Cidade</label><input id="merchant-edit-city" class="input" value="${esc(store.city)}"></div><div class="field"><label>Telefone</label><input id="merchant-edit-phone" class="input" value="${esc(state.merchant.phone)}"></div><div class="field"><label>Instagram da loja *</label><input id="merchant-edit-instagram" class="input" value="${esc(store.instagram||store.officialRef||'')}" placeholder="@sualoja"></div></div><div class="field"><label>Descrição</label><textarea id="merchant-edit-desc" class="textarea">${esc(storeDescription(store))}</textarea></div><div class="merchant-form-actions"><button class="primary-btn" type="submit">Salvar perfil</button></div></form></section>`;
+  if(tab==='cadastro')body=`<section class="merchant-editor"><div class="merchant-section-heading"><div><span class="merchant-eyebrow">Configurações do perfil</span><h3>Dados de ${esc(store.name)}</h3><p>Personalize as informações exibidas na vitrine do estabelecimento.</p></div></div><form id="merchant-profile-form" class="merchant-edit-form"><div class="field-grid"><div class="field"><label>Nome da loja *</label><input id="merchant-edit-name" class="input" required value="${esc(store.name)}"></div><div class="field"><label>Categoria</label><input id="merchant-edit-category" class="input" value="${esc(storeCategoryLabel(store))}"></div><div class="field"><label>Cidade</label><input id="merchant-edit-city" class="input" value="${esc(store.city)}"></div><div class="field auth-wide"><label>Endereço / ponto de retirada</label><input id="merchant-edit-address" class="input" value="${esc(store.address||'')}" placeholder="Rua, bairro ou localidade"></div><div class="field"><label>Telefone</label><input id="merchant-edit-phone" class="input" value="${esc(state.merchant.phone)}"></div><div class="field"><label>Instagram da loja *</label><input id="merchant-edit-instagram" class="input" value="${esc(store.instagram||store.officialRef||'')}" placeholder="@sualoja"></div></div><div class="field"><label>Descrição</label><textarea id="merchant-edit-desc" class="textarea">${esc(storeDescription(store))}</textarea></div><div class="merchant-form-actions"><button class="primary-btn" type="submit">Salvar perfil</button></div></form></section>`;
   const stageList=[['pendentes','Recebidos',pending.length],['preparando','Em preparo',preparing.length],['prontos','Prontos',ready.length],['concluidos','Finalizados',concluded.length]];
   return `${state.ui.presentationMerchant?'<div class="merchant-demo-notice">Visão de apresentação · Os pedidos e produtos são salvos apenas neste navegador.</div>':''}
    <section class="merchant-cover-card ${store.producer?'producer-cover-theme':''}"><div class="merchant-cover-picture">${imgTag(store.cover,store.name,store.producer?'producer':'store')}</div><div class="merchant-cover-copy"><span class="merchant-eyebrow">PAINEL DO ${store.producer?'PRODUTOR':'COMERCIANTE'}</span><h2>${esc(store.name)}</h2><p>${esc(storeCategoryLabel(store))} · ${esc(store.city)}</p><div class="merchant-cover-actions"><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="pendentes">Ver pedidos <span>${pending.length}</span></button><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="produtos">+ Produto</button><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="fornada">Última Fornada <span>${offerCount}</span></button></div></div></section>
@@ -1313,7 +1325,7 @@ function storeDetailPage() {
   const store = getStore(state.storeViewId);
   if(!store)return `${pageHead('Estabelecimento indisponível','Esse perfil não está mais disponível.')}<div class="empty"><b>Não encontramos essa loja</b> Volte para a lista de estabelecimentos.<div class="row" style="justify-content:center;margin-top:14px"><button class="primary-btn" data-action="go-page" data-page="estabelecimentos">Ver estabelecimentos</button></div></div>`;
   const products = state.products.filter((product) => product.storeId === store.id);
-  return `${pageHead(store.name, storeHeroText(store))}<section class="store-detail"><article class="detail-hero ${store.producer ? 'producer-tone' : 'merchant-tone'}"><div class="detail-cover">${imgTag(store.cover, store.name, store.producer ? 'producer' : 'store')}<div class="cover-overlay ${store.producer ? 'producer' : ''}"></div><div class="cover-copy"><span class="cover-kicker">${esc(storeCategoryLabel(store))}</span><h4>${esc(store.name)}</h4><div class="cover-meta"><span>${esc(store.city)}</span>${storeRating(store)?`<span>★ ${storeRating(store).toFixed(1)}</span>`:'<span>Novo no APETÊ</span>'}<span>${esc(storeEta(store))}</span></div></div></div><div class="detail-info"><div class="chip-row"><span class="chip ${store.producer ? 'producer-alt' : 'orange'}">Entrega ${money(store.fee)}</span>${instagramBadge(store)}</div><p>${esc(storeDescription(store))}</p><div class="row detail-actions" style="margin-top:18px"><button class="primary-btn" data-action="filter-store" data-id="${store.id}">Ver tudo no catálogo</button><button class="ghost-btn strong" data-action="go-page" data-page="estabelecimentos">Voltar</button></div></div></article><div class="product-grid">${products.map(productCard).join('')}</div></section>`;
+  return `${pageHead(store.name, storeHeroText(store))}<section class="store-detail"><article class="detail-hero ${store.producer ? 'producer-tone' : 'merchant-tone'}"><div class="detail-cover">${imgTag(store.cover, store.name, store.producer ? 'producer' : 'store')}<div class="cover-overlay ${store.producer ? 'producer' : ''}"></div><div class="cover-copy"><span class="cover-kicker">${esc(storeCategoryLabel(store))}</span><h4>${esc(store.name)}</h4><div class="cover-meta"><span>${esc(store.city)}</span>${storeRating(store)?`<span>★ ${storeRating(store).toFixed(1)}</span>`:'<span>Novo no APETÊ</span>'}<span>${esc(storeEta(store))}</span></div></div></div><div class="detail-info"><div class="chip-row"><span class="chip ${store.producer ? 'producer-alt' : 'orange'}">Entrega ${money(store.fee)}</span>${instagramBadge(store)}</div><p>${esc(storeDescription(store))}</p><p class="store-address"><strong>Local:</strong> ${esc(store.address||store.city)} · ${esc(store.city)}</p><div class="row detail-actions" style="margin-top:18px"><button class="primary-btn" data-action="filter-store" data-id="${store.id}">Ver tudo no catálogo</button><button class="ghost-btn strong" data-action="go-page" data-page="estabelecimentos">Voltar</button></div></div></article><div class="product-grid">${products.map(productCard).join('')}</div></section>`;
 }
 
 // Patch the existing Sabiá nodes so status updates never replace the active input.
@@ -1755,6 +1767,7 @@ async function saveMerchantProfile() {
     name:$('#merchant-edit-name')?.value.trim()||store.name,
     category:$('#merchant-edit-category')?.value.trim()||store.category,
     city:$('#merchant-edit-city')?.value.trim()||store.city,
+    address:$('#merchant-edit-address')?.value.trim()||store.address||'',
     desc:$('#merchant-edit-desc')?.value.trim()||store.desc,
     contactPhone:normalizePhone($('#merchant-edit-phone')?.value.trim()||state.merchant.phone),
     instagram:'@'+instagramHandle($('#merchant-edit-instagram')?.value)
@@ -1762,14 +1775,14 @@ async function saveMerchantProfile() {
   if(state.merchant?.backend){
     try{
       await window.APETE_BACKEND.updateStoreProfile(store.backendId,values);
-      Object.assign(store,{name:values.name,category:values.category,city:values.city,desc:values.desc,contactPhone:values.contactPhone,instagram:values.instagram});
+      Object.assign(store,{name:values.name,category:values.category,city:values.city,address:values.address,desc:values.desc,contactPhone:values.contactPhone,instagram:values.instagram});
       state.merchant.phone=values.contactPhone;
       state.merchant.officialProof=values.instagram;
       save();render();toast('Dados da loja atualizados no banco.','success');
     }catch(error){toast(friendlyBackendError(error,'Não foi possível atualizar a loja.'));}
     return;
   }
-  Object.assign(store,{name:values.name,category:values.category,city:values.city,desc:values.desc,instagram:values.instagram,officialRef:values.instagram});
+  Object.assign(store,{name:values.name,category:values.category,city:values.city,address:values.address,desc:values.desc,instagram:values.instagram,officialRef:values.instagram});
   state.merchant.phone=values.contactPhone;
   save();render();toast('Dados da loja atualizados');
 }
@@ -1828,41 +1841,50 @@ async function logoutMerchant() {
   setPage('comerciante-entrar');
 }
 async function useMyLocation() {
-  if (locating) return;
-  if (!navigator.geolocation) return toast('Seu navegador não oferece geolocalização.');
-  locating = true;
-  $('#locate').disabled = true;
-  $('#location-label').textContent = 'Localizando...';
-  const finish = () => {
-    locating = false;
-    $('#locate').disabled = false;
-    $('#location-label').textContent = state.city || 'Guaraciaba do Norte';
+  if(locating)return;
+  if(!navigator.geolocation)return toast('Seu navegador não oferece geolocalização.');
+  locating=true;
+  const locateButton=$('#use-location-inline');
+  if(locateButton){locateButton.disabled=true;locateButton.textContent='Localizando…';}
+
+  const finish=()=>{
+    locating=false;
+    updateGeolocationControl();
+    $('#location-label').textContent=state.city||'Guaraciaba do Norte';
   };
-  navigator.geolocation.getCurrentPosition(async ({ coords }) => {
-    const latitude = coords.latitude;
-    const longitude = coords.longitude;
-    let label = '';
-    try {
-      const controller = new AbortController();
-      const t = setTimeout(() => controller.abort(), 4500);
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&accept-language=pt-BR`, { signal: controller.signal });
-      clearTimeout(t);
-      if (res.ok) {
-        const data = await res.json();
-        const city = data.address?.city || data.address?.town || data.address?.village || data.address?.municipality || data.address?.county;
-        const neighborhood = data.address?.suburb || data.address?.neighbourhood || data.address?.quarter || '';
-        label = city ? `${city}${neighborhood ? ` • ${neighborhood}` : ''}` : '';
-      }
-    } catch {}
-    state.location = label || 'Entrega definida';
+  const toRad=value=>value*Math.PI/180;
+  const distanceKm=(lat1,lon1,lat2,lon2)=>{
+    const R=6371;
+    const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);
+    const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+    return 2*R*Math.asin(Math.sqrt(a));
+  };
+
+  navigator.geolocation.getCurrentPosition(({coords})=>{
+    const matches=Object.entries(REGIONAL_CITY_CENTERS)
+      .map(([city,[lat,lon]])=>({city,distance:distanceKm(coords.latitude,coords.longitude,lat,lon)}))
+      .sort((a,b)=>a.distance-b.distance);
+    const nearest=matches[0];
+
+    if(!nearest||nearest.distance>70){
+      finish();
+      toast('Sua localização parece estar fora da área regional cadastrada. Escolha a cidade manualmente.');
+      return;
+    }
+
+    state.city=nearest.city;
+    state.location=`Próximo de ${nearest.city}`;
     save();
+    closeRegionSelector();
     render();
     finish();
-    toast('Localização atualizada');
-  }, (error) => {
+    toast(`Cidade de entrega ajustada para ${nearest.city}`,'success');
+  },error=>{
     finish();
-    toast(error.code === 1 ? 'Permissão de localização não concedida' : 'Localização indisponível.');
-  }, { enableHighAccuracy: false, timeout: 7000, maximumAge: 60000 });
+    if(error.code===1)toast('Localização bloqueada. Escolha a cidade manualmente ou libere a permissão no navegador.');
+    else if(error.code===3)toast('A localização demorou demais. Escolha a cidade manualmente.');
+    else toast('Não foi possível obter sua localização. Escolha a cidade manualmente.');
+  },{enableHighAccuracy:false,timeout:8000,maximumAge:300000});
 }
 
 async function sabiaRequest(path, body, authenticated=true) {
@@ -1966,6 +1988,34 @@ function closeRegionSelector(){
   popover.hidden=true;
   $('#locate')?.setAttribute('aria-expanded','false');
 }
+async function updateGeolocationControl(){
+  const button=$('#use-location-inline');
+  const note=$('#region-location-note');
+  if(!button||!note)return;
+  if(!navigator.geolocation){
+    button.hidden=true;
+    note.textContent='Seu navegador não oferece localização. Escolha a cidade manualmente.';
+    return;
+  }
+  button.hidden=false;
+  button.disabled=false;
+  button.textContent='Usar minha localização';
+  if(!navigator.permissions?.query)return;
+  try{
+    const status=await navigator.permissions.query({name:'geolocation'});
+    if(status.state==='denied'){
+      button.disabled=true;
+      button.textContent='Localização bloqueada';
+      note.textContent='A permissão de localização está bloqueada no navegador. Você pode escolher a cidade acima.';
+    }else if(status.state==='granted'){
+      note.textContent='Permissão ativa. O APETÊ usa a posição apenas para escolher a cidade regional mais próxima.';
+    }else{
+      note.textContent='Ao tocar, o navegador pedirá permissão. A coordenada exata não é salva pelo APETÊ.';
+    }
+    status.onchange=()=>updateGeolocationControl();
+  }catch{}
+}
+
 function selectRegion(){
   const popover=$('#region-popover');
   const select=$('#regional-city-inline');
@@ -1977,6 +2027,7 @@ function selectRegion(){
   select.value=REGIONAL_CITIES.includes(state.city)?state.city:REGIONAL_CITIES[0];
   popover.hidden=false;
   $('#locate')?.setAttribute('aria-expanded','true');
+  updateGeolocationControl();
   requestAnimationFrame(()=>select.focus({preventScroll:true}));
 }
 
@@ -2101,6 +2152,7 @@ $('#user-button').addEventListener('click', () => {
   else setPage(isRealCustomerLogged() ? 'cliente' : 'entrar');
 });
 $('#locate').addEventListener('click', selectRegion);
+$('#use-location-inline')?.addEventListener('click', useMyLocation);
 $('#menu-toggle').addEventListener('click', openSidebar);
 $('#sidebar-close').addEventListener('click', closeSidebar);
 $('#scrim').addEventListener('click', closeSidebar);

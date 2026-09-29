@@ -639,13 +639,14 @@ function openSidebar() {
 }
 function closeModal({restoreFocus=true}={}) {
   const modal=$('#modal');
-  if(!modal||modal.hidden)return;
+  if(!modal)return;
+  const wasOpen=!modal.hidden;
   modal.hidden = true;
   modal.classList.remove('is-open');
   modal.setAttribute('aria-hidden','true');
   $('#modal-body').innerHTML = '';
   document.body.classList.remove('modal-open');
-  if(restoreFocus&&modalReturnFocus?.isConnected){
+  if(wasOpen&&restoreFocus&&modalReturnFocus?.isConnected){
     requestAnimationFrame(()=>modalReturnFocus.focus({preventScroll:true}));
   }
   modalReturnFocus=null;

@@ -1370,9 +1370,7 @@ function renderUnsafe() {
     if (label) label.textContent = logged ? 'Minha conta' : 'Entrar';
     enterLink.setAttribute('aria-label', logged ? 'Minha conta' : 'Entrar');
   }
-  $$('.side-nav a').forEach((link) => link.classList.toggle('active', link.dataset.page === visualPage));
-}
-
+  $('.side-nav a').forEach((link) => link.classList.toggle('active', link.dataset.page === visualPage));
 }
 
 function render() {

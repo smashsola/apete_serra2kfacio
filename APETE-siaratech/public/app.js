@@ -643,6 +643,8 @@ function openModal(title, html) {
   const modal=$('#modal');
   if(!modal)return;
   const wasHidden=modal.hidden;
+  const panel=modal.querySelector('.modal-panel');
+  const previousScroll=wasHidden?0:(panel?.scrollTop||0);
   if(wasHidden&&document.activeElement instanceof HTMLElement)modalReturnFocus=document.activeElement;
   closeSidebar();
   $('#modal-title').textContent = title;
@@ -653,6 +655,7 @@ function openModal(title, html) {
   requestAnimationFrame(() => {
     modal.classList.add('is-open');
     if(wasHidden)modal.querySelector('[data-action="close"]')?.focus({preventScroll:true});
+    else if(panel)panel.scrollTop=previousScroll;
   });
 }
 
@@ -701,6 +704,7 @@ function captureCheckoutDraft() {
 
 function productCard(product) {
   const store = getStore(product.storeId);
+  if(!store)return '';
   return `
     <article class="product-card ${store.producer ? 'producer-tone' : 'merchant-tone'}">
       <div class="product-image">
@@ -1278,6 +1282,7 @@ function merchantPage() {
 
 function storeDetailPage() {
   const store = getStore(state.storeViewId);
+  if(!store)return `${pageHead('Estabelecimento indisponível','Esse perfil não está mais disponível.')}<div class="empty"><b>Não encontramos essa loja</b> Volte para a lista de estabelecimentos.<div class="row" style="justify-content:center;margin-top:14px"><button class="primary-btn" data-action="go-page" data-page="estabelecimentos">Ver estabelecimentos</button></div></div>`;
   const products = state.products.filter((product) => product.storeId === store.id);
   return `${pageHead(store.name, store.hero)}<section class="store-detail"><article class="detail-hero ${store.producer ? 'producer-tone' : 'merchant-tone'}"><div class="detail-cover">${imgTag(store.cover, store.name, store.producer ? 'producer' : 'store')}<div class="cover-overlay ${store.producer ? 'producer' : ''}"></div><div class="cover-copy"><span class="cover-kicker">${esc(store.category)}</span><h4>${esc(store.name)}</h4><div class="cover-meta"><span>${esc(store.city)}</span><span>★ ${store.rating.toFixed(1)}</span><span>${esc(store.time)}</span></div></div></div><div class="detail-info"><div class="chip-row"><span class="chip ${store.producer ? 'producer-alt' : 'orange'}">Entrega ${money(store.fee)}</span>${instagramBadge(store)}</div><p>${esc(store.desc)}</p><div class="row detail-actions" style="margin-top:18px"><button class="primary-btn" data-action="filter-store" data-id="${store.id}">Ver tudo no catálogo</button><button class="ghost-btn strong" data-action="go-page" data-page="estabelecimentos">Voltar</button></div></div></article><div class="product-grid">${products.map(productCard).join('')}</div></section>`;
 }
@@ -1343,7 +1348,7 @@ function render() {
   if(page==='sabia'&&$('#sabia-form'))updateSabiaView(html);
   else {content.innerHTML = html;if(page==='sabia')renderedSabiaMessages=sabiaChat.map(entry=>entry.role+'\0'+entry.content);}
   const visualPage = ((page === 'entrar' || page === 'cadastro') && isRealCustomerLogged()) ? 'cliente' : (((page === 'comerciante-entrar' || page === 'comerciante-cadastro') && isMerchantLogged()) ? 'comerciante' : page);
-  $('#page-title').textContent = visualPage === 'loja' ? getStore(state.storeViewId).name : (PAGE_TITLES[visualPage] || 'APETÊ');
+  $('#page-title').textContent = visualPage === 'loja' ? (getStore(state.storeViewId)?.name || 'Estabelecimentos') : (PAGE_TITLES[visualPage] || 'APETÊ');
   const enterLink = $('#customer-nav-link');
   if (enterLink) {
     const profileReady = isMerchantView();
@@ -1363,7 +1368,8 @@ function addToCart(productId) {
   if (product.stock <= 0) return toast('Produto indisponível no momento.');
   const firstProduct = state.cart.length ? getProduct(state.cart[0].productId) : null;
   if (firstProduct && firstProduct.storeId !== product.storeId) {
-    toast(`Sua sacola já tem produtos de ${getStore(firstProduct.storeId).name}. Finalize esse pedido antes de comprar de outro perfil.`);
+    const firstStore=getStore(firstProduct.storeId);
+    toast(`Sua sacola já tem produtos de ${firstStore?.name||'outro estabelecimento'}. Finalize esse pedido antes de comprar de outro perfil.`);
     return;
   }
   const line = state.cart.find((item) => item.productId === product.id);
@@ -1441,7 +1447,7 @@ function renderCartModal() {
     return;
   }
 
-  openModal('Sua sacola', `${items.map((item) => `<div class="cart-line"><div class="cart-thumb">${imgTag(item.product.image, item.product.name, getStore(item.product.storeId).producer ? 'producer' : 'food')}</div><div><strong>${esc(item.product.name)}</strong><p class="note">${esc(getStore(item.product.storeId).name)}</p><div class="qty-row"><button data-action="qty-cart" data-id="${item.productId}" data-step="-1">−</button><strong>${item.qty}</strong><button data-action="qty-cart" data-id="${item.productId}" data-step="1">+</button><button class="link-danger" data-action="remove-cart" data-id="${item.productId}">Remover</button></div></div><strong>${money(item.product.price * item.qty)}</strong></div>`).join('')}<div class="summary-card"><div class="total-row"><span>Subtotal</span><strong>${money(subtotal)}</strong></div><div class="total-row"><span>Entrega</span><strong>${money(deliveryFee)}</strong></div><div class="total-row final"><span>Total</span><strong>${money(total)}</strong></div><div class="row" style="margin-top:16px"><button class="ghost-btn strong" data-action="close">Continuar navegando</button><button class="primary-btn" data-action="go-checkout">Finalizar compra</button></div></div>`);
+  openModal('Sua sacola', `${items.map((item) => {const itemStore=getStore(item.product.storeId);return `<div class="cart-line"><div class="cart-thumb">${imgTag(item.product.image, item.product.name, itemStore?.producer ? 'producer' : 'food')}</div><div><strong>${esc(item.product.name)}</strong><p class="note">${esc(itemStore?.name||'Estabelecimento')}</p><div class="qty-row"><button data-action="qty-cart" data-id="${item.productId}" data-step="-1">−</button><strong>${item.qty}</strong><button data-action="qty-cart" data-id="${item.productId}" data-step="1">+</button><button class="link-danger" data-action="remove-cart" data-id="${item.productId}">Remover</button></div></div><strong>${money(item.product.price * item.qty)}</strong></div>`}).join('')}<div class="summary-card"><div class="total-row"><span>Subtotal</span><strong>${money(subtotal)}</strong></div><div class="total-row"><span>Entrega</span><strong>${money(deliveryFee)}</strong></div><div class="total-row final"><span>Total</span><strong>${money(total)}</strong></div><div class="row" style="margin-top:16px"><button class="ghost-btn strong" data-action="close">Continuar navegando</button><button class="primary-btn" data-action="go-checkout">Finalizar compra</button></div></div>`);
 }
 
 async function placeOrder() {

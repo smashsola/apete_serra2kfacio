@@ -2035,6 +2035,91 @@ const PRODUCTS = [
   }
 ];
 
+
+const DEMO_CUSTOMERS = Object.freeze([
+  'Ana Lima','Bruno Alves','Camila Sousa','Diego Rocha','Elisa Martins','Felipe Costa',
+  'Gabi Melo','Hugo Silva','Rafaela Monteiro','Lucas Ferreira','Marina Oliveira','João Vitor'
+]);
+const DEMO_NEIGHBORHOODS = Object.freeze(['Centro','Santa Luzia','São José','Planalto']);
+const DEMO_ADDRESSES = Object.freeze([
+  'Rua das Flores, 12','Rua do Mercado, 24','Rua da Praça, 36','Rua do Sol, 48',
+  'Rua da Serra, 17','Rua das Palmeiras, 29'
+]);
+
+function demoOrderItems(storeId,offset=0,count=2){
+  const products=PRODUCTS.filter(product=>Number(product.storeId)===Number(storeId)&&product.available!==false);
+  if(!products.length)return [];
+  return Array.from({length:Math.min(count,products.length)},(_,index)=>{
+    const product=products[(offset+index)%products.length];
+    return {productId:product.id,name:product.name,price:product.price,qty:index===0?1:Math.min(2,Math.max(1,product.stock||1))};
+  });
+}
+
+function buildDemoOrder({store,status,index,idBase,ageMinutes,note}){
+  const items=demoOrderItems(store.id,index,2);
+  const subtotal=items.reduce((sum,item)=>sum+item.price*item.qty,0);
+  const customerIndex=(store.id*3+index)%DEMO_CUSTOMERS.length;
+  return {
+    id:idBase+store.id*100+index,
+    demo:true,
+    storeId:store.id,
+    createdAt:new Date(Date.now()-ageMinutes*60*1000).toISOString(),
+    status,
+    items,
+    subtotal,
+    deliveryFee:Number(store.fee)||0,
+    total:subtotal+(Number(store.fee)||0),
+    paymentLabel:index%2?'Cartão na entrega (exemplo)':'Pix (exemplo)',
+    note:note||'Pedido fictício usado apenas para demonstrar o fluxo do painel.',
+    customer:{
+      name:DEMO_CUSTOMERS[customerIndex]+' (exemplo)',
+      phone:'(88) 90000-0000',
+      address:'Endereço fictício: '+DEMO_ADDRESSES[(store.id+index)%DEMO_ADDRESSES.length],
+      neighborhood:DEMO_NEIGHBORHOODS[(store.id+index)%DEMO_NEIGHBORHOODS.length]
+    }
+  };
+}
+
+function makeDemoOrders(){
+  const statuses=['pendente','preparando','pronto','concluido'];
+  return STORES.flatMap(store=>statuses.map((status,index)=>buildDemoOrder({
+    store,status,index:index+1,idBase:1000,ageMinutes:(index+1)*75+store.id,
+    note:index===0?'Pedido novo aguardando análise do comerciante.':'Pedido fictício usado para demonstrar esta etapa do atendimento.'
+  })));
+}
+
+function extraPendingOrders(){
+  return STORES.flatMap(store=>[1,2].map(index=>buildDemoOrder({
+    store,status:'pendente',index:index+10,idBase:6000,ageMinutes:index*12+store.id,
+    note:index===1
+      ? 'Cliente pediu atenção à embalagem e para avisar ao chegar.'
+      : 'Pedido fictício adicional aguardando aceite no painel.'
+  })));
+}
+
+const PAGE_TITLES = Object.freeze({
+  inicio:'Início',
+  estabelecimentos:'Estabelecimentos',
+  cardapio:'Cardápio',
+  fornada:'Última Fornada',
+  produtores:'Do produtor',
+  sabia:'Sabiá',
+  pedidos:'Meus pedidos',
+  entrar:'Entrar',
+  cadastro:'Criar conta',
+  cliente:'Minha conta',
+  'comerciante-entrar':'Entrar como comerciante',
+  'comerciante-cadastro':'Cadastro de comerciante',
+  comerciante:'Painel do comerciante',
+  loja:'Perfil',
+  termos:'Termos de Uso',
+  privacidade:'Privacidade',
+  cookies:'Cookies e armazenamento',
+  cancelamentos:'Cancelamentos e reembolsos',
+  'regras-comerciante':'Regras do comerciante',
+  admin:'Administração'
+});
+
 function initialState() {
   return {
     stores: JSON.parse(JSON.stringify(STORES)),
@@ -2047,6 +2132,7 @@ function initialState() {
     customer: { logged: false, name: '', email: '', phone: '', address: '', neighborhood: '', password: '' },
     merchant: { logged: false, owner: '', storeId: 1, phone: '', email: '', password: '', document: '', officialProof: '', verified: false },
     location: '',
+    city: 'Guaraciaba do Norte',
     page: 'inicio',
     storeViewId: 1,
     filters: { query: '', category: 'Todos', storeId: '0', sort: 'relevancia' },

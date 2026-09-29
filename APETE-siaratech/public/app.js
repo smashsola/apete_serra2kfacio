@@ -1879,6 +1879,7 @@ detectSabiaMode();
 $('#content').addEventListener('click', (event) => {
   const button = event.target.closest('[data-action]');
   if (!button) return;
+  if(button.matches('a[href]'))event.preventDefault();
   const action = button.dataset.action;
   if (action === 'go-page') setPage(button.dataset.page);
   if (action === 'goto-store') setPage('loja', button.dataset.id);
@@ -1890,18 +1891,18 @@ $('#content').addEventListener('click', (event) => {
   if (action === 'merchant-panel-tab') { state.ui.merchantPanelTab=button.dataset.tab;state.ui.productEditor=0;save();render(); }
   if (action === 'edit-product' && merchantAccess()) {const item=getProduct(button.dataset.id);if(item?.storeId===activeMerchantStore().id){state.ui.merchantPanelTab='produtos';state.ui.productEditor=item.id;save();render();$('#merchant-product-editor')?.scrollIntoView({behavior:'smooth',block:'start'});}}
   if (action === 'new-product' || action === 'cancel-product-edit') {state.ui.productEditor=0;save();render();}
-  if (action === 'end-offer') endMerchantOffer(button.dataset.id);
+  if (action === 'end-offer') runBusyAction(button,`end-offer:${button.dataset.id}`,()=>endMerchantOffer(button.dataset.id));
   if (action === 'dismiss-order-success') { state.ui.orderSuccessId = null; save(); render(); }
-  if (action === 'save-customer') saveCustomer();
-  if (action === 'login-customer') loginCustomer();
-  if (action === 'login-merchant') loginMerchant();
-  if (action === 'register-merchant') registerMerchant();
-  if (action === 'admin-review-merchant') reviewMerchantApplication(button.dataset.id,button.dataset.decision);
-  if (action === 'save-merchant-profile') saveMerchantProfile();
-  if (action === 'advance-order') advanceOrder(button.dataset.id);
-  if (action === 'cancel-order') cancelOrder(button.dataset.id);
-  if (action === 'logout-merchant') logoutMerchant();
-  if (action === 'logout-customer') logoutCustomer();
+  if (action === 'save-customer') runBusyAction(button,'save-customer',saveCustomer);
+  if (action === 'login-customer') runBusyAction(button,'login-customer',loginCustomer);
+  if (action === 'login-merchant') runBusyAction(button,'login-merchant',loginMerchant);
+  if (action === 'register-merchant') runBusyAction(button,'register-merchant',registerMerchant);
+  if (action === 'admin-review-merchant') runBusyAction(button,`admin-review:${button.dataset.id}`,()=>reviewMerchantApplication(button.dataset.id,button.dataset.decision));
+  if (action === 'save-merchant-profile') runBusyAction(button,'save-merchant-profile',saveMerchantProfile);
+  if (action === 'advance-order') runBusyAction(button,`advance-order:${button.dataset.id}`,()=>advanceOrder(button.dataset.id));
+  if (action === 'cancel-order') runBusyAction(button,`cancel-order:${button.dataset.id}`,()=>cancelOrder(button.dataset.id));
+  if (action === 'logout-merchant') runBusyAction(button,'logout-merchant',logoutMerchant);
+  if (action === 'logout-customer') runBusyAction(button,'logout-customer',logoutCustomer);
   if (action === 'send-suggestion') sendToSabia(button.dataset.text || '');
   if (action === 'sabia-check') detectSabiaMode();
   if (action === 'sabia-diagnostic') runSabiaDiagnostic(button.dataset.provider);
@@ -1922,10 +1923,12 @@ $('#content').addEventListener('change', (event) => {
   if (['filter-category','filter-store','filter-sort'].includes(t.id)) render();
 });
 $('#content').addEventListener('submit', event=>{
-  if(event.target.id==='merchant-product-form'){event.preventDefault();saveMerchantProduct(event.target);return;}
-  if(event.target.id==='merchant-offer-form'){event.preventDefault();publishMerchantOffer();return;}
-  if(event.target.id==='merchant-profile-form'){event.preventDefault();saveMerchantProfile();return;}
-  if(event.target.id!=='sabia-form')return;
+  const form=event.target;
+  const submitter=event.submitter||form.querySelector('[type="submit"]');
+  if(form.id==='merchant-product-form'){event.preventDefault();runBusyAction(submitter,'form:merchant-product',()=>saveMerchantProduct(form));return;}
+  if(form.id==='merchant-offer-form'){event.preventDefault();runBusyAction(submitter,'form:merchant-offer',publishMerchantOffer);return;}
+  if(form.id==='merchant-profile-form'){event.preventDefault();runBusyAction(submitter,'form:merchant-profile',saveMerchantProfile);return;}
+  if(form.id!=='sabia-form')return;
   event.preventDefault();
   const input=$('#sabia-input');
   if(input) sendToSabia(input.value);
@@ -1967,22 +1970,37 @@ $('.side-nav a, .brand, .site-footer [data-page]').forEach((link) => link.addEve
 $('#modal').addEventListener('click', (event) => {
   const button = event.target.closest('[data-action]');
   if (!button) return;
+  event.preventDefault();
   const action = button.dataset.action;
   if (action === 'close') closeModal();
   if (action === 'go-catalog') { state.filters = { query:'', category:'Todos', storeId:'0', sort:'relevancia' }; setPage('cardapio'); }
   if (action === 'qty-cart') updateCartQty(button.dataset.id, button.dataset.step);
   if (action === 'remove-cart') removeCartItem(button.dataset.id);
   if (action === 'go-checkout') goCheckout();
-  if (action === 'back-to-cart') { cartStep = 'cart'; renderCartModal(); }
-  if (action === 'place-order') placeOrder();
+  if (action === 'back-to-cart') { captureCheckoutDraft();cartStep = 'cart';renderCartModal(); }
+  if (action === 'place-order') runBusyAction(button,'place-order',placeOrder);
   if (action === 'sabia-confirm-add') confirmSabiaAdd();
   if (action === 'save-region') {const city=$('#regional-city')?.value;if(REGIONAL_CITIES.includes(city)){state.city=city;state.location=city;save();closeModal();render();}}
-  if (action === 'select-payment') { selectedPayment = button.dataset.pay; renderCartModal(); }
+  if (action === 'select-payment') { captureCheckoutDraft();selectedPayment = button.dataset.pay;renderCartModal(); }
 });
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
-    if (!$('#modal').hidden) closeModal();
-    else closeSidebar();
+    if (!$('#modal').hidden) {event.preventDefault();closeModal();}
+    else if($('#sidebar')?.classList.contains('is-open')) {event.preventDefault();closeSidebar();}
   }
+});
+
+window.addEventListener('popstate', () => {
+  const page=location.hash.replace(/^#/,'')||'inicio';
+  if(VALID_PAGES.has(page))setPage(page,null,{fromHistory:true});
+});
+
+window.addEventListener('offline',()=>toast('Você está sem internet. Algumas ações ficarão indisponíveis.'));
+window.addEventListener('online',()=>toast('Conexão restabelecida.','success'));
+
+window.addEventListener('unhandledrejection',(event)=>{
+  const message=String(event.reason?.message||event.reason||'');
+  if(/abort|network|fetch/i.test(message))return;
+  console.error('apete_unhandled_rejection',event.reason);
 });

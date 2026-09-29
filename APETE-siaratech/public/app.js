@@ -248,6 +248,11 @@ const AUTH_ROUTES = {
   'comerciante-entrar': 'comerciante-entrar.html',
   'comerciante-cadastro': 'comerciante-cadastro.html'
 };
+const VALID_PAGES = new Set([
+  'inicio','estabelecimentos','cardapio','fornada','produtores','sabia','pedidos',
+  'entrar','cadastro','comerciante-entrar','comerciante-cadastro','cliente','comerciante',
+  'loja','termos','privacidade','cookies','cancelamentos','regras-comerciante','admin'
+]);
 const documentName = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
 const AUTH_PAGE = Object.entries(AUTH_ROUTES).find(([,file]) => file === documentName)?.[0] || null;
 if (AUTH_PAGE) {
@@ -258,9 +263,9 @@ if (AUTH_PAGE) {
   if (AUTH_PAGE === 'comerciante-entrar') state.ui.merchantAuthTab = 'entrar';
 } else {
   const pageFromHash = location.hash.replace(/^#/, '');
-  state.page = ['inicio','estabelecimentos','cardapio','fornada','produtores','sabia','pedidos','entrar','cadastro','comerciante-entrar','comerciante-cadastro','cliente','comerciante','loja','termos','privacidade','cookies','cancelamentos','regras-comerciante','admin'].includes(pageFromHash)
+  state.page = VALID_PAGES.has(pageFromHash)
     ? pageFromHash
-    : (!state.page || AUTH_ROUTES[state.page] ? 'inicio' : state.page);
+    : (!state.page || AUTH_ROUTES[state.page] || !VALID_PAGES.has(state.page) ? 'inicio' : state.page);
   if (state.page === 'cliente' && !(state.customer.logged && !state.customer.demo && window.APETE_BACKEND?.hasStoredSession?.())) state.page = 'inicio';
   if (state.page === 'comerciante' && !state.merchant.logged) state.page = 'inicio';
 }
@@ -268,6 +273,10 @@ let cartStep = 'cart';
 let selectedPayment = 'pix';
 let toastTimer;
 let locating = false;
+let checkoutDraft = null;
+let modalReturnFocus = null;
+let storageWarningShown = false;
+const busyActions = new Set();
 let sabiaBusy = false;
 let sabiaResearch = false;
 let sabiaMode = 'checking';
@@ -286,7 +295,7 @@ state.city = REGIONAL_CITIES.includes(state.city) ? state.city : 'Guaraciaba do 
 
 const getStore = (id) => state.stores.find((item) => item.id === Number(id));
 const getProduct = (id) => state.products.find((item) => item.id === Number(id));
-const activeMerchantStore = () => getStore(state.merchant.storeId || 1);
+const activeMerchantStore = () => getStore(state.merchant.storeId || 1) || state.stores[0] || STORES[0];
 const isCustomerLogged = () => Boolean(state.customer.logged && state.customer.phone);
 const isRealCustomerLogged = () => Boolean(state.customer.logged && !state.customer.demo && window.APETE_BACKEND?.hasStoredSession?.());
 const isMerchantLogged = () => Boolean(state.merchant.logged && state.merchant.storeId);
@@ -316,7 +325,17 @@ if(AUTH_PAGE==='entrar'||AUTH_PAGE==='cadastro'){
 function save() {
   const customer={...(state.customer||{}),password:''};
   const merchant={...(state.merchant||{}),password:''};
-  localStorage.setItem(KEY, JSON.stringify({...state,customer,merchant,chat:[]}));
+  try {
+    localStorage.setItem(KEY, JSON.stringify({...state,customer,merchant,chat:[]}));
+    return true;
+  } catch(error) {
+    console.warn('apete_local_storage_unavailable',{message:String(error?.message||error).slice(0,180)});
+    if(!storageWarningShown){
+      storageWarningShown=true;
+      setTimeout(()=>toast('Não foi possível salvar algumas preferências neste navegador. O backend continua protegido.'),0);
+    }
+    return false;
+  }
 }
 
 async function hydrateCatalogFromBackend() {

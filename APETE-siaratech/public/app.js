@@ -563,38 +563,32 @@ function validAddress(value) { return String(value||'').trim().length>=5; }
 function validEmail(value) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim()); }
 function strongPassword(value) { return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(String(value || '')); }
 
-function setPage(next, storeId = null) {
-  closeModal();
+function setPage(next, storeId = null, options = {}) {
+  const { fromHistory=false, replaceHistory=false, scroll=true } = options;
+  closeModal({restoreFocus:false});
   closeSidebar();
 
+  if(!VALID_PAGES.has(next)) next='inicio';
   if (isRealCustomerLogged() && (next === 'entrar' || next === 'cadastro')) next = 'cliente';
   if (isMerchantLogged() && (next === 'comerciante-entrar' || next === 'comerciante-cadastro')) next = 'comerciante';
 
-  // Cliente e comerciante usam uma única aplicação.
   const inlineAuthRoute = ['entrar','cadastro','comerciante-entrar','comerciante-cadastro'].includes(next);
-  if (inlineAuthRoute) {
-    if (AUTH_PAGE) {
-      location.assign(`index.html#${encodeURIComponent(next)}`);
-      return;
-    }
-  } else if (AUTH_ROUTES[next]) {
-    location.assign(AUTH_ROUTES[next]);
+  if (inlineAuthRoute && AUTH_PAGE) {
+    location.assign(`index.html#${encodeURIComponent(next)}`);
     return;
   }
 
-  if (next === 'cliente' && !isRealCustomerLogged()) {
-    next = 'entrar';
-  }
-  if (next === 'comerciante' && !merchantAccess()) {
-    next = 'comerciante-entrar';
-  }
-  if (next === 'admin' && !isAdmin()) {
-    next = isRealCustomerLogged() ? 'cliente' : 'entrar';
-  }
+  if (next === 'cliente' && !isRealCustomerLogged()) next = 'entrar';
+  if (next === 'comerciante' && !merchantAccess()) next = 'comerciante-entrar';
+  if (next === 'admin' && !isAdmin()) next = isRealCustomerLogged() ? 'cliente' : 'entrar';
 
   if (next !== 'pedidos') state.ui.orderSuccessId = null;
   state.page = next;
-  if (storeId) state.storeViewId = Number(storeId);
+  if (storeId && getStore(storeId)) state.storeViewId = Number(storeId);
+  if (next === 'loja' && !getStore(state.storeViewId)) {
+    state.page='estabelecimentos';
+    next='estabelecimentos';
+  }
   save();
 
   if (AUTH_PAGE) {
@@ -602,32 +596,107 @@ function setPage(next, storeId = null) {
     return;
   }
 
-  if (location.hash !== `#${next}`) history.replaceState(null, '', `#${next}`);
+  const nextHash=`#${next}`;
+  if(fromHistory){
+    if(location.hash!==nextHash) history.replaceState({apetePage:next},'',nextHash);
+  } else if(location.hash!==nextHash){
+    const method=replaceHistory?'replaceState':'pushState';
+    history[method]({apetePage:next},'',nextHash);
+  }
+
   render();
   if(next==='sabia')detectSabiaMode();
   if(next==='pedidos')refreshCustomerOrders({rerender:true});
   if(next==='comerciante'&&state.merchant?.backend)refreshMerchantBackend({rerender:true});
   if(next==='admin'&&isAdmin())refreshAdminApplications({rerender:true});
-  if(next!=='sabia')window.scrollTo({ top: 0, behavior: 'instant' });
+  if(scroll&&next!=='sabia')window.scrollTo({ top: 0, behavior: 'instant' });
 }
+
 function closeSidebar() {
-  $('#sidebar').classList.remove('is-open');
+  $('#sidebar')?.classList.remove('is-open');
   $('#scrim').hidden = true;
+  document.body.classList.remove('sidebar-open');
+  $('#menu-toggle')?.setAttribute('aria-expanded','false');
 }
 function openSidebar() {
-  $('#sidebar').classList.add('is-open');
+  closeModal({restoreFocus:false});
+  $('#sidebar')?.classList.add('is-open');
   $('#scrim').hidden = false;
+  document.body.classList.add('sidebar-open');
+  $('#menu-toggle')?.setAttribute('aria-expanded','true');
+  requestAnimationFrame(()=>$('#sidebar-close')?.focus({preventScroll:true}));
 }
-function closeModal() {
-  $('#modal').hidden = true;
-  $('#modal').classList.remove('is-open');
+function closeModal({restoreFocus=true}={}) {
+  const modal=$('#modal');
+  if(!modal||modal.hidden)return;
+  modal.hidden = true;
+  modal.classList.remove('is-open');
+  modal.setAttribute('aria-hidden','true');
   $('#modal-body').innerHTML = '';
+  document.body.classList.remove('modal-open');
+  if(restoreFocus&&modalReturnFocus?.isConnected){
+    requestAnimationFrame(()=>modalReturnFocus.focus({preventScroll:true}));
+  }
+  modalReturnFocus=null;
 }
 function openModal(title, html) {
+  const modal=$('#modal');
+  if(!modal)return;
+  const wasHidden=modal.hidden;
+  if(wasHidden&&document.activeElement instanceof HTMLElement)modalReturnFocus=document.activeElement;
+  closeSidebar();
   $('#modal-title').textContent = title;
   $('#modal-body').innerHTML = html;
-  $('#modal').hidden = false;
-  requestAnimationFrame(() => $('#modal').classList.add('is-open'));
+  modal.hidden = false;
+  modal.setAttribute('aria-hidden','false');
+  document.body.classList.add('modal-open');
+  requestAnimationFrame(() => {
+    modal.classList.add('is-open');
+    if(wasHidden)modal.querySelector('[data-action="close"]')?.focus({preventScroll:true});
+  });
+}
+
+async function runBusyAction(button,key,task) {
+  const actionKey=String(key||'action');
+  if(busyActions.has(actionKey))return;
+  busyActions.add(actionKey);
+  if(button){
+    button.disabled=true;
+    button.setAttribute('aria-busy','true');
+    button.classList.add('is-busy');
+  }
+  try {
+    return await task();
+  } catch(error) {
+    console.error('apete_action_error',{action:actionKey,error});
+    toast(friendlyBackendError(error,'Algo deu errado. Tente novamente.'));
+  } finally {
+    busyActions.delete(actionKey);
+    if(button?.isConnected){
+      button.disabled=false;
+      button.removeAttribute('aria-busy');
+      button.classList.remove('is-busy');
+    }
+  }
+}
+
+function captureCheckoutDraft() {
+  if(cartStep!=='checkout')return checkoutDraft;
+  const name=$('#checkout-name')?.value;
+  const phone=$('#checkout-phone')?.value;
+  const neighborhood=$('#checkout-neighborhood')?.value;
+  const address=$('#checkout-address')?.value;
+  const note=$('#checkout-note')?.value;
+  if([name,phone,neighborhood,address,note].some(value=>value!==undefined)){
+    checkoutDraft={
+      name:name??checkoutDraft?.name??state.customer.name??'',
+      phone:phone??checkoutDraft?.phone??onlyDigits(state.customer.phone||''),
+      neighborhood:neighborhood??checkoutDraft?.neighborhood??state.customer.neighborhood??'',
+      address:address??checkoutDraft?.address??state.customer.address??'',
+      note:note??checkoutDraft?.note??''
+    };
+  }
+  return checkoutDraft;
 }
 
 function productCard(product) {

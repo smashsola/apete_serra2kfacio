@@ -837,3 +837,39 @@ button:disabled,[aria-busy="true"]{cursor:wait;opacity:.68}
   .modal-actions{display:grid!important;grid-template-columns:1fr 1fr;width:100%}
   .modal-actions>button{width:100%;justify-content:center}
 }
+
+
+/* Seletor de cidade não bloqueante */
+.location-control{position:relative;display:inline-flex;min-width:0}
+.region-popover[hidden]{display:none}
+.region-popover{
+  position:absolute;
+  top:calc(100% + 10px);
+  right:0;
+  z-index:32;
+  width:min(340px,calc(100vw - 28px));
+  padding:16px;
+  display:grid;
+  gap:9px;
+  background:var(--surface);
+  border:1px solid rgba(20,62,52,.10);
+  border-radius:18px;
+  box-shadow:0 18px 50px rgba(10,44,34,.16);
+}
+.region-popover strong{font:700 20px Georgia,serif;color:var(--green)}
+.region-popover label{font-size:13px;font-weight:800;color:var(--green)}
+.region-popover small{font-size:12px;line-height:1.45;color:var(--muted)}
+.region-popover .select{width:100%;min-height:46px}
+
+@media(max-width:880px){
+  .location-control{flex:1}
+  .location-control .location-btn{width:100%;justify-content:center}
+  .region-popover{left:0;right:auto}
+}
+@media(max-width:640px){
+  .region-popover{
+    width:min(360px,calc(100vw - 28px));
+    padding:14px;
+    border-radius:16px;
+  }
+}

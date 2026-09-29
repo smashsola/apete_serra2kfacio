@@ -2146,20 +2146,32 @@ let state;
 try {
   const saved = JSON.parse(localStorage.getItem(KEY) || localStorage.getItem('apete_serra_v13') || 'null');
   state = saved?.products?.length ? saved : initialState();
+  if(!Array.isArray(state.products))state.products=[];
+  if(!Array.isArray(state.stores))state.stores=[];
   for (const fresh of PRODUCTS) {
-    const item = state.products.find((p) => p.id === fresh.id);
-    if (item && (!item.image || /^https?:/i.test(item.image))) item.image = fresh.image;
+    const item = state.products.find((p) => Number(p.id) === Number(fresh.id));
+    if (!item) state.products.push(JSON.parse(JSON.stringify(fresh)));
+    else if (!item.image || /^https?:/i.test(item.image)) item.image = fresh.image;
   }
   for (const fresh of STORES) {
-    const item = state.stores.find((s) => s.id === fresh.id);
-    if (item) {
+    const item = state.stores.find((s) => Number(s.id) === Number(fresh.id));
+    if (!item) state.stores.push(JSON.parse(JSON.stringify(fresh)));
+    else {
       item.cover = fresh.cover;
       item.verified = fresh.verified;
       item.panelPassword = item.panelPassword || fresh.panelPassword;
       item.officialRef = item.officialRef || fresh.officialRef;
+      item.address = item.address || fresh.address || '';
+      item.serviceAreas = Array.isArray(item.serviceAreas)&&item.serviceAreas.length ? item.serviceAreas : [...(fresh.serviceAreas||[])];
+      if(typeof item.delivery!=='boolean')item.delivery=fresh.delivery;
+      if(typeof item.pickup!=='boolean')item.pickup=fresh.pickup;
     }
   }
   if (!Array.isArray(state.demoOrders)) state.demoOrders = makeDemoOrders();
+  else {
+    const knownDemoIds=new Set(state.demoOrders.map(order=>Number(order.id)));
+    for(const order of makeDemoOrders())if(!knownDemoIds.has(Number(order.id)))state.demoOrders.push(order);
+  }
   if (!Array.isArray(state.merchantOrders)) state.merchantOrders = [];
   if (!Array.isArray(state.adminApplications)) state.adminApplications = [];
   // Não reinicia pedidos que já foram aceitos ou concluídos em versões anteriores.

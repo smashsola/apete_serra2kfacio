@@ -202,13 +202,14 @@
 
   async function loadCatalog() {
     const [stores,products]=await Promise.all([
-      request('/rest/v1/stores?select=id,public_id,name,category,city,description,hero,delivery_fee,producer,delivery,pickup,service_areas,cover,verified,active,demo,instagram,contact_phone&active=eq.true&order=public_id.asc'),
+      request('/rest/v1/stores?select=id,public_id,name,category,city,address,description,hero,delivery_fee,producer,delivery,pickup,service_areas,cover,verified,active,demo,instagram,contact_phone&active=eq.true&order=public_id.asc'),
       request('/rest/v1/products?select=id,public_id,store_id,name,description,category,price,stock,image,old_price,last_batch,preferences,serves,active,demo&active=eq.true&order=public_id.asc')
     ]);
     const publicStoreId=new Map(stores.map(store=>[store.id,Number(store.public_id)]));
     return {
       stores:stores.map(store=>({
         id:Number(store.public_id),backendId:store.id,name:store.name,category:store.category,city:store.city,
+        address:store.address||'',
         desc:store.description||'',hero:store.hero||'',fee:Number(store.delivery_fee)||0,producer:Boolean(store.producer),
         delivery:Boolean(store.delivery),pickup:Boolean(store.pickup),serviceAreas:Array.isArray(store.service_areas)?store.service_areas:[],
         cover:store.cover||'',verified:Boolean(store.verified),open:Boolean(store.active),demo:Boolean(store.demo),
@@ -289,7 +290,7 @@
   async function getMerchantMemberships() {
     const session=await getSession();
     if(!session?.user?.id)return [];
-    const select='store_id,role,stores(id,public_id,name,category,city,description,delivery_fee,producer,delivery,pickup,service_areas,cover,verified,active,instagram,contact_phone)';
+    const select='store_id,role,stores(id,public_id,name,category,city,address,description,delivery_fee,producer,delivery,pickup,service_areas,cover,verified,active,instagram,contact_phone)';
     const rows=await authed('/rest/v1/store_members?select='+encodeURIComponent(select)+'&user_id=eq.'+encodeURIComponent(session.user.id));
     return (rows||[]).filter(row=>row.stores).map(row=>({
       role:row.role,
@@ -299,6 +300,7 @@
         name:row.stores.name,
         category:row.stores.category||'',
         city:row.stores.city||'',
+        address:row.stores.address||'',
         desc:row.stores.description||'',
         fee:Number(row.stores.delivery_fee)||0,
         producer:Boolean(row.stores.producer),
@@ -359,7 +361,7 @@
 
   async function updateStoreProfile(storeBackendId,values) {
     const body={};
-    const map={name:'name',category:'category',city:'city',desc:'description',instagram:'instagram',contactPhone:'contact_phone'};
+    const map={name:'name',category:'category',city:'city',address:'address',desc:'description',instagram:'instagram',contactPhone:'contact_phone'};
     for(const [source,target] of Object.entries(map))if(values[source]!==undefined)body[target]=values[source];
     const rows=await authed('/rest/v1/stores?id=eq.'+encodeURIComponent(storeBackendId),{
       method:'PATCH',body,headers:{Prefer:'return=representation'}

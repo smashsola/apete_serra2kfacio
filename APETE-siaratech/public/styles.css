@@ -873,3 +873,22 @@ button:disabled,[aria-busy="true"]{cursor:wait;opacity:.68}
     border-radius:16px;
   }
 }
+
+
+/* Endereços e localização regional */
+.store-address{
+  margin:10px 0 0;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.45;
+}
+.store-address strong{color:var(--green)}
+.region-location-btn{
+  width:100%;
+  min-height:44px;
+  justify-content:center;
+}
+.region-location-btn:disabled{
+  opacity:.58;
+  cursor:not-allowed;
+}

@@ -769,3 +769,62 @@ a.instagram-badge:hover { background: #e6dbe8; text-decoration: underline; }
 .admin-application-head p{margin:0;color:var(--muted);font-size:13px}
 .admin-id{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px;overflow-wrap:anywhere}
 @media(max-width:640px){.admin-summary{grid-template-columns:1fr}.admin-application{padding:16px}}
+
+
+/* Robustez mobile-first: overlays, toques e estados assíncronos */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body.modal-open,body.sidebar-open{overflow:hidden}
+button,a,[data-action]{touch-action:manipulation}
+button:disabled,[aria-busy="true"]{cursor:wait;opacity:.68}
+.is-busy{pointer-events:none}
+.field,.summary-card,.order-detail,.merchant-editor{min-width:0}
+.modal-panel{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.modal-head .icon-btn{flex:0 0 auto;min-width:44px;min-height:44px}
+.modal-body button,.auth-form-card button,.merchant-editor button{min-height:44px}
+.input,.select,.textarea{max-width:100%}
+.toast{bottom:max(18px,env(safe-area-inset-bottom))}
+
+@media(max-width:640px){
+  .modal{display:block}
+  .modal-panel{
+    left:0;
+    right:0;
+    top:auto;
+    bottom:0;
+    width:100%;
+    max-height:92dvh;
+    min-height:0;
+    border-left:0;
+    border-top:1px solid rgba(20,62,52,.10);
+    border-radius:24px 24px 0 0;
+    transform:translateY(104%);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .modal.is-open .modal-panel{transform:translateY(0)}
+  .modal-head{
+    align-items:center;
+    padding:14px 16px 8px;
+  }
+  .modal-head h2{
+    margin:0;
+    font-size:clamp(25px,8vw,31px);
+    line-height:1.02;
+  }
+  .modal-body{padding:12px 16px 18px}
+  .modal-body>.note:first-child,.modal-body>p:first-child{margin-top:2px}
+  .checkout-summary{gap:12px}
+  .summary-card{padding:15px;border-radius:18px}
+  .payment-option{min-height:58px;padding:13px 14px}
+  .modal-body .row{gap:9px;align-items:stretch}
+  .modal-body .row>.primary-btn,
+  .modal-body .row>.ghost-btn,
+  .modal-body>.primary-btn{min-height:48px}
+  .auth-form-card .auth-submit{width:100%;justify-content:center}
+  .input,.select,.textarea{font-size:16px}
+  .toast{
+    width:calc(100% - 24px);
+    max-width:none;
+    border-radius:16px;
+    padding:13px 15px;
+  }
+}

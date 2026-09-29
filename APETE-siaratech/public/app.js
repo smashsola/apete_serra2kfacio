@@ -377,6 +377,8 @@ function applyBackendCustomer(profile) {
 
 function friendlyBackendError(error,fallback='Não foi possível concluir agora.') {
   const message=String(error?.message||'').toLowerCase();
+  if(/network_offline|network_unavailable/.test(message))return 'Sem conexão com o servidor. Confira sua internet e tente novamente.';
+  if(/backend_timeout/.test(message))return 'O servidor demorou para responder. Tente novamente em alguns segundos.';
   if(/invalid login credentials/.test(message))return 'E-mail ou senha incorretos.';
   if(/email not confirmed/.test(message))return 'Confirme seu e-mail antes de entrar.';
   if(/user already registered|already been registered/.test(message))return 'Esse e-mail já possui cadastro.';

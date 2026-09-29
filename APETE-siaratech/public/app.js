@@ -1388,7 +1388,7 @@ function renderUnsafe() {
     if (label) label.textContent = logged ? 'Minha conta' : 'Entrar';
     enterLink.setAttribute('aria-label', logged ? 'Minha conta' : 'Entrar');
   }
-  $('.side-nav a').forEach((link) => link.classList.toggle('active', link.dataset.page === visualPage));
+  $$('.side-nav a').forEach((link) => link.classList.toggle('active', link.dataset.page === visualPage));
 }
 
 function render() {
@@ -2104,7 +2104,7 @@ $('#locate').addEventListener('click', selectRegion);
 $('#menu-toggle').addEventListener('click', openSidebar);
 $('#sidebar-close').addEventListener('click', closeSidebar);
 $('#scrim').addEventListener('click', closeSidebar);
-$('.side-nav a, .brand, .site-footer [data-page]').forEach((link) => link.addEventListener('click', (event) => {
+$$('.side-nav a, .brand, .site-footer [data-page]').forEach((link) => link.addEventListener('click', (event) => {
   const page = link.dataset.page;
   if (!page) return;
   event.preventDefault();

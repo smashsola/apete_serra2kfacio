@@ -1389,7 +1389,10 @@ function removeCartItem(productId) {
   renderCartModal();
   render();
 }
-function openCartModal() { cartStep = 'cart'; renderCartModal(); }
+function openCartModal() {
+  cartStep='cart';
+  renderCartModal();
+}
 function goCheckout() {
   if (!isRealCustomerLogged()) {
     closeModal();
@@ -1401,6 +1404,13 @@ function goCheckout() {
     return;
   }
   cartStep = 'checkout';
+  checkoutDraft = checkoutDraft || {
+    name:state.customer.name||'',
+    phone:onlyDigits(state.customer.phone||''),
+    neighborhood:state.customer.neighborhood||'',
+    address:state.customer.address||'',
+    note:''
+  };
   renderCartModal();
 }
 
@@ -1411,16 +1421,22 @@ function renderCartModal() {
     return;
   }
   const store = getStore(items[0].product.storeId);
+  if(!store){
+    state.cart=[];
+    save();
+    openModal('Sua sacola','<div class="empty"><b>Este estabelecimento não está mais disponível</b> Sua sacola foi limpa para evitar um pedido inconsistente.<div class="row" style="justify-content:center;margin-top:14px"><button class="primary-btn" data-action="go-catalog">Ver produtos disponíveis</button></div></div>');
+    return;
+  }
   const subtotal = items.reduce((sum, item) => sum + item.product.price * item.qty, 0);
-  const deliveryFee = store.fee;
+  const deliveryFee = Number(store.fee)||0;
   const total = subtotal + deliveryFee;
 
   if (cartStep === 'checkout') {
     openModal('Finalizar pedido', `
       <div class="checkout-summary">
-        <div class="summary-card"><h4>Entrega e pagamento</h4><div class="field-grid"><div class="field"><label>Nome</label><input id="checkout-name" class="input" value="${esc(state.customer.name)}"></div><div class="field"><label>Telefone</label><input id="checkout-phone" class="input" value="${esc(onlyDigits(state.customer.phone))}"></div><div class="field"><label>Bairro</label><input id="checkout-neighborhood" class="input" value="${esc(state.customer.neighborhood)}"></div><div class="field"><label>Endereço</label><input id="checkout-address" class="input" value="${esc(state.customer.address)}"></div></div></div>
+        <div class="summary-card"><h4>Entrega e pagamento</h4><div class="field-grid"><div class="field"><label>Nome</label><input id="checkout-name" class="input" autocomplete="name" value="${esc(checkoutDraft?.name??state.customer.name??'')}"></div><div class="field"><label>Telefone</label><input id="checkout-phone" class="input phone-only" inputmode="numeric" autocomplete="tel" maxlength="11" value="${esc(checkoutDraft?.phone??onlyDigits(state.customer.phone||''))}"></div><div class="field"><label>Bairro</label><input id="checkout-neighborhood" class="input" autocomplete="address-level3" value="${esc(checkoutDraft?.neighborhood??state.customer.neighborhood??'')}"></div><div class="field"><label>Endereço</label><input id="checkout-address" class="input" autocomplete="street-address" value="${esc(checkoutDraft?.address??state.customer.address??'')}"></div></div></div>
         <div class="summary-card"><h4>Como você vai pagar?</h4><div class="payment-box"><button class="payment-option ${selectedPayment === 'pix' ? 'active' : ''}" data-action="select-payment" data-pay="pix"><strong>Pix</strong><span>Pagamento rápido</span></button><button class="payment-option ${selectedPayment === 'cartao' ? 'active' : ''}" data-action="select-payment" data-pay="cartao"><strong>Cartão</strong><span>Crédito ou débito</span></button><button class="payment-option ${selectedPayment === 'cartao-entrega' ? 'active' : ''}" data-action="select-payment" data-pay="cartao-entrega"><strong>Cartão na entrega</strong><span>Máquina no recebimento</span></button></div></div>
-        <div class="summary-card"><h4>Resumo do pedido</h4><div class="total-row"><span>Estabelecimento</span><strong>${esc(store.name)}</strong></div><div class="total-row"><span>Subtotal</span><strong>${money(subtotal)}</strong></div><div class="total-row"><span>Entrega</span><strong>${money(deliveryFee)}</strong></div><div class="total-row final"><span>Total</span><strong>${money(total)}</strong></div><div class="field" style="margin-top:12px"><label>Observações do pedido</label><textarea id="checkout-note" class="textarea" placeholder="Ex.: sem cebola, entregar na portaria, chamar no WhatsApp"></textarea></div><div class="row" style="margin-top:14px"><button class="ghost-btn strong" data-action="back-to-cart">Voltar</button><button class="primary-btn" data-action="place-order">Confirmar pedido</button></div></div>
+        <div class="summary-card"><h4>Resumo do pedido</h4><div class="total-row"><span>Estabelecimento</span><strong>${esc(store.name)}</strong></div><div class="total-row"><span>Subtotal</span><strong>${money(subtotal)}</strong></div><div class="total-row"><span>Entrega</span><strong>${money(deliveryFee)}</strong></div><div class="total-row final"><span>Total</span><strong>${money(total)}</strong></div><div class="field" style="margin-top:12px"><label>Observações do pedido</label><textarea id="checkout-note" class="textarea" maxlength="500" placeholder="Ex.: sem cebola, entregar na portaria, chamar no WhatsApp">${esc(checkoutDraft?.note||'')}</textarea></div><div class="row" style="margin-top:14px"><button class="ghost-btn strong" data-action="back-to-cart">Voltar</button><button class="primary-btn" data-action="place-order">Confirmar pedido</button></div></div>
       </div>`);
     return;
   }
@@ -1429,6 +1445,7 @@ function renderCartModal() {
 }
 
 async function placeOrder() {
+  captureCheckoutDraft();
   if(!window.APETE_BACKEND?.createOrder||state.customer.demo||!window.APETE_BACKEND.hasStoredSession()) {
     closeModal();setPage('entrar');return toast('Entre na sua conta real para concluir a compra.');
   }
@@ -1453,6 +1470,7 @@ async function placeOrder() {
     state.orders=await window.APETE_BACKEND.loadOrders();
     state.ui.orderSuccessId=Number(created?.public_number)||state.orders[0]?.id||null;
     state.cart=[];
+    checkoutDraft=null;
     save();
     closeModal();
     setPage('pedidos');

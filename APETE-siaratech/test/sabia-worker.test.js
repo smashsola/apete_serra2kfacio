@@ -80,3 +80,16 @@ test('status expõe a ordem real de provedores sem chamar nenhum deles',async()=
  const data=await response.json();
  assert.deepEqual(data.providers,['Groq','Gemini','Cloudflare Workers AI']);
 });
+
+
+test('catálogo regional expõe cidades e variedade mínima sem quebrar a API',async()=>{
+ const response=await worker.fetch(new Request(origin+'/api/catalog'),baseEnv);
+ assert.equal(response.status,200);
+ const data=await response.json();
+ assert.ok(Array.isArray(data.cities));
+ assert.ok(data.cities.includes('Guaraciaba do Norte'));
+ assert.ok(data.cities.includes('Tianguá'));
+ assert.ok(data.stores.length>=18);
+ assert.ok(data.products.length>=90);
+ assert.equal(data.stores.filter(store=>store.producer).length,5);
+});

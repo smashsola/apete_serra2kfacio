@@ -1870,9 +1870,14 @@ function confirmSabiaAdd(){
   closeModal();for(let i=0;i<p.quantity;i++)addToCart(p.id);sabiaPendingProduct=null;
 }
 function selectRegion(){
-  openModal('Onde você quer receber?',`<p>Escolha o município. Não presumimos entregas entre cidades.</p><label for="regional-city">Município</label><select id="regional-city" class="select">${REGIONAL_CITIES.map(city=>`<option ${state.city===city?'selected':''}>${esc(city)}</option>`).join('')}</select><p class="note">Os estabelecimentos são fictícios. As áreas de atendimento da Sabiá são cadastradas no servidor.</p><button class="primary-btn" data-action="save-region">Confirmar cidade</button>`);
+  openModal('Onde você quer receber?',`<p>Escolha o município. Não presumimos entregas entre cidades.</p><div class="field"><label for="regional-city">Município</label><select id="regional-city" class="select">${REGIONAL_CITIES.map(city=>`<option ${state.city===city?'selected':''}>${esc(city)}</option>`).join('')}</select></div><p class="note">Os estabelecimentos são fictícios. As áreas de atendimento da Sabiá são cadastradas no servidor.</p><div class="row modal-actions"><button class="ghost-btn strong" data-action="close">Agora não</button><button class="primary-btn" data-action="save-region">Confirmar cidade</button></div>`);
 }
 
+if(!AUTH_PAGE){
+  const initialHash=`#${state.page}`;
+  if(location.hash!==initialHash)history.replaceState({apetePage:state.page},'',initialHash);
+  else history.replaceState({apetePage:state.page},'',location.href);
+}
 render();
 hydrateCatalogFromBackend();
 restoreCustomerFromBackend();

@@ -296,6 +296,14 @@ state.city = REGIONAL_CITIES.includes(state.city) ? state.city : 'Guaraciaba do 
 const getStore = (id) => state.stores.find((item) => item.id === Number(id));
 const getProduct = (id) => state.products.find((item) => item.id === Number(id));
 const activeMerchantStore = () => getStore(state.merchant.storeId || 1) || state.stores[0] || STORES[0];
+const storeCategoryLabel = (store) => String(store?.category||'').trim() || (store?.producer ? 'Produtor local' : 'Estabelecimento local');
+const storeDescription = (store) => String(store?.desc||'').trim() || 'Novo estabelecimento cadastrado no APETÊ. Informações do perfil em atualização.';
+const storeHeroText = (store) => String(store?.hero||'').trim() || storeDescription(store);
+const storeEta = (store) => String(store?.time||'').trim() || 'Prazo a confirmar';
+const storeRating = (store) => {
+  const rating=Number(store?.rating);
+  return Number.isFinite(rating)&&rating>0?rating:null;
+};
 const isCustomerLogged = () => Boolean(state.customer.logged && state.customer.phone);
 const isRealCustomerLogged = () => Boolean(state.customer.logged && !state.customer.demo && window.APETE_BACKEND?.hasStoredSession?.());
 const isMerchantLogged = () => Boolean(state.merchant.logged && state.merchant.storeId);
@@ -524,7 +532,8 @@ function fallbackImage(label, mode = 'food') {
 }
 
 function imgTag(src, alt, mode='food') {
-  return `<img src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallbackImage(alt, mode)}'">`;
+  const safeSrc=String(src||'').trim()||fallbackImage(alt,mode);
+  return `<img src="${esc(safeSrc)}" alt="${esc(alt)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallbackImage(alt, mode)}'">`;
 }
 
 function pageHead(title, desc) {
@@ -745,14 +754,14 @@ function storeCard(store) {
         ${imgTag(store.cover, store.name, 'store')}
         <div class="cover-overlay"></div>
         <div class="cover-copy">
-          <span class="cover-kicker">${esc(store.category)}</span>
+          <span class="cover-kicker">${esc(storeCategoryLabel(store))}</span>
           <h4>${esc(store.name)}</h4>
-          <div class="cover-meta"><span>${esc(store.city)}</span><span>★ ${store.rating.toFixed(1)}</span><span>${esc(store.time)}</span></div>
+          <div class="cover-meta"><span>${esc(store.city)}</span><span>★ ${storeRating(store)?.toFixed(1)||'Novo'}</span><span>${esc(storeEta(store))}</span></div>
         </div>
       </div>
       <div class="store-body">
         <div class="chip-row"><span class="chip orange">${store.open ? 'Aberto agora' : 'Fechado'}</span><span class="chip soft">Entrega ${money(store.fee)}</span></div>
-        <p>${esc(store.desc)}</p>
+        <p>${esc(storeDescription(store))}</p>
         <div class="fact-row">${instagramBadge(store)}<span>${esc(store.city)}</span></div>
         <div class="mini-products-row">${items}</div>
         <div class="row" style="margin-top:16px"><button class="primary-btn" data-action="goto-store" data-id="${store.id}">Ver cardápio</button><button class="ghost-btn strong" data-action="filter-store" data-id="${store.id}">Filtrar no catálogo</button></div>
@@ -776,14 +785,14 @@ function producerCard(store) {
         ${imgTag(store.cover, store.name, 'producer')}
         <div class="cover-overlay producer"></div>
         <div class="cover-copy">
-          <span class="cover-kicker">${esc(store.category)}</span>
+          <span class="cover-kicker">${esc(storeCategoryLabel(store))}</span>
           <h4>${esc(store.name)}</h4>
-          <div class="cover-meta"><span>${esc(store.city)}</span><span>${esc(store.time)}</span></div>
+          <div class="cover-meta"><span>${esc(store.city)}</span><span>${esc(storeEta(store))}</span></div>
         </div>
       </div>
       <div class="producer-body">
         <div class="chip-row"><span class="chip soft producer-chip">Colheita local</span><span class="chip producer-alt">Entrega ${money(store.fee)}</span></div>
-        <p>${esc(store.desc)}</p>
+        <p>${esc(storeDescription(store))}</p>
         <ul class="kv producer-list with-thumbs">${products}</ul>
         <div class="row" style="margin-top:16px"><button class="primary-btn producer-btn" data-action="goto-store" data-id="${store.id}">Ver produtos</button></div>
       </div>
@@ -1272,10 +1281,10 @@ function merchantPage() {
   if(panels[tab]) body=panels[tab].length?panels[tab].map(o=>orderCard(o,true)).join(''):`<div class="empty"><b>Nenhum pedido nesta etapa</b> Você pode avançar um pedido pela etapa anterior.</div>`;
   if(tab==='produtos')body=merchantProductsView(products);
   if(tab==='fornada')body=merchantOffersView(products);
-  if(tab==='cadastro')body=`<section class="merchant-editor"><div class="merchant-section-heading"><div><span class="merchant-eyebrow">Configurações do perfil</span><h3>Dados de ${esc(store.name)}</h3><p>Personalize as informações exibidas na vitrine do estabelecimento.</p></div></div><form id="merchant-profile-form" class="merchant-edit-form"><div class="field-grid"><div class="field"><label>Nome da loja *</label><input id="merchant-edit-name" class="input" required value="${esc(store.name)}"></div><div class="field"><label>Categoria</label><input id="merchant-edit-category" class="input" value="${esc(store.category)}"></div><div class="field"><label>Cidade</label><input id="merchant-edit-city" class="input" value="${esc(store.city)}"></div><div class="field"><label>Telefone</label><input id="merchant-edit-phone" class="input" value="${esc(state.merchant.phone)}"></div><div class="field"><label>Instagram da loja *</label><input id="merchant-edit-instagram" class="input" value="${esc(store.instagram||store.officialRef||'')}" placeholder="@sualoja"></div></div><div class="field"><label>Descrição</label><textarea id="merchant-edit-desc" class="textarea">${esc(store.desc)}</textarea></div><div class="merchant-form-actions"><button class="primary-btn" type="submit">Salvar perfil</button></div></form></section>`;
+  if(tab==='cadastro')body=`<section class="merchant-editor"><div class="merchant-section-heading"><div><span class="merchant-eyebrow">Configurações do perfil</span><h3>Dados de ${esc(store.name)}</h3><p>Personalize as informações exibidas na vitrine do estabelecimento.</p></div></div><form id="merchant-profile-form" class="merchant-edit-form"><div class="field-grid"><div class="field"><label>Nome da loja *</label><input id="merchant-edit-name" class="input" required value="${esc(store.name)}"></div><div class="field"><label>Categoria</label><input id="merchant-edit-category" class="input" value="${esc(storeCategoryLabel(store))}"></div><div class="field"><label>Cidade</label><input id="merchant-edit-city" class="input" value="${esc(store.city)}"></div><div class="field"><label>Telefone</label><input id="merchant-edit-phone" class="input" value="${esc(state.merchant.phone)}"></div><div class="field"><label>Instagram da loja *</label><input id="merchant-edit-instagram" class="input" value="${esc(store.instagram||store.officialRef||'')}" placeholder="@sualoja"></div></div><div class="field"><label>Descrição</label><textarea id="merchant-edit-desc" class="textarea">${esc(storeDescription(store))}</textarea></div><div class="merchant-form-actions"><button class="primary-btn" type="submit">Salvar perfil</button></div></form></section>`;
   const stageList=[['pendentes','Recebidos',pending.length],['preparando','Em preparo',preparing.length],['prontos','Prontos',ready.length],['concluidos','Finalizados',concluded.length]];
   return `${state.ui.presentationMerchant?'<div class="merchant-demo-notice">Visão de apresentação · Os pedidos e produtos são salvos apenas neste navegador.</div>':''}
-   <section class="merchant-cover-card ${store.producer?'producer-cover-theme':''}"><div class="merchant-cover-picture">${imgTag(store.cover,store.name,store.producer?'producer':'store')}</div><div class="merchant-cover-copy"><span class="merchant-eyebrow">PAINEL DO ${store.producer?'PRODUTOR':'COMERCIANTE'}</span><h2>${esc(store.name)}</h2><p>${esc(store.category)} · ${esc(store.city)}</p><div class="merchant-cover-actions"><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="pendentes">Ver pedidos <span>${pending.length}</span></button><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="produtos">+ Produto</button><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="fornada">Última Fornada <span>${offerCount}</span></button></div></div></section>
+   <section class="merchant-cover-card ${store.producer?'producer-cover-theme':''}"><div class="merchant-cover-picture">${imgTag(store.cover,store.name,store.producer?'producer':'store')}</div><div class="merchant-cover-copy"><span class="merchant-eyebrow">PAINEL DO ${store.producer?'PRODUTOR':'COMERCIANTE'}</span><h2>${esc(store.name)}</h2><p>${esc(storeCategoryLabel(store))} · ${esc(store.city)}</p><div class="merchant-cover-actions"><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="pendentes">Ver pedidos <span>${pending.length}</span></button><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="produtos">+ Produto</button><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="fornada">Última Fornada <span>${offerCount}</span></button></div></div></section>
    ${state.ui.presentationMerchant?`<div class="merchant-store-select"><label for="demo-merchant-store">Trocar estabelecimento no vídeo</label><select id="demo-merchant-store" class="select">${state.stores.map(s=>`<option value="${s.id}" ${s.id===store.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>`:''}
    <div class="merchant-workflow" aria-label="Etapas do pedido">${stageList.map(([key,label,count])=>`<button class="merchant-stage ${tab===key?'selected':''}" data-action="merchant-panel-tab" data-tab="${key}" aria-pressed="${tab===key}" aria-label="${label}: ${count} ${count===1?'pedido':'pedidos'}"><span class="stage-label">${label}</span>${tab===key?`<span class="stage-count">${count} ${count===1?'pedido':'pedidos'}</span>`:''}</button>`).join('')}</div>
    <div class="merchant-tabs" role="group" aria-label="Áreas do painel"><button class="merchant-tab ${['pendentes','preparando','prontos','concluidos'].includes(tab)?'selected':''}" data-action="merchant-panel-tab" data-tab="pendentes">Pedidos</button><button class="merchant-tab ${tab==='produtos'?'selected':''}" data-action="merchant-panel-tab" data-tab="produtos">Cardápio</button><button class="merchant-tab ${tab==='fornada'?'selected':''}" data-action="merchant-panel-tab" data-tab="fornada">Última Fornada</button><button class="merchant-tab ${tab==='cadastro'?'selected':''}" data-action="merchant-panel-tab" data-tab="cadastro">Meu perfil</button></div>
@@ -1286,7 +1295,7 @@ function storeDetailPage() {
   const store = getStore(state.storeViewId);
   if(!store)return `${pageHead('Estabelecimento indisponível','Esse perfil não está mais disponível.')}<div class="empty"><b>Não encontramos essa loja</b> Volte para a lista de estabelecimentos.<div class="row" style="justify-content:center;margin-top:14px"><button class="primary-btn" data-action="go-page" data-page="estabelecimentos">Ver estabelecimentos</button></div></div>`;
   const products = state.products.filter((product) => product.storeId === store.id);
-  return `${pageHead(store.name, store.hero)}<section class="store-detail"><article class="detail-hero ${store.producer ? 'producer-tone' : 'merchant-tone'}"><div class="detail-cover">${imgTag(store.cover, store.name, store.producer ? 'producer' : 'store')}<div class="cover-overlay ${store.producer ? 'producer' : ''}"></div><div class="cover-copy"><span class="cover-kicker">${esc(store.category)}</span><h4>${esc(store.name)}</h4><div class="cover-meta"><span>${esc(store.city)}</span><span>★ ${store.rating.toFixed(1)}</span><span>${esc(store.time)}</span></div></div></div><div class="detail-info"><div class="chip-row"><span class="chip ${store.producer ? 'producer-alt' : 'orange'}">Entrega ${money(store.fee)}</span>${instagramBadge(store)}</div><p>${esc(store.desc)}</p><div class="row detail-actions" style="margin-top:18px"><button class="primary-btn" data-action="filter-store" data-id="${store.id}">Ver tudo no catálogo</button><button class="ghost-btn strong" data-action="go-page" data-page="estabelecimentos">Voltar</button></div></div></article><div class="product-grid">${products.map(productCard).join('')}</div></section>`;
+  return `${pageHead(store.name, storeHeroText(store))}<section class="store-detail"><article class="detail-hero ${store.producer ? 'producer-tone' : 'merchant-tone'}"><div class="detail-cover">${imgTag(store.cover, store.name, store.producer ? 'producer' : 'store')}<div class="cover-overlay ${store.producer ? 'producer' : ''}"></div><div class="cover-copy"><span class="cover-kicker">${esc(storeCategoryLabel(store))}</span><h4>${esc(store.name)}</h4><div class="cover-meta"><span>${esc(store.city)}</span><span>★ ${storeRating(store)?.toFixed(1)||'Novo'}</span><span>${esc(storeEta(store))}</span></div></div></div><div class="detail-info"><div class="chip-row"><span class="chip ${store.producer ? 'producer-alt' : 'orange'}">Entrega ${money(store.fee)}</span>${instagramBadge(store)}</div><p>${esc(storeDescription(store))}</p><div class="row detail-actions" style="margin-top:18px"><button class="primary-btn" data-action="filter-store" data-id="${store.id}">Ver tudo no catálogo</button><button class="ghost-btn strong" data-action="go-page" data-page="estabelecimentos">Voltar</button></div></div></article><div class="product-grid">${products.map(productCard).join('')}</div></section>`;
 }
 
 // Patch the existing Sabiá nodes so status updates never replace the active input.
@@ -1314,7 +1323,7 @@ function updateSabiaView(html){
  document.querySelectorAll('.sabia-suggest button,[data-action="sabia-new"]').forEach(button=>{button.disabled=sabiaBusy;});
 }
 
-function render() {
+function renderUnsafe() {
   const content = $('#content');
   const page = state.page;
   $('#location-label').textContent = state.city || 'Guaraciaba do Norte';
@@ -1364,6 +1373,20 @@ function render() {
   $$('.side-nav a').forEach((link) => link.classList.toggle('active', link.dataset.page === visualPage));
 }
 
+}
+
+function render() {
+  try {
+    return renderUnsafe();
+  } catch(error) {
+    console.error('apete_render_error',error);
+    const content=$('#content');
+    if(content){
+      content.innerHTML=`${pageHead('Algo saiu do lugar','O APETÊ protegeu esta tela para você não ficar preso em uma página quebrada.')}<div class="empty"><b>Não foi possível abrir esta área</b> Volte ao início e tente novamente.<div class="row" style="justify-content:center;margin-top:16px"><button class="primary-btn" data-action="go-page" data-page="inicio">Voltar ao início</button></div></div>`;
+    }
+    $('#page-title') && ($('#page-title').textContent='APETÊ');
+  }
+}
 function addToCart(productId) {
   const product = getProduct(productId);
   if (!product) return;

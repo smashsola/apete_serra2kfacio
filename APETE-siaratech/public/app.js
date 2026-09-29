@@ -23,166 +23,2017 @@ const asset = (name) => `assets/images/${name}`;
 const img = (tag, lock, w = 1200, h = 800) => asset('cover-casa.webp');
 
 const STORES = [
-  { id: 1, name: 'Casa do Baião', category: 'Comida regional', city: 'Guaraciaba do Norte', fee: 600, time: '28–40 min', rating: 4.9, open: true, producer: false, verified: true, panelPassword: '1234', officialRef: '@casadobaiao', cover: asset('cover-casa.webp'), desc: 'Pratos regionais, baião de dois, almoço executivo e combinações para compartilhar.', hero: 'Baião, galinha caipira e comida de casa com aquele tempero da Serra.' },
-  { id: 2, name: 'Forno & Afeto', category: 'Padaria artesanal', city: 'Guaraciaba do Norte', fee: 450, time: '22–35 min', rating: 4.8, open: true, producer: false, verified: true, panelPassword: '1234', officialRef: '@fornoeafeto', cover: asset('cover-forno.webp'), desc: 'Pães, bolos, tapiocas, cafés e opções frescas para o café da manhã e da tarde.', hero: 'Pães quentinhos, bolos e café passado na hora.' },
-  { id: 3, name: 'Quintal da Serra', category: 'Cozinha caseira', city: 'São Benedito', fee: 700, time: '32–48 min', rating: 4.7, open: true, producer: false, verified: true, panelPassword: '1234', officialRef: '@quintaldaserra', cover: asset('cover-quintal.webp'), desc: 'Comida caseira, marmitas, caldinhos e pratos bem servidos para o almoço ou jantar.', hero: 'Receitas caseiras e porções que lembram comida de família.' },
-  { id: 4, name: 'Sítio Boa Vista', category: 'Produtor local', city: 'Guaraciaba do Norte', fee: 500, time: '30–45 min', rating: 4.9, open: true, producer: true, verified: true, panelPassword: '1234', officialRef: '@sitioboavista', cover: asset('cover-sitio.webp'), desc: 'Hortaliças, frutas e produtos artesanais colhidos na Serra e enviados com frescor.', hero: 'Frutas, verduras e produtos da roça direto para a sua mesa.' },
-  { id: 5, name: 'Serra Verde Orgânicos', category: 'Produtor local', city: 'Ibiapina', fee: 550, time: '35–50 min', rating: 4.8, open: true, producer: true, verified: true, panelPassword: '1234', officialRef: '@serraverdeorganicos', cover: asset('cover-serraverde.webp'), desc: 'Cestas, legumes, mel e itens naturais de pequenos produtores da região.', hero: 'Orgânicos selecionados e cestas prontas para a semana.' }
+  {
+    "id": 1,
+    "name": "Casa do Baião",
+    "category": "Comida regional",
+    "city": "Guaraciaba do Norte",
+    "address": "Rua Senador Catunda, Centro",
+    "fee": 600,
+    "time": "28–40 min",
+    "rating": 4.9,
+    "open": true,
+    "producer": false,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@casadobaiao",
+    "instagram": "@casadobaiao",
+    "cover": "assets/images/cover-casa.webp",
+    "desc": "Pratos regionais, baião de dois, almoço executivo e combinações para compartilhar.",
+    "hero": "Baião, galinha caipira e comida de casa com aquele tempero da Serra.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "Guaraciaba do Norte"
+    ],
+    "demo": true
+  },
+  {
+    "id": 2,
+    "name": "Forno & Afeto",
+    "category": "Padaria artesanal",
+    "city": "Guaraciaba do Norte",
+    "address": "Rua Monsenhor Eurico, Centro",
+    "fee": 450,
+    "time": "22–35 min",
+    "rating": 4.8,
+    "open": true,
+    "producer": false,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@fornoeafeto",
+    "instagram": "@fornoeafeto",
+    "cover": "assets/images/cover-forno.webp",
+    "desc": "Pães, bolos, tapiocas, cafés e opções frescas para o café da manhã e da tarde.",
+    "hero": "Pães quentinhos, bolos e café passado na hora.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "Guaraciaba do Norte"
+    ],
+    "demo": true
+  },
+  {
+    "id": 3,
+    "name": "Quintal da Serra",
+    "category": "Cozinha caseira",
+    "city": "São Benedito",
+    "address": "Rua Capitão Miranda, Centro",
+    "fee": 700,
+    "time": "32–48 min",
+    "rating": 4.7,
+    "open": true,
+    "producer": false,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@quintaldaserra",
+    "instagram": "@quintaldaserra",
+    "cover": "assets/images/cover-quintal.webp",
+    "desc": "Comida caseira, marmitas, caldinhos e pratos bem servidos para o almoço ou jantar.",
+    "hero": "Receitas caseiras e porções que lembram comida de família.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "São Benedito"
+    ],
+    "demo": true
+  },
+  {
+    "id": 4,
+    "name": "Sítio Boa Vista",
+    "category": "Produtor local",
+    "city": "Guaraciaba do Norte",
+    "address": "Distrito Várzea dos Espinhos, Zona Rural",
+    "fee": 500,
+    "time": "30–45 min",
+    "rating": 4.9,
+    "open": true,
+    "producer": true,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@sitioboavista",
+    "instagram": "@sitioboavista",
+    "cover": "assets/images/cover-sitio.webp",
+    "desc": "Hortaliças, frutas e produtos artesanais colhidos na Serra e enviados com frescor.",
+    "hero": "Frutas, verduras e produtos da roça direto para a sua mesa.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "Guaraciaba do Norte"
+    ],
+    "demo": true
+  },
+  {
+    "id": 5,
+    "name": "Serra Verde Orgânicos",
+    "category": "Produtor local",
+    "city": "Ibiapina",
+    "address": "Rua Padre Ibiapina, Centro (ponto de retirada)",
+    "fee": 550,
+    "time": "35–50 min",
+    "rating": 4.8,
+    "open": true,
+    "producer": true,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@serraverdeorganicos",
+    "instagram": "@serraverdeorganicos",
+    "cover": "assets/images/cover-serraverde.webp",
+    "desc": "Cestas, legumes, mel e itens naturais de pequenos produtores da região.",
+    "hero": "Orgânicos selecionados e cestas prontas para a semana.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "Ibiapina"
+    ],
+    "demo": true
+  },
+  {
+    "id": 6,
+    "name": "Pão da Praça",
+    "category": "Padaria",
+    "city": "São Benedito",
+    "address": "Praça 25 de Novembro, Centro",
+    "fee": 450,
+    "time": "20–35 min",
+    "rating": null,
+    "open": true,
+    "producer": false,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@paodapraca",
+    "instagram": "@paodapraca",
+    "cover": "assets/images/product-bakery.webp",
+    "desc": "Padaria de bairro com pães do dia, salgados, bolos simples e café.",
+    "hero": "Pão quente cedo, lanche rápido e fornada promocional no fim do dia.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "São Benedito"
+    ],
+    "demo": true
+  },
+  {
+    "id": 7,
+    "name": "Padaria Neblina",
+    "category": "Padaria e café",
+    "city": "Ubajara",
+    "address": "Avenida dos Constituintes, Centro",
+    "fee": 550,
+    "time": "25–40 min",
+    "rating": null,
+    "open": true,
+    "producer": false,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@padarianeblina",
+    "instagram": "@padarianeblina",
+    "cover": "assets/images/cover-forno.webp",
+    "desc": "Pães macios, bolos regionais, café e itens de vitrine preparados diariamente.",
+    "hero": "Padaria de clima serrano com café, pães e bolos para manhã e tarde.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "Ubajara"
+    ],
+    "demo": true
+  },
+  {
+    "id": 8,
+    "name": "Doce Encanto da Serra",
+    "category": "Doceria",
+    "city": "Guaraciaba do Norte",
+    "address": "Rua Prefeito Valdemiro Ferreira Gomes, Centro",
+    "fee": 400,
+    "time": "20–35 min",
+    "rating": null,
+    "open": true,
+    "producer": false,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@doceencantodaserra",
+    "instagram": "@doceencantodaserra",
+    "cover": "assets/images/product-artisanal.webp",
+    "desc": "Doces individuais, bolo no pote, pudim e caixas para dividir ou presentear.",
+    "hero": "Sobremesas caseiras e porções pequenas para matar a vontade de doce.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "Guaraciaba do Norte"
+    ],
+    "demo": true
+  },
+  {
+    "id": 9,
+    "name": "Açúcar & Canela",
+    "category": "Doceria e bolos",
+    "city": "Tianguá",
+    "address": "Rua 12 de Agosto, Centro",
+    "fee": 600,
+    "time": "25–40 min",
+    "rating": null,
+    "open": true,
+    "producer": false,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@acucarecanela",
+    "instagram": "@acucarecanela",
+    "cover": "assets/images/product-artisanal.webp",
+    "desc": "Bolos, churros, palha italiana e sobremesas montadas em porções individuais.",
+    "hero": "Doces de vitrine, bolos por fatia e sobremesas caprichadas.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "Tianguá"
+    ],
+    "demo": true
+  },
+  {
+    "id": 10,
+    "name": "Flor de Cacau",
+    "category": "Café e doceria",
+    "city": "Ubajara",
+    "address": "Rua Juvêncio Pereira, Centro",
+    "fee": 600,
+    "time": "25–40 min",
+    "rating": null,
+    "open": true,
+    "producer": false,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@flordecacau",
+    "instagram": "@flordecacau",
+    "cover": "assets/images/product-artisanal.webp",
+    "desc": "Tortas, brownies, trufas e bebidas de café para lanche e sobremesa.",
+    "hero": "Chocolate, café e sobremesas para uma pausa no centro de Ubajara.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "Ubajara"
+    ],
+    "demo": true
+  },
+  {
+    "id": 11,
+    "name": "Chapa do Norte",
+    "category": "Lanchonete",
+    "city": "Guaraciaba do Norte",
+    "address": "Rua Capitão Ferreira, Centro",
+    "fee": 450,
+    "time": "20–35 min",
+    "rating": null,
+    "open": true,
+    "producer": false,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@chapadonorte",
+    "instagram": "@chapadonorte",
+    "cover": "assets/images/product-regional.webp",
+    "desc": "Hambúrgueres, sanduíches, cachorro-quente, batata e sucos para lanche rápido.",
+    "hero": "Lanches de chapa e porções para pedir à noite ou no fim da tarde.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "Guaraciaba do Norte"
+    ],
+    "demo": true
+  },
+  {
+    "id": 12,
+    "name": "Ponto do Cuscuz",
+    "category": "Café regional",
+    "city": "São Benedito",
+    "address": "Avenida Tabajara, Centro",
+    "fee": 500,
+    "time": "20–35 min",
+    "rating": null,
+    "open": true,
+    "producer": false,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@pontodocuscuz",
+    "instagram": "@pontodocuscuz",
+    "cover": "assets/images/product-caseiro.webp",
+    "desc": "Cuscuz recheado, tapioca, café e bolos regionais em combinações de café da manhã.",
+    "hero": "Café regional simples, com cuscuz e tapioca preparados na hora.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "São Benedito"
+    ],
+    "demo": true
+  },
+  {
+    "id": 13,
+    "name": "Massa da Serra",
+    "category": "Pizzaria",
+    "city": "Tianguá",
+    "address": "Avenida Prefeito Jacques Nunes, Centro",
+    "fee": 700,
+    "time": "35–50 min",
+    "rating": null,
+    "open": true,
+    "producer": false,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@massadaserra",
+    "instagram": "@massadaserra",
+    "cover": "assets/images/product-caseiro.webp",
+    "desc": "Pizzas tradicionais e vegetarianas, com tamanhos para uma pessoa ou para dividir.",
+    "hero": "Pizza assada na hora com sabores clássicos para jantar ou compartilhar.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "Tianguá"
+    ],
+    "demo": true
+  },
+  {
+    "id": 14,
+    "name": "Panelinha Ibiapaba",
+    "category": "Restaurante caseiro",
+    "city": "Ibiapina",
+    "address": "Avenida Pedro Ferreira de Assis, Centro",
+    "fee": 650,
+    "time": "30–45 min",
+    "rating": null,
+    "open": true,
+    "producer": false,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@panelinhaibiapaba",
+    "instagram": "@panelinhaibiapaba",
+    "cover": "assets/images/product-caseiro.webp",
+    "desc": "Marmitas e pratos feitos com opções de frango, carne, peixe e vegetariana.",
+    "hero": "Almoço de todo dia com comida caseira, porção bem servida e acompanhamentos.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "Ibiapina"
+    ],
+    "demo": true
+  },
+  {
+    "id": 15,
+    "name": "Café Jatobá",
+    "category": "Cafeteria",
+    "city": "Ubajara",
+    "address": "Rua José Agapito Pereira, Centro",
+    "fee": 550,
+    "time": "20–35 min",
+    "rating": null,
+    "open": true,
+    "producer": false,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@cafejatoba",
+    "instagram": "@cafejatoba",
+    "cover": "assets/images/prod-cafe-serra.webp",
+    "desc": "Café coado, cappuccino, pão de queijo, sanduíches e bolos para café e lanche.",
+    "hero": "Café da Serra com opções rápidas para manhã, tarde ou intervalo.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "Ubajara"
+    ],
+    "demo": true
+  },
+  {
+    "id": 16,
+    "name": "Horta Pedra Branca",
+    "category": "Produtor local",
+    "city": "São Benedito",
+    "address": "Sítio Jussara, Zona Rural",
+    "fee": 600,
+    "time": "35–55 min",
+    "rating": null,
+    "open": true,
+    "producer": true,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@hortapedrabranca",
+    "instagram": "@hortapedrabranca",
+    "cover": "assets/images/product-produce.webp",
+    "desc": "Folhas, temperos e legumes colhidos para cestas e compras da semana.",
+    "hero": "Hortaliças frescas e cesta de salada montada com produção local.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "São Benedito"
+    ],
+    "demo": true
+  },
+  {
+    "id": 17,
+    "name": "Mel & Raiz da Serra",
+    "category": "Produtor artesanal",
+    "city": "Ubajara",
+    "address": "CE-187, Zona Rural",
+    "fee": 650,
+    "time": "40–60 min",
+    "rating": null,
+    "open": true,
+    "producer": true,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@meleraiz",
+    "instagram": "@meleraiz",
+    "cover": "assets/images/cover-sitio.webp",
+    "desc": "Mel, geleias, rapadura, farinha e outros produtos artesanais de origem local.",
+    "hero": "Itens da roça e produtos artesanais para café da manhã, receitas e despensa.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "Ubajara"
+    ],
+    "demo": true
+  },
+  {
+    "id": 18,
+    "name": "Roçado da Ibiapaba",
+    "category": "Produtor local",
+    "city": "Tianguá",
+    "address": "Sítio Bom Jesus, acesso pela CE-187",
+    "fee": 700,
+    "time": "40–60 min",
+    "rating": null,
+    "open": true,
+    "producer": true,
+    "verified": true,
+    "panelPassword": "1234",
+    "officialRef": "@rocadodaibiapaba",
+    "instagram": "@rocadodaibiapaba",
+    "cover": "assets/images/product-produce.webp",
+    "desc": "Raízes, frutas, feijão e cestas sazonais vindas do roçado.",
+    "hero": "Produtos básicos da roça com entrega em lotes pequenos conforme a colheita.",
+    "delivery": true,
+    "pickup": true,
+    "serviceAreas": [
+      "Tianguá"
+    ],
+    "demo": true
+  }
 ];
 
 const PRODUCTS = [
-  { id: 1, storeId: 1, name: 'Baião da casa para dois', desc: 'Baião de dois, frango grelhado, macaxeira e salada.', cat: 'Regional', price: 6200, stock: 20, image: asset('prod-baiao.webp'), oldPrice: 0, lastBatch: false },
-  { id: 2, storeId: 1, name: 'Galinha caipira com pirão', desc: 'Prato completo com arroz, pirão e salada da casa.', cat: 'Regional', price: 3600, stock: 14, image: asset('prod-galinha.webp'), oldPrice: 0, lastBatch: false },
-  { id: 3, storeId: 1, name: 'Escondidinho de carne', desc: 'Purê de macaxeira, carne desfiada e queijo dourado.', cat: 'Regional', price: 3100, stock: 16, image: asset('prod-escondidinho.webp'), oldPrice: 3900, lastBatch: true },
-  { id: 4, storeId: 1, name: 'Macaxeira dourada', desc: 'Porção crocante para compartilhar.', cat: 'Acompanhamentos', price: 1600, stock: 22, image: asset('prod-macaxeira.webp'), oldPrice: 0, lastBatch: false },
-  { id: 5, storeId: 1, name: 'Suco de acerola', desc: 'Copo de 400 ml preparado na hora.', cat: 'Bebidas', price: 900, stock: 30, image: asset('prod-acerola.webp'), oldPrice: 1200, lastBatch: true },
-  { id: 6, storeId: 2, name: 'Pão de fermentação lenta', desc: 'Pão artesanal de 400 g, casca crocante e miolo macio.', cat: 'Padaria', price: 1800, stock: 18, image: asset('prod-pao.webp'), oldPrice: 2400, lastBatch: true },
-  { id: 7, storeId: 2, name: 'Bolo de milho caseiro', desc: 'Fatia generosa, fofinha e com gostinho de interior.', cat: 'Doces', price: 1500, stock: 20, image: asset('prod-bolo-milho.webp'), oldPrice: 0, lastBatch: false },
-  { id: 8, storeId: 2, name: 'Tapioca com queijo coalho', desc: 'Tapioca recheada, feita na chapa e servida quentinha.', cat: 'Padaria', price: 1300, stock: 24, image: asset('prod-tapioca.webp'), oldPrice: 0, lastBatch: false },
-  { id: 9, storeId: 2, name: 'Café coado', desc: 'Café passado na hora, copo de 200 ml.', cat: 'Bebidas', price: 600, stock: 35, image: asset('prod-cafe-coado.webp'), oldPrice: 0, lastBatch: false },
-  { id: 10, storeId: 2, name: 'Combo café da manhã', desc: 'Pão, bolo de milho e café para começar bem o dia.', cat: 'Padaria', price: 2400, stock: 10, image: asset('prod-combo-cafe.webp'), oldPrice: 3200, lastBatch: true },
-  { id: 11, storeId: 3, name: 'Prato da Serra', desc: 'Arroz, feijão, frango, legumes e salada.', cat: 'Caseiro', price: 2800, stock: 18, image: asset('prod-prato-serra.webp'), oldPrice: 0, lastBatch: false },
-  { id: 12, storeId: 3, name: 'Caldinho de feijão', desc: 'Porção de 350 ml, ideal para o fim da tarde.', cat: 'Caseiro', price: 1500, stock: 20, image: asset('prod-caldinho.webp'), oldPrice: 0, lastBatch: false },
-  { id: 13, storeId: 3, name: 'Almoço vegetariano', desc: 'Arroz, feijão verde, legumes e salada fresca.', cat: 'Vegetariano', price: 2600, stock: 16, image: asset('prod-almoco-veg.webp'), oldPrice: 0, lastBatch: false },
-  { id: 14, storeId: 3, name: 'Panelada da Serra', desc: 'Prato forte e bem temperado, servido com arroz.', cat: 'Regional', price: 3400, stock: 8, image: asset('prod-panelada.webp'), oldPrice: 4300, lastBatch: true },
-  { id: 15, storeId: 3, name: 'Suco de cajá', desc: 'Copo de 400 ml, preparado com fruta natural.', cat: 'Bebidas', price: 900, stock: 25, image: asset('prod-caja.webp'), oldPrice: 0, lastBatch: false },
-  { id: 16, storeId: 4, name: 'Banana da estação', desc: 'Um quilo de bananas frescas da região.', cat: 'Do produtor', price: 700, stock: 30, image: asset('prod-banana.webp'), oldPrice: 0, lastBatch: false },
-  { id: 17, storeId: 4, name: 'Café da Serra', desc: 'Café torrado e moído, pacote de 250 g.', cat: 'Do produtor', price: 2200, stock: 15, image: asset('prod-cafe-serra.webp'), oldPrice: 0, lastBatch: false },
-  { id: 18, storeId: 4, name: 'Geleia de goiaba', desc: 'Pote artesanal de 250 g, produção local.', cat: 'Do produtor', price: 1700, stock: 14, image: asset('prod-geleia-goiaba.webp'), oldPrice: 0, lastBatch: false },
-  { id: 19, storeId: 4, name: 'Cesta de hortaliças', desc: 'Mix com alface, tomate, coentro e cheiro-verde.', cat: 'Do produtor', price: 2900, stock: 10, image: asset('prod-cesta-hortalicas.webp'), oldPrice: 0, lastBatch: false },
-  { id: 20, storeId: 4, name: 'Tomate da horta', desc: 'Tomates selecionados, vendidos por quilo.', cat: 'Do produtor', price: 1000, stock: 24, image: asset('prod-tomate.webp'), oldPrice: 0, lastBatch: false },
-  { id: 21, storeId: 5, name: 'Cesta orgânica semanal', desc: 'Legumes e verduras da semana, pronta para a família.', cat: 'Do produtor', price: 3900, stock: 8, image: asset('prod-cesta-organica.webp'), oldPrice: 0, lastBatch: false },
-  { id: 22, storeId: 5, name: 'Mel da região', desc: 'Pote de mel puro com 300 g.', cat: 'Do produtor', price: 2000, stock: 16, image: asset('prod-mel.webp'), oldPrice: 0, lastBatch: false },
-  { id: 23, storeId: 5, name: 'Alface crespa', desc: 'Maço fresco, colhido no dia.', cat: 'Do produtor', price: 500, stock: 30, image: asset('prod-alface.webp'), oldPrice: 0, lastBatch: false },
-  { id: 24, storeId: 5, name: 'Cenoura orgânica', desc: 'Pacote com 500 g de cenouras selecionadas.', cat: 'Do produtor', price: 800, stock: 25, image: asset('prod-cenoura.webp'), oldPrice: 0, lastBatch: false },
-  { id: 25, storeId: 5, name: 'Queijo coalho artesanal', desc: 'Peça de 250 g produzida na região.', cat: 'Do produtor', price: 1800, stock: 12, image: asset('prod-queijo-coalho.webp'), oldPrice: 0, lastBatch: false }
-];
-
-
-// Pedidos ilustrativos para a apresentação: separados dos pedidos feitos no navegador.
-// Dois pedidos por etapa para cada um dos cinco perfis (inclusive produtores).
-const DEMO_TEMPLATES = {
-  1: [
-    {ids:[1,5], qty:[1,2], note:'Sem cebola no baião; mandar o suco bem gelado.', address:'Rua das Flores, 12', neighborhood:'Centro'},
-    {ids:[2,4], qty:[1,1], note:'Separar o pirão da galinha e enviar talheres.', address:'Rua da Feira, 24', neighborhood:'Santa Luzia'},
-    {ids:[3,5], qty:[2,1], note:'Deixar o escondidinho bem dourado; ligar ao chegar.', address:'Rua do Mercado, 36', neighborhood:'Centro'},
-    {ids:[1,4], qty:[1,2], note:'Mandar a salada em embalagem separada.', address:'Rua do Sol, 48', neighborhood:'Alto da Boa Vista'}
-  ],
-  2: [
-    {ids:[6,9], qty:[1,2], note:'Cortar o pão em fatias; café sem açúcar.', address:'Rua do Mercado, 21', neighborhood:'Centro'},
-    {ids:[8,7], qty:[2,1], note:'Tapiocas com queijo bem derretido e bolo em embalagem separada.', address:'Rua das Flores, 33', neighborhood:'Santa Luzia'},
-    {ids:[10,9], qty:[1,1], note:'Café bem quente; deixar com a portaria.', address:'Rua da Praça, 16', neighborhood:'Centro'},
-    {ids:[6,7], qty:[2,2], note:'Embalar os pães separados dos bolos.', address:'Rua do Sol, 53', neighborhood:'São José'}
-  ],
-  3: [
-    {ids:[11,15], qty:[1,1], note:'Arroz e feijão em potes separados; suco sem gelo.', address:'Rua da Serra, 17', neighborhood:'Centro'},
-    {ids:[13,12], qty:[1,2], note:'Refeição vegetariana sem queijo; identificar os potes.', address:'Rua das Acácias, 29', neighborhood:'Planalto'},
-    {ids:[14,15], qty:[1,1], note:'Mandar a panelada com pouca pimenta.', address:'Rua da Praça, 31', neighborhood:'Centro'},
-    {ids:[11,12], qty:[2,1], note:'Enviar colher para o caldinho e dividir em duas embalagens.', address:'Rua das Palmeiras, 46', neighborhood:'São José'}
-  ],
-  4: [
-    {ids:[16,19], qty:[2,1], note:'Bananas mais maduras; se possível, alface bem fresquinha.', address:'Rua do Campo, 14', neighborhood:'Centro'},
-    {ids:[17,18], qty:[1,2], note:'Geleia bem embalada para não vazar; café moído fino.', address:'Rua das Flores, 27', neighborhood:'Santa Luzia'},
-    {ids:[19,20], qty:[1,2], note:'Preferência por tomates mais firmes.', address:'Rua da Feira, 39', neighborhood:'Centro'},
-    {ids:[16,20], qty:[3,1], note:'Deixar na recepção e avisar pelo telefone.', address:'Rua do Sol, 51', neighborhood:'Planalto'}
-  ],
-  5: [
-    {ids:[21,22], qty:[1,1], note:'Cesta com folhas bem selecionadas; mel embalado à parte.', address:'Rua da Serra, 18', neighborhood:'Centro'},
-    {ids:[23,24], qty:[3,2], note:'Alfaces grandes, cenouras sem machucados.', address:'Rua do Mercado, 30', neighborhood:'São José'},
-    {ids:[25,22], qty:[1,1], note:'Queijo em embalagem térmica; tocar a campainha.', address:'Rua da Praça, 42', neighborhood:'Centro'},
-    {ids:[21,24], qty:[1,2], note:'Trocar folhas murchas, se houver; entregar no período da tarde.', address:'Rua das Palmeiras, 54', neighborhood:'Planalto'}
-  ]
-};
-function makeDemoOrders() {
-  const statuses=['pendente','preparando','pronto','concluido'];
-  const names=['Ana Lima','Bruno Alves','Camila Sousa','Diego Rocha','Elisa Martins','Felipe Costa','Gabi Melo','Hugo Silva'];
-  const orders=[];
-  for(const store of STORES){
-    for(let stage=0;stage<statuses.length;stage++){
-      for(let sequence=0;sequence<2;sequence++){
-        const index=stage*2+sequence;
-        const template=DEMO_TEMPLATES[store.id][index%4];
-        const items=template.ids.map((id,i)=>{
-          const product=PRODUCTS.find(p=>p.id===id);
-          return {productId:id,name:product.name,price:product.price,qty:template.qty[i]};
-        });
-        const subtotal=items.reduce((sum,item)=>sum+item.price*item.qty,0);
-        orders.push({
-          id:1000+store.id*100+index+1, demo:true, storeId:store.id,
-          createdAt:new Date(Date.now()-(stage*4+sequence+1)*60*60*1000).toISOString(),
-          status:statuses[stage],items,subtotal,deliveryFee:store.fee,total:subtotal+store.fee,
-          paymentLabel:index%2?'Cartão na entrega (exemplo)':'Pix (exemplo)',
-          note:template.note,
-          customer:{name:names[(store.id+index)%names.length]+' (exemplo)',phone:'(88) 90000-0000',address:'Endereço fictício: '+template.address,neighborhood:template.neighborhood}
-        });
-      }
-    }
+  {
+    "id": 1,
+    "storeId": 1,
+    "name": "Baião da casa para dois",
+    "desc": "Baião de dois, frango grelhado, macaxeira e salada.",
+    "cat": "Regional",
+    "price": 6200,
+    "stock": 20,
+    "image": "assets/images/prod-baiao.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": 2,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 2,
+    "storeId": 1,
+    "name": "Galinha caipira com pirão",
+    "desc": "Prato completo com arroz, pirão e salada da casa.",
+    "cat": "Regional",
+    "price": 3600,
+    "stock": 14,
+    "image": "assets/images/prod-galinha.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 3,
+    "storeId": 1,
+    "name": "Escondidinho de carne",
+    "desc": "Purê de macaxeira, carne desfiada e queijo dourado.",
+    "cat": "Regional",
+    "price": 3100,
+    "stock": 16,
+    "image": "assets/images/prod-escondidinho.webp",
+    "oldPrice": 3900,
+    "lastBatch": true,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 4,
+    "storeId": 1,
+    "name": "Macaxeira dourada",
+    "desc": "Porção crocante para compartilhar.",
+    "cat": "Acompanhamentos",
+    "price": 1600,
+    "stock": 22,
+    "image": "assets/images/prod-macaxeira.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 5,
+    "storeId": 1,
+    "name": "Suco de acerola",
+    "desc": "Copo de 400 ml preparado na hora.",
+    "cat": "Bebidas",
+    "price": 900,
+    "stock": 30,
+    "image": "assets/images/prod-acerola.webp",
+    "oldPrice": 1200,
+    "lastBatch": true,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 6,
+    "storeId": 2,
+    "name": "Pão de fermentação lenta",
+    "desc": "Pão artesanal de 400 g, casca crocante e miolo macio.",
+    "cat": "Padaria",
+    "price": 1800,
+    "stock": 18,
+    "image": "assets/images/prod-pao.webp",
+    "oldPrice": 2400,
+    "lastBatch": true,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 7,
+    "storeId": 2,
+    "name": "Bolo de milho caseiro",
+    "desc": "Fatia generosa, fofinha e com gostinho de interior.",
+    "cat": "Doces",
+    "price": 1500,
+    "stock": 20,
+    "image": "assets/images/prod-bolo-milho.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 8,
+    "storeId": 2,
+    "name": "Tapioca com queijo coalho",
+    "desc": "Tapioca recheada, feita na chapa e servida quentinha.",
+    "cat": "Padaria",
+    "price": 1300,
+    "stock": 24,
+    "image": "assets/images/prod-tapioca.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 9,
+    "storeId": 2,
+    "name": "Café coado",
+    "desc": "Café passado na hora, copo de 200 ml.",
+    "cat": "Bebidas",
+    "price": 600,
+    "stock": 35,
+    "image": "assets/images/prod-cafe-coado.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 10,
+    "storeId": 2,
+    "name": "Combo café da manhã",
+    "desc": "Pão, bolo de milho e café para começar bem o dia.",
+    "cat": "Padaria",
+    "price": 2400,
+    "stock": 10,
+    "image": "assets/images/prod-combo-cafe.webp",
+    "oldPrice": 3200,
+    "lastBatch": true,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 11,
+    "storeId": 3,
+    "name": "Prato da Serra",
+    "desc": "Arroz, feijão, frango, legumes e salada.",
+    "cat": "Caseiro",
+    "price": 2800,
+    "stock": 18,
+    "image": "assets/images/prod-prato-serra.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 12,
+    "storeId": 3,
+    "name": "Caldinho de feijão",
+    "desc": "Porção de 350 ml, ideal para o fim da tarde.",
+    "cat": "Caseiro",
+    "price": 1500,
+    "stock": 20,
+    "image": "assets/images/prod-caldinho.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 13,
+    "storeId": 3,
+    "name": "Almoço vegetariano",
+    "desc": "Arroz, feijão verde, legumes e salada fresca.",
+    "cat": "Vegetariano",
+    "price": 2600,
+    "stock": 16,
+    "image": "assets/images/prod-almoco-veg.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 14,
+    "storeId": 3,
+    "name": "Panelada da Serra",
+    "desc": "Prato forte e bem temperado, servido com arroz.",
+    "cat": "Regional",
+    "price": 3400,
+    "stock": 8,
+    "image": "assets/images/prod-panelada.webp",
+    "oldPrice": 4300,
+    "lastBatch": true,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 15,
+    "storeId": 3,
+    "name": "Suco de cajá",
+    "desc": "Copo de 400 ml, preparado com fruta natural.",
+    "cat": "Bebidas",
+    "price": 900,
+    "stock": 25,
+    "image": "assets/images/prod-caja.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 16,
+    "storeId": 4,
+    "name": "Banana da estação",
+    "desc": "Um quilo de bananas frescas da região.",
+    "cat": "Do produtor",
+    "price": 700,
+    "stock": 30,
+    "image": "assets/images/prod-banana.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 17,
+    "storeId": 4,
+    "name": "Café da Serra",
+    "desc": "Café torrado e moído, pacote de 250 g.",
+    "cat": "Do produtor",
+    "price": 2200,
+    "stock": 15,
+    "image": "assets/images/prod-cafe-serra.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 18,
+    "storeId": 4,
+    "name": "Geleia de goiaba",
+    "desc": "Pote artesanal de 250 g, produção local.",
+    "cat": "Do produtor",
+    "price": 1700,
+    "stock": 14,
+    "image": "assets/images/prod-geleia-goiaba.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 19,
+    "storeId": 4,
+    "name": "Cesta de hortaliças",
+    "desc": "Mix com alface, tomate, coentro e cheiro-verde.",
+    "cat": "Do produtor",
+    "price": 2900,
+    "stock": 10,
+    "image": "assets/images/prod-cesta-hortalicas.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 20,
+    "storeId": 4,
+    "name": "Tomate da horta",
+    "desc": "Tomates selecionados, vendidos por quilo.",
+    "cat": "Do produtor",
+    "price": 1000,
+    "stock": 24,
+    "image": "assets/images/prod-tomate.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 21,
+    "storeId": 5,
+    "name": "Cesta orgânica semanal",
+    "desc": "Legumes e verduras da semana, pronta para a família.",
+    "cat": "Do produtor",
+    "price": 3900,
+    "stock": 8,
+    "image": "assets/images/prod-cesta-organica.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 22,
+    "storeId": 5,
+    "name": "Mel da região",
+    "desc": "Pote de mel puro com 300 g.",
+    "cat": "Do produtor",
+    "price": 2000,
+    "stock": 16,
+    "image": "assets/images/prod-mel.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 23,
+    "storeId": 5,
+    "name": "Alface crespa",
+    "desc": "Maço fresco, colhido no dia.",
+    "cat": "Do produtor",
+    "price": 500,
+    "stock": 30,
+    "image": "assets/images/prod-alface.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 24,
+    "storeId": 5,
+    "name": "Cenoura orgânica",
+    "desc": "Pacote com 500 g de cenouras selecionadas.",
+    "cat": "Do produtor",
+    "price": 800,
+    "stock": 25,
+    "image": "assets/images/prod-cenoura.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 25,
+    "storeId": 5,
+    "name": "Queijo coalho artesanal",
+    "desc": "Peça de 250 g produzida na região.",
+    "cat": "Do produtor",
+    "price": 1800,
+    "stock": 12,
+    "image": "assets/images/prod-queijo-coalho.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 26,
+    "storeId": 6,
+    "name": "Pão francês da fornada",
+    "desc": "Pacote com 6 pães franceses assados no dia, casca leve e miolo macio.",
+    "cat": "Padaria",
+    "price": 900,
+    "stock": 30,
+    "image": "assets/images/product-bakery.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 27,
+    "storeId": 6,
+    "name": "Sonho de creme",
+    "desc": "Massa macia recheada com creme de confeiteiro e finalizada com açúcar.",
+    "cat": "Doces",
+    "price": 700,
+    "stock": 18,
+    "image": "assets/images/product-bakery.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 28,
+    "storeId": 6,
+    "name": "Bolo fofo de laranja",
+    "desc": "Fatia grande de bolo caseiro de laranja, úmido e sem recheio pesado.",
+    "cat": "Bolos",
+    "price": 900,
+    "stock": 16,
+    "image": "assets/images/prod-bolo-milho.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 29,
+    "storeId": 6,
+    "name": "Cuscuz com queijo coalho",
+    "desc": "Cuscuz de milho feito na hora com queijo coalho dourado na chapa.",
+    "cat": "Café da manhã",
+    "price": 1400,
+    "stock": 20,
+    "image": "assets/images/prod-tapioca.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 30,
+    "storeId": 6,
+    "name": "Kit fim de fornada",
+    "desc": "Seleção do fim do dia com 4 pães e 2 salgados ainda próprios para consumo no mesmo dia.",
+    "cat": "Última Fornada",
+    "price": 1200,
+    "stock": 8,
+    "image": "assets/images/product-bakery.webp",
+    "oldPrice": 1800,
+    "lastBatch": true,
+    "preferences": [],
+    "serves": 2,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 31,
+    "storeId": 7,
+    "name": "Pão de coco",
+    "desc": "Pão macio levemente adocicado com coco, bom para café da manhã ou lanche.",
+    "cat": "Padaria",
+    "price": 1100,
+    "stock": 18,
+    "image": "assets/images/product-bakery.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 32,
+    "storeId": 7,
+    "name": "Croissant de queijo",
+    "desc": "Croissant amanteigado recheado com queijo, assado até ficar dourado.",
+    "cat": "Padaria",
+    "price": 1300,
+    "stock": 14,
+    "image": "assets/images/product-bakery.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 33,
+    "storeId": 7,
+    "name": "Pão de queijo",
+    "desc": "Porção com 8 unidades pequenas de pão de queijo assadas na hora.",
+    "cat": "Padaria",
+    "price": 1500,
+    "stock": 20,
+    "image": "assets/images/prod-queijo-coalho.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": 2,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 34,
+    "storeId": 7,
+    "name": "Bolo de macaxeira",
+    "desc": "Fatia de bolo de macaxeira com coco, textura cremosa e sabor caseiro.",
+    "cat": "Bolos",
+    "price": 1000,
+    "stock": 15,
+    "image": "assets/images/product-bakery.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 35,
+    "storeId": 7,
+    "name": "Cesta da fornada do dia",
+    "desc": "Combo com pães e duas fatias de bolo selecionados entre os itens restantes da vitrine.",
+    "cat": "Última Fornada",
+    "price": 1800,
+    "stock": 6,
+    "image": "assets/images/product-bakery.webp",
+    "oldPrice": 2600,
+    "lastBatch": true,
+    "preferences": [],
+    "serves": 2,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 36,
+    "storeId": 8,
+    "name": "Brownie de chocolate",
+    "desc": "Quadrado de brownie úmido com chocolate intenso e casquinha fina.",
+    "cat": "Doces",
+    "price": 1000,
+    "stock": 16,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 37,
+    "storeId": 8,
+    "name": "Brigadeiro artesanal",
+    "desc": "Caixa com 6 brigadeiros tradicionais enrolados no dia.",
+    "cat": "Doces",
+    "price": 1500,
+    "stock": 20,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": 2,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 38,
+    "storeId": 8,
+    "name": "Bolo no pote de ninho",
+    "desc": "Camadas de massa branca, creme de leite em pó e cobertura suave.",
+    "cat": "Sobremesas",
+    "price": 1400,
+    "stock": 14,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 39,
+    "storeId": 8,
+    "name": "Pudim caseiro",
+    "desc": "Fatia generosa de pudim de leite com calda de caramelo.",
+    "cat": "Sobremesas",
+    "price": 1200,
+    "stock": 12,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 40,
+    "storeId": 8,
+    "name": "Caixa mini doces",
+    "desc": "Caixa com 12 mini doces variados para dividir ou presentear.",
+    "cat": "Doces",
+    "price": 3200,
+    "stock": 8,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": 4,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 41,
+    "storeId": 9,
+    "name": "Fatia red velvet",
+    "desc": "Fatia de bolo vermelho com recheio cremoso e cobertura leve.",
+    "cat": "Bolos",
+    "price": 1600,
+    "stock": 12,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 42,
+    "storeId": 9,
+    "name": "Churros com doce de leite",
+    "desc": "Porção com 6 mini churros polvilhados com açúcar e canela.",
+    "cat": "Doces",
+    "price": 1500,
+    "stock": 16,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": 2,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 43,
+    "storeId": 9,
+    "name": "Palha italiana",
+    "desc": "Doce de brigadeiro com biscoito em quadrados, porção com 4 unidades.",
+    "cat": "Doces",
+    "price": 1300,
+    "stock": 18,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": 2,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 44,
+    "storeId": 9,
+    "name": "Copo da felicidade",
+    "desc": "Copo com camadas de brownie, creme e chocolate para sobremesa individual.",
+    "cat": "Sobremesas",
+    "price": 1800,
+    "stock": 12,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 45,
+    "storeId": 9,
+    "name": "Bolo de cenoura com chocolate",
+    "desc": "Fatia de bolo de cenoura fofinho com cobertura de chocolate.",
+    "cat": "Bolos",
+    "price": 1100,
+    "stock": 14,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 46,
+    "storeId": 10,
+    "name": "Torta de chocolate",
+    "desc": "Fatia de torta com base macia e creme de chocolate.",
+    "cat": "Sobremesas",
+    "price": 1700,
+    "stock": 12,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 47,
+    "storeId": 10,
+    "name": "Cheesecake de frutas vermelhas",
+    "desc": "Fatia cremosa com base de biscoito e calda de frutas vermelhas.",
+    "cat": "Sobremesas",
+    "price": 1900,
+    "stock": 10,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 48,
+    "storeId": 10,
+    "name": "Cappuccino da casa",
+    "desc": "Bebida quente de café com leite e espuma, copo de 250 ml.",
+    "cat": "Bebidas",
+    "price": 1200,
+    "stock": 20,
+    "image": "assets/images/prod-cafe-serra.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 49,
+    "storeId": 10,
+    "name": "Brownie com sorvete",
+    "desc": "Brownie aquecido acompanhado de uma bola de sorvete de creme.",
+    "cat": "Sobremesas",
+    "price": 1900,
+    "stock": 10,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 50,
+    "storeId": 10,
+    "name": "Caixa de trufas",
+    "desc": "Caixa com 8 trufas de chocolate em sabores variados.",
+    "cat": "Doces",
+    "price": 2800,
+    "stock": 10,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": 3,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 51,
+    "storeId": 11,
+    "name": "X-burger da casa",
+    "desc": "Pão, carne bovina, queijo, alface, tomate e molho da casa.",
+    "cat": "Lanches",
+    "price": 1900,
+    "stock": 20,
+    "image": "assets/images/product-regional.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 52,
+    "storeId": 11,
+    "name": "Sanduíche de frango",
+    "desc": "Pão tostado com frango desfiado, queijo, salada e molho.",
+    "cat": "Lanches",
+    "price": 1800,
+    "stock": 18,
+    "image": "assets/images/product-regional.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 53,
+    "storeId": 11,
+    "name": "Batata frita crocante",
+    "desc": "Porção de batata frita com sal e molho separado.",
+    "cat": "Porções",
+    "price": 1600,
+    "stock": 24,
+    "image": "assets/images/product-regional.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": 2,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 54,
+    "storeId": 11,
+    "name": "Cachorro-quente completo",
+    "desc": "Pão, salsicha, molho, milho, batata palha e queijo ralado.",
+    "cat": "Lanches",
+    "price": 1400,
+    "stock": 20,
+    "image": "assets/images/product-regional.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 55,
+    "storeId": 11,
+    "name": "Suco de cajá 400 ml",
+    "desc": "Suco de cajá preparado gelado, sem mistura de outras frutas.",
+    "cat": "Bebidas",
+    "price": 900,
+    "stock": 24,
+    "image": "assets/images/prod-caja.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 56,
+    "storeId": 12,
+    "name": "Cuscuz com carne de sol",
+    "desc": "Cuscuz de milho com carne de sol desfiada e queijo coalho.",
+    "cat": "Café regional",
+    "price": 1900,
+    "stock": 18,
+    "image": "assets/images/product-caseiro.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 57,
+    "storeId": 12,
+    "name": "Cuscuz com ovo e queijo",
+    "desc": "Cuscuz com ovo mexido e queijo coalho, opção sem carne.",
+    "cat": "Café regional",
+    "price": 1500,
+    "stock": 20,
+    "image": "assets/images/product-caseiro.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 58,
+    "storeId": 12,
+    "name": "Tapioca de frango",
+    "desc": "Tapioca na chapa recheada com frango desfiado e queijo.",
+    "cat": "Tapiocas",
+    "price": 1500,
+    "stock": 20,
+    "image": "assets/images/prod-tapioca.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 59,
+    "storeId": 12,
+    "name": "Café com leite",
+    "desc": "Café coado com leite, servido quente em copo de 250 ml.",
+    "cat": "Bebidas",
+    "price": 700,
+    "stock": 30,
+    "image": "assets/images/prod-cafe-coado.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 60,
+    "storeId": 12,
+    "name": "Bolo pé de moleque",
+    "desc": "Fatia de bolo regional de massa de mandioca com castanha e especiarias.",
+    "cat": "Bolos",
+    "price": 1100,
+    "stock": 12,
+    "image": "assets/images/product-caseiro.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 61,
+    "storeId": 13,
+    "name": "Pizza muçarela média",
+    "desc": "Pizza média com molho de tomate, muçarela, tomate e orégano.",
+    "cat": "Pizzas",
+    "price": 3600,
+    "stock": 12,
+    "image": "assets/images/product-caseiro.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": 2,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 62,
+    "storeId": 13,
+    "name": "Pizza calabresa média",
+    "desc": "Pizza média com molho, muçarela, calabresa e cebola.",
+    "cat": "Pizzas",
+    "price": 3900,
+    "stock": 12,
+    "image": "assets/images/product-caseiro.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": 2,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 63,
+    "storeId": 13,
+    "name": "Pizza frango cremosa média",
+    "desc": "Pizza média com frango desfiado, queijo e creme de queijo.",
+    "cat": "Pizzas",
+    "price": 4200,
+    "stock": 10,
+    "image": "assets/images/product-caseiro.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": 2,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 64,
+    "storeId": 13,
+    "name": "Pizza marguerita média",
+    "desc": "Pizza média com muçarela, tomate, manjericão e orégano.",
+    "cat": "Pizzas",
+    "price": 3800,
+    "stock": 10,
+    "image": "assets/images/product-caseiro.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": 2,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 65,
+    "storeId": 13,
+    "name": "Combo pizza e refrigerante",
+    "desc": "Uma pizza média de muçarela e refrigerante de 1 litro.",
+    "cat": "Combos",
+    "price": 4500,
+    "stock": 8,
+    "image": "assets/images/product-caseiro.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": 3,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 66,
+    "storeId": 14,
+    "name": "Marmita de frango grelhado",
+    "desc": "Arroz, feijão, frango grelhado, macaxeira e salada do dia.",
+    "cat": "Almoço",
+    "price": 2600,
+    "stock": 18,
+    "image": "assets/images/prod-prato-serra.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 67,
+    "storeId": 14,
+    "name": "Carne de panela completa",
+    "desc": "Arroz, feijão, carne de panela com legumes e farofa.",
+    "cat": "Almoço",
+    "price": 3000,
+    "stock": 16,
+    "image": "assets/images/product-caseiro.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 68,
+    "storeId": 14,
+    "name": "Peixe grelhado com legumes",
+    "desc": "Filé de peixe grelhado com arroz, legumes e salada.",
+    "cat": "Almoço",
+    "price": 3200,
+    "stock": 12,
+    "image": "assets/images/product-caseiro.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 69,
+    "storeId": 14,
+    "name": "Marmita vegetariana",
+    "desc": "Arroz, feijão verde, legumes refogados, macaxeira e salada.",
+    "cat": "Vegetariano",
+    "price": 2400,
+    "stock": 16,
+    "image": "assets/images/prod-almoco-veg.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 70,
+    "storeId": 14,
+    "name": "Feijoada individual",
+    "desc": "Feijoada com arroz, farofa e couve, porção individual.",
+    "cat": "Almoço",
+    "price": 2900,
+    "stock": 10,
+    "image": "assets/images/product-caseiro.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 71,
+    "storeId": 15,
+    "name": "Café coado da Serra",
+    "desc": "Café filtrado servido na hora, 250 ml.",
+    "cat": "Bebidas",
+    "price": 700,
+    "stock": 30,
+    "image": "assets/images/prod-cafe-serra.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 72,
+    "storeId": 15,
+    "name": "Cappuccino cremoso",
+    "desc": "Café com leite vaporizado e espuma, 250 ml.",
+    "cat": "Bebidas",
+    "price": 1200,
+    "stock": 20,
+    "image": "assets/images/prod-cafe-serra.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 73,
+    "storeId": 15,
+    "name": "Pão de queijo grande",
+    "desc": "Porção com 3 pães de queijo grandes, assados no dia.",
+    "cat": "Lanches",
+    "price": 1300,
+    "stock": 18,
+    "image": "assets/images/prod-queijo-coalho.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 74,
+    "storeId": 15,
+    "name": "Sanduíche natural de frango",
+    "desc": "Pão macio com frango, cenoura, alface e creme leve.",
+    "cat": "Lanches",
+    "price": 1600,
+    "stock": 15,
+    "image": "assets/images/product-bakery.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 75,
+    "storeId": 15,
+    "name": "Bolo de banana com canela",
+    "desc": "Fatia de bolo caseiro de banana com canela.",
+    "cat": "Bolos",
+    "price": 1000,
+    "stock": 14,
+    "image": "assets/images/prod-banana.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 76,
+    "storeId": 16,
+    "name": "Alface crespa",
+    "desc": "Unidade de alface crespa colhida recentemente e higienizada externamente.",
+    "cat": "Hortaliças",
+    "price": 500,
+    "stock": 30,
+    "image": "assets/images/prod-alface.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 77,
+    "storeId": 16,
+    "name": "Cheiro-verde",
+    "desc": "Maço de cebolinha e coentro para temperos e finalizações.",
+    "cat": "Hortaliças",
+    "price": 400,
+    "stock": 35,
+    "image": "assets/images/product-produce.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 78,
+    "storeId": 16,
+    "name": "Tomate da Serra 1 kg",
+    "desc": "Quilo de tomates selecionados para salada, molho ou preparo quente.",
+    "cat": "Hortaliças",
+    "price": 900,
+    "stock": 24,
+    "image": "assets/images/prod-tomate.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 79,
+    "storeId": 16,
+    "name": "Cenoura 1 kg",
+    "desc": "Quilo de cenouras selecionadas, boas para salada, sopa e refogado.",
+    "cat": "Hortaliças",
+    "price": 800,
+    "stock": 24,
+    "image": "assets/images/prod-cenoura.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 80,
+    "storeId": 16,
+    "name": "Cesta de salada",
+    "desc": "Cesta com alface, tomate, cenoura, pepino e cheiro-verde para a semana.",
+    "cat": "Cestas",
+    "price": 2400,
+    "stock": 12,
+    "image": "assets/images/prod-cesta-hortalicas.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "serves": 3,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 81,
+    "storeId": 17,
+    "name": "Mel artesanal 500 g",
+    "desc": "Pote de mel artesanal de 500 g, indicado para café da manhã e receitas.",
+    "cat": "Artesanais",
+    "price": 2600,
+    "stock": 16,
+    "image": "assets/images/prod-mel.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 82,
+    "storeId": 17,
+    "name": "Geleia de goiaba 250 g",
+    "desc": "Geleia artesanal de goiaba para pães, bolos e acompanhamentos.",
+    "cat": "Artesanais",
+    "price": 1600,
+    "stock": 18,
+    "image": "assets/images/prod-geleia-goiaba.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 83,
+    "storeId": 17,
+    "name": "Rapadura tradicional",
+    "desc": "Tablete de rapadura artesanal, sabor intenso de cana.",
+    "cat": "Artesanais",
+    "price": 900,
+    "stock": 20,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 84,
+    "storeId": 17,
+    "name": "Farinha de mandioca 1 kg",
+    "desc": "Farinha de mandioca torrada para acompanhamentos e receitas regionais.",
+    "cat": "Despensa",
+    "price": 1200,
+    "stock": 18,
+    "image": "assets/images/product-artisanal.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 85,
+    "storeId": 17,
+    "name": "Queijo coalho artesanal 500 g",
+    "desc": "Peça de queijo coalho para café da manhã, tapioca ou preparo na chapa.",
+    "cat": "Artesanais",
+    "price": 2800,
+    "stock": 12,
+    "image": "assets/images/prod-queijo-coalho.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 86,
+    "storeId": 18,
+    "name": "Banana prata 1 kg",
+    "desc": "Quilo de banana prata selecionada conforme maturação do lote.",
+    "cat": "Frutas",
+    "price": 800,
+    "stock": 28,
+    "image": "assets/images/prod-banana.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 87,
+    "storeId": 18,
+    "name": "Macaxeira 1 kg",
+    "desc": "Raiz de macaxeira descascada e pronta para cozinhar.",
+    "cat": "Raízes",
+    "price": 900,
+    "stock": 24,
+    "image": "assets/images/prod-macaxeira.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 88,
+    "storeId": 18,
+    "name": "Batata-doce 1 kg",
+    "desc": "Quilo de batata-doce selecionada para cozimento, forno ou purê.",
+    "cat": "Raízes",
+    "price": 800,
+    "stock": 24,
+    "image": "assets/images/product-produce.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 89,
+    "storeId": 18,
+    "name": "Feijão verde 1 kg",
+    "desc": "Feijão verde fresco para baião, saladas e acompanhamentos.",
+    "cat": "Grãos",
+    "price": 1400,
+    "stock": 18,
+    "image": "assets/images/product-produce.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "serves": null,
+    "available": true,
+    "demo": true
+  },
+  {
+    "id": 90,
+    "storeId": 18,
+    "name": "Cesta da roça",
+    "desc": "Cesta com banana, macaxeira, batata-doce, feijão verde e item sazonal do dia.",
+    "cat": "Cestas",
+    "price": 3200,
+    "stock": 10,
+    "image": "assets/images/prod-cesta-organica.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "serves": 3,
+    "available": true,
+    "demo": true
   }
-  return orders;
-}
-
-// Pedidos novos de apresentação: +2 aguardando aceite em CADA perfil.
-// IDs novos garantem que o histórico salvo no navegador não seja apagado.
-const EXTRA_PENDING_TEMPLATES = {
-  1: [
-    {ids:[1,3,5],qty:[1,1,2],note:'Cliente pediu o baião sem cebola, escondidinho separado e dois sucos sem gelo.',address:'Rua da Igreja, 72',neighborhood:'Centro'},
-    {ids:[2,4],qty:[2,1],note:'Duas galinhas caipiras: pirão em potes separados e macaxeira bem crocante.',address:'Rua das Palmeiras, 81',neighborhood:'São José'}
-  ],
-  2: [
-    {ids:[6,7,9],qty:[2,1,2],note:'Pães fatiados, bolo sem cobertura e cafés sem açúcar, por favor.',address:'Rua do Comércio, 44',neighborhood:'Centro'},
-    {ids:[8,10],qty:[2,1],note:'Tapioca com pouco queijo e combo embalado em sacola separada.',address:'Rua dos Girassóis, 19',neighborhood:'Santa Luzia'}
-  ],
-  3: [
-    {ids:[11,12],qty:[2,1],note:'Separar feijão do arroz em ambas as marmitas e mandar uma colher para o caldinho.',address:'Rua da Serra, 62',neighborhood:'Centro'},
-    {ids:[13,15],qty:[1,2],note:'Almoço vegetariano sem queijo; dois sucos de cajá sem açúcar.',address:'Rua da Paz, 91',neighborhood:'Planalto'}
-  ],
-  4: [
-    {ids:[16,19,20],qty:[2,1,1],note:'Escolher bananas maduras, tomates mais firmes e deixar a cesta bem fechada.',address:'Rua do Campo, 63',neighborhood:'Centro'},
-    {ids:[17,18],qty:[1,2],note:'Geleia de goiaba em dois potes protegidos e café moído para coador.',address:'Rua das Flores, 85',neighborhood:'Santa Luzia'}
-  ],
-  5: [
-    {ids:[21,23,24],qty:[1,2,1],note:'Selecionar alfaces grandes, cenouras firmes e cesta com bastante variedade.',address:'Rua do Açude, 28',neighborhood:'Centro'},
-    {ids:[22,25],qty:[2,1],note:'Dois potes de mel separados e queijo coalho conservado em embalagem térmica.',address:'Rua da Feira, 57',neighborhood:'São José'}
-  ]
-};
-function extraPendingOrders() {
-  const names=['Rafaela Monteiro','Lucas Ferreira','Marina Oliveira','João Vitor','Beatriz Carvalho','Pedro Ribeiro','Natália Sousa','André Martins','Lara Araújo','Caio Nunes'];
-  return STORES.flatMap(store=>EXTRA_PENDING_TEMPLATES[store.id].map((sample,index)=>{
-    const items=sample.ids.map((id,i)=>{
-      const p=PRODUCTS.find(p=>p.id===id);
-      return {productId:id,name:p.name,price:p.price,qty:sample.qty[i]};
-    });
-    const subtotal=items.reduce((sum,item)=>sum+item.price*item.qty,0);
-    return {
-      id:6000+store.id*100+index+1,demo:true,storeId:store.id,
-      createdAt:new Date(Date.now()-(index+1)*12*60*1000).toISOString(),status:'pendente',
-      items,subtotal,deliveryFee:store.fee,total:subtotal+store.fee,
-      paymentLabel:index?'Cartão na entrega (exemplo)':'Pix (exemplo)',
-      note:sample.note,
-      customer:{name:names[(store.id-1)*2+index]+' (exemplo)',phone:'(88) 90000-0000',address:'Endereço fictício: '+sample.address,neighborhood:sample.neighborhood}
-    };
-  }));
-}
-
-const PAGE_TITLES = {
-  inicio: 'Início',
-  estabelecimentos: 'Estabelecimentos',
-  cardapio: 'Cardápio',
-  fornada: 'Última Fornada',
-  produtores: 'Do produtor',
-  sabia: 'Sabiá',
-  pedidos: 'Meus pedidos',
-  entrar: 'Entrar',
-  cliente: 'Minha conta',
-  comerciante: 'Painel do comerciante',
-  loja: 'Perfil',
-  termos: 'Termos de Uso',
-  privacidade: 'Privacidade',
-  cookies: 'Cookies e armazenamento',
-  cancelamentos: 'Cancelamentos e reembolsos',
-  'regras-comerciante': 'Regras do comerciante',
-  admin: 'Administração'
-};
+];
 
 function initialState() {
   return {

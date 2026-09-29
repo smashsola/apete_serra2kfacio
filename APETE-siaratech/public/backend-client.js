@@ -18,6 +18,7 @@
   const hasStoredSession=()=>Boolean(readSession());
 
   async function request(path,{method='GET',body,accessToken,headers={}}={}) {
+    if(typeof navigator!=='undefined'&&navigator.onLine===false)throw new Error('network_offline');
     const controller=new AbortController();
     const timeout=setTimeout(()=>controller.abort(),10000);
     try {
@@ -45,7 +46,8 @@
       }
       return data;
     } catch(error) {
-      if(error.name==='AbortError')throw new Error('O backend demorou demais para responder.');
+      if(error.name==='AbortError')throw new Error('backend_timeout');
+      if(error instanceof TypeError||/failed to fetch|networkerror|load failed/i.test(String(error?.message||'')))throw new Error('network_unavailable');
       throw error;
     } finally { clearTimeout(timeout); }
   }

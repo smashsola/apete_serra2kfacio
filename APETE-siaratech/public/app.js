@@ -1505,7 +1505,7 @@ async function saveCustomer() {
   if(!$('#customer-accept-terms')?.checked||!$('#customer-accept-privacy')?.checked)return toast('Aceite os Termos de Uso e leia a Política de Privacidade para criar a conta.');
   if(!window.APETE_BACKEND?.signUpCustomer)return toast('Backend de cadastro indisponível.');
   try {
-    const result=await window.APETE_BACKEND.signUpCustomer({email,password,name,phone,address,neighborhood,city:state.city});
+    const result=await window.APETE_BACKEND.signUpCustomer({email,password,name,phone,address,neighborhood,city:state.city,legalDocuments:['terms','privacy']});
     if(result.confirmationRequired){
       state.customer={...initialState().customer,name,email,phone,address,neighborhood};
       state.ui.pendingLegalAcceptances=['terms','privacy'];
@@ -1625,6 +1625,8 @@ async function registerMerchant() {
   const proof=$('#merchant-register-proof')?.value.trim();
   const instagram=instagramHandle(proof);
   const confirmed=$('#merchant-register-confirm')?.checked;
+  const legalDocuments=['terms','privacy','merchant_terms'];
+
   if(!storeName||!owner)return toast('Preencha nome da loja e responsável');
   if(onlyDigits(phone).length<10)return toast('Digite um telefone válido');
   if(!validEmail(email))return toast('Informe um e-mail válido do responsável');
@@ -1633,27 +1635,74 @@ async function registerMerchant() {
   if(!documentId||!instagram||!confirmed)return toast('Informe o documento, Instagram da loja e a confirmação');
   if(!$('#merchant-accept-terms')?.checked||!$('#merchant-accept-privacy')?.checked||!$('#merchant-accept-rules')?.checked)
     return toast('Aceite os Termos, a Política de Privacidade e as Regras do Comerciante.');
+
   const draft={storeName,phone,city,document:documentId,instagram:'@'+instagram};
+
   try{
+    // Quem já tem conta de cliente pode solicitar acesso comercial com a mesma conta.
+    let signedInExisting=false;
+    try{
+      await window.APETE_BACKEND.signInCustomer({email,password});
+      signedInExisting=true;
+    }catch(loginError){
+      const message=String(loginError?.message||'').toLowerCase();
+      if(/email not confirmed/.test(message)){
+        state.ui.merchantApplicationDraft=draft;
+        state.ui.pendingLegalAcceptances=legalDocuments;
+        save();
+        toast('Essa conta existe, mas o e-mail ainda não foi confirmado. Confirme o e-mail e volte para enviar a solicitação.');
+        return;
+      }
+      if(!/invalid login credentials/.test(message))throw loginError;
+    }
+
+    if(signedInExisting){
+      await window.APETE_BACKEND.acceptLegalDocuments(legalDocuments);
+      const memberships=await window.APETE_BACKEND.getMerchantMemberships();
+      if(memberships.length){
+        await window.APETE_BACKEND.signOut();
+        return toast('Essa conta já possui acesso a um estabelecimento. Entre pelo painel do comerciante.');
+      }
+      const previous=await window.APETE_BACKEND.getMerchantApplication();
+      if(previous?.status==='pending'){
+        await window.APETE_BACKEND.signOut();
+        return toast('Essa conta já tem uma solicitação aguardando análise.');
+      }
+      await window.APETE_BACKEND.submitMerchantApplication(draft);
+      await window.APETE_BACKEND.signOut();
+      state.customer={...initialState().customer};
+      state.merchant={...initialState().merchant};
+      state.ui.merchantApplicationDraft=null;
+      state.ui.pendingLegalAcceptances=null;
+      save();
+      toast('Solicitação enviada. Depois de aprovada, entre no painel com esta mesma conta.','success');
+      setPage('comerciante-entrar');
+      return;
+    }
+
     const result=await window.APETE_BACKEND.signUpCustomer({
-      email,password,name:owner,phone,address:'',neighborhood:'',city
+      email,password,name:owner,phone,address:'',neighborhood:'',city,legalDocuments
     });
     if(result.confirmationRequired){
       state.ui.merchantApplicationDraft=draft;
-      state.ui.pendingLegalAcceptances=['terms','privacy','merchant_terms'];
+      state.ui.pendingLegalAcceptances=legalDocuments;
       state.merchant={...initialState().merchant};
       save();
       toast('Conta criada. Confirme o e-mail e depois entre no painel para enviar a solicitação.','success');
+      setPage('comerciante-entrar');
       return;
     }
-    await window.APETE_BACKEND.acceptLegalDocuments(['terms','privacy','merchant_terms']);
+
+    await window.APETE_BACKEND.acceptLegalDocuments(legalDocuments);
     await window.APETE_BACKEND.submitMerchantApplication(draft);
     await window.APETE_BACKEND.signOut();
     state.customer={...initialState().customer};
     state.merchant={...initialState().merchant};
     state.ui.merchantApplicationDraft=null;
+    state.ui.pendingLegalAcceptances=null;
     save();
     toast('Cadastro enviado para aprovação. Depois de aprovado, entre com seu e-mail e senha.','success');
+    setPage('comerciante-entrar');
   }catch(error){
     toast(friendlyBackendError(error,'Não foi possível enviar o cadastro do estabelecimento.'));
   }

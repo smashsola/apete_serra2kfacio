@@ -74,10 +74,16 @@
     return refreshSession(session);
   }
 
-  async function signUpCustomer({email,password,name,phone,address,neighborhood,city}) {
+  async function signUpCustomer({email,password,name,phone,address,neighborhood,city,legalDocuments=[]}) {
+    const legalMeta={};
+    for(const type of [...new Set(legalDocuments||[])]) {
+      if(type==='terms')legalMeta.legal_terms_version=LEGAL_VERSIONS.terms;
+      if(type==='privacy')legalMeta.legal_privacy_version=LEGAL_VERSIONS.privacy;
+      if(type==='merchant_terms')legalMeta.legal_merchant_terms_version=LEGAL_VERSIONS.merchant_terms;
+    }
     const data=await request('/auth/v1/signup',{
       method:'POST',
-      body:{email,password,data:{full_name:name,phone}}
+      body:{email,password,data:{full_name:name,phone,...legalMeta}}
     });
     const session=data?.access_token?data:data?.session;
     if(session){

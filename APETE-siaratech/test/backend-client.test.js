@@ -151,12 +151,16 @@ test('revisão de comerciante usa RPC autenticada e decisão permitida',async()=
 test('signup anônimo envia Authorization com a chave publicável',async()=>{
   memory.clear();
   let auth='';
+  let sent=null;
   globalThis.fetch=async(url,options)=>{
     assert.match(String(url),/\/auth\/v1\/signup$/);
     auth=options.headers.Authorization;
+    sent=JSON.parse(options.body);
     return response({user:{id:'new-user',email:'novo@apete.test'},session:null});
   };
-  const result=await backend.signUpCustomer({email:'novo@apete.test',password:'abcdef123',name:'Novo Cliente',phone:'88999999999',address:'Rua A',neighborhood:'Centro',city:'Guaraciaba do Norte'});
+  const result=await backend.signUpCustomer({email:'novo@apete.test',password:'abcdef123',name:'Novo Cliente',phone:'88999999999',address:'Rua A',neighborhood:'Centro',city:'Guaraciaba do Norte',legalDocuments:['terms','privacy']});
   assert.equal(String(auth).startsWith('Bearer sb_publishable_'),true);
+  assert.equal(sent.data.legal_terms_version,'2026-09-28-v1');
+  assert.equal(sent.data.legal_privacy_version,'2026-09-28-v1');
   assert.equal(result.confirmationRequired,true);
 });

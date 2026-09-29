@@ -7,9 +7,9 @@
   <meta name="description" content="APETÊ — delivery local com restaurantes, padarias e produtores da região.">
   <title>APETÊ — Delivery local</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="styles.css?v=region-popover-v1">
-  <script defer src="backend-client.js?v=mobile-first-v2"></script>
-  <script defer src="app.js?v=region-popover-v2"></script>
+  <link rel="stylesheet" href="styles.css?v=catalog-v2">
+  <script defer src="backend-client.js?v=catalog-v2"></script>
+  <script defer src="app.js?v=catalog-v2"></script>
 </head>
 <body>
   <div class="shell">
@@ -109,7 +109,10 @@
               <strong>Cidade de entrega</strong>
               <label for="regional-city-inline">Município</label>
               <select id="regional-city-inline" class="select" aria-label="Cidade de entrega"></select>
-              <small>Usamos a cidade apenas para mostrar entrega, catálogo e recomendações compatíveis.</small>
+              <button id="use-location-inline" class="ghost-btn strong region-location-btn" type="button">
+                Usar minha localização
+              </button>
+              <small id="region-location-note">A localização só é solicitada quando você tocar no botão. Você também pode escolher a cidade manualmente.</small>
             </div>
           </div>
 

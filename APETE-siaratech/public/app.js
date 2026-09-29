@@ -419,7 +419,7 @@ async function refreshCustomerOrders({rerender=false}={}) {
   if(!window.APETE_BACKEND?.loadOrders||!window.APETE_BACKEND?.hasStoredSession?.())return;
   try {
     state.orders=await window.APETE_BACKEND.loadOrders();
-    if(profile.role==='admin'&&window.APETE_BACKEND?.loadAdminMerchantApplications){
+    if(isAdmin()&&window.APETE_BACKEND?.loadAdminMerchantApplications){
       try{state.adminApplications=await window.APETE_BACKEND.loadAdminMerchantApplications();}catch{}
     }
     save();

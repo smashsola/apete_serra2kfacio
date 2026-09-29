@@ -574,6 +574,20 @@ function validAddress(value) { return String(value||'').trim().length>=5; }
 function validEmail(value) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim()); }
 function strongPassword(value) { return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(String(value || '')); }
 
+function fieldError(selector,message) {
+  const el=$(selector);
+  if(el){
+    el.setAttribute('aria-invalid','true');
+    try{el.focus({preventScroll:true});}catch{el.focus();}
+    el.scrollIntoView({behavior:'smooth',block:'center'});
+    const clear=()=>{el.removeAttribute('aria-invalid');el.removeEventListener('input',clear);el.removeEventListener('change',clear);};
+    el.addEventListener('input',clear,{once:true});
+    el.addEventListener('change',clear,{once:true});
+  }
+  toast(message);
+  return false;
+}
+
 function setPage(next, storeId = null, options = {}) {
   const { fromHistory=false, replaceHistory=false, scroll=true } = options;
   closeModal({restoreFocus:false});
@@ -757,7 +771,7 @@ function storeCard(store) {
         <div class="cover-copy">
           <span class="cover-kicker">${esc(storeCategoryLabel(store))}</span>
           <h4>${esc(store.name)}</h4>
-          <div class="cover-meta"><span>${esc(store.city)}</span><span>★ ${storeRating(store)?.toFixed(1)||'Novo'}</span><span>${esc(storeEta(store))}</span></div>
+          <div class="cover-meta"><span>${esc(store.city)}</span>${storeRating(store)?`<span>★ ${storeRating(store).toFixed(1)}</span>`:'<span>Novo no APETÊ</span>'}<span>${esc(storeEta(store))}</span></div>
         </div>
       </div>
       <div class="store-body">
@@ -1296,7 +1310,7 @@ function storeDetailPage() {
   const store = getStore(state.storeViewId);
   if(!store)return `${pageHead('Estabelecimento indisponível','Esse perfil não está mais disponível.')}<div class="empty"><b>Não encontramos essa loja</b> Volte para a lista de estabelecimentos.<div class="row" style="justify-content:center;margin-top:14px"><button class="primary-btn" data-action="go-page" data-page="estabelecimentos">Ver estabelecimentos</button></div></div>`;
   const products = state.products.filter((product) => product.storeId === store.id);
-  return `${pageHead(store.name, storeHeroText(store))}<section class="store-detail"><article class="detail-hero ${store.producer ? 'producer-tone' : 'merchant-tone'}"><div class="detail-cover">${imgTag(store.cover, store.name, store.producer ? 'producer' : 'store')}<div class="cover-overlay ${store.producer ? 'producer' : ''}"></div><div class="cover-copy"><span class="cover-kicker">${esc(storeCategoryLabel(store))}</span><h4>${esc(store.name)}</h4><div class="cover-meta"><span>${esc(store.city)}</span><span>★ ${storeRating(store)?.toFixed(1)||'Novo'}</span><span>${esc(storeEta(store))}</span></div></div></div><div class="detail-info"><div class="chip-row"><span class="chip ${store.producer ? 'producer-alt' : 'orange'}">Entrega ${money(store.fee)}</span>${instagramBadge(store)}</div><p>${esc(storeDescription(store))}</p><div class="row detail-actions" style="margin-top:18px"><button class="primary-btn" data-action="filter-store" data-id="${store.id}">Ver tudo no catálogo</button><button class="ghost-btn strong" data-action="go-page" data-page="estabelecimentos">Voltar</button></div></div></article><div class="product-grid">${products.map(productCard).join('')}</div></section>`;
+  return `${pageHead(store.name, storeHeroText(store))}<section class="store-detail"><article class="detail-hero ${store.producer ? 'producer-tone' : 'merchant-tone'}"><div class="detail-cover">${imgTag(store.cover, store.name, store.producer ? 'producer' : 'store')}<div class="cover-overlay ${store.producer ? 'producer' : ''}"></div><div class="cover-copy"><span class="cover-kicker">${esc(storeCategoryLabel(store))}</span><h4>${esc(store.name)}</h4><div class="cover-meta"><span>${esc(store.city)}</span>${storeRating(store)?`<span>★ ${storeRating(store).toFixed(1)}</span>`:'<span>Novo no APETÊ</span>'}<span>${esc(storeEta(store))}</span></div></div></div><div class="detail-info"><div class="chip-row"><span class="chip ${store.producer ? 'producer-alt' : 'orange'}">Entrega ${money(store.fee)}</span>${instagramBadge(store)}</div><p>${esc(storeDescription(store))}</p><div class="row detail-actions" style="margin-top:18px"><button class="primary-btn" data-action="filter-store" data-id="${store.id}">Ver tudo no catálogo</button><button class="ghost-btn strong" data-action="go-page" data-page="estabelecimentos">Voltar</button></div></div></article><div class="product-grid">${products.map(productCard).join('')}</div></section>`;
 }
 
 // Patch the existing Sabiá nodes so status updates never replace the active input.
@@ -1484,7 +1498,9 @@ async function placeOrder() {
   const neighborhood=$('#checkout-neighborhood')?.value.trim();
   const address=$('#checkout-address')?.value.trim();
   const note=$('#checkout-note')?.value.trim();
-  if(!name||onlyDigits(phone).length<10||!address)return toast('Preencha nome, telefone e endereço para finalizar');
+  if(!name)return fieldError('#checkout-name','Informe o nome para entrega.');
+  if(onlyDigits(phone).length<10)return fieldError('#checkout-phone','Informe um telefone válido com DDD.');
+  if(!validAddress(address))return fieldError('#checkout-address','Digite um endereço mais completo para finalizar.');
   const items=state.cart.map(item=>({...item,product:getProduct(item.productId)})).filter(item=>item.product);
   if(!items.length)return toast('Sua sacola está vazia.');
   const store=getStore(items[0].product.storeId);
@@ -1518,12 +1534,12 @@ async function saveCustomer() {
   const address=$('#customer-address-field')?.value.trim();
   const password=$('#customer-password-field')?.value||'';
   const confirmPassword=$('#customer-password-confirm')?.value||'';
-  if(!validCustomerName(name))return toast('Digite um nome válido, sem números');
-  if(!validEmail(email))return toast('Digite um e-mail válido com @');
-  if(onlyDigits(phone).length<10)return toast('Digite um telefone válido');
-  if(!validAddress(address))return toast('Digite um endereço mais completo.');
-  if(!strongPassword(password))return toast('A senha precisa ter no mínimo 8 caracteres, com letras e números');
-  if(password!==confirmPassword)return toast('As senhas do cadastro não conferem');
+  if(!validCustomerName(name))return fieldError('#customer-name-field','Digite um nome válido, sem números.');
+  if(!validEmail(email))return fieldError('#customer-email-field','Digite um e-mail válido.');
+  if(onlyDigits(phone).length<10)return fieldError('#customer-phone-field','Digite um telefone válido com DDD.');
+  if(!validAddress(address))return fieldError('#customer-address-field','Digite um endereço mais completo.');
+  if(!strongPassword(password))return fieldError('#customer-password-field','A senha precisa ter no mínimo 8 caracteres, com letras e números.');
+  if(password!==confirmPassword)return fieldError('#customer-password-confirm','As senhas do cadastro não conferem.');
   if(!$('#customer-accept-terms')?.checked||!$('#customer-accept-privacy')?.checked)return toast('Aceite os Termos de Uso e leia a Política de Privacidade para criar a conta.');
   if(!window.APETE_BACKEND?.signUpCustomer)return toast('Backend de cadastro indisponível.');
   try {
@@ -1551,7 +1567,8 @@ async function saveCustomer() {
 async function loginCustomer() {
   const email=($('#login-identifier')?.value||'').trim().toLowerCase();
   const password=$('#login-password')?.value||'';
-  if(!validEmail(email)||!password)return toast('Informe seu e-mail e sua senha.');
+  if(!validEmail(email))return fieldError('#login-identifier','Informe um e-mail válido.');
+  if(!password)return fieldError('#login-password','Informe sua senha.');
   if(!window.APETE_BACKEND?.signInCustomer)return toast('Backend de login indisponível.');
   try {
     await window.APETE_BACKEND.signInCustomer({email,password});
@@ -2022,6 +2039,27 @@ $('#content').addEventListener('input', (event) => {
     if (feedback) feedback.textContent = t.value && first?.value !== t.value ? 'As senhas não conferem.' : (t.value ? 'As senhas conferem.' : '');
   }
   if (t.classList.contains('name-only')) t.value = t.value.replace(/[^A-Za-zÀ-ÿ' ]+/g, '');
+});
+
+$('#content').addEventListener('keydown',(event)=>{
+  if(event.key!=='Enter'||event.isComposing||event.target.matches('textarea,button,a'))return;
+  const card=event.target.closest('.auth-form-card');
+  if(!card)return;
+  const actionButton=card.querySelector('[data-action="login-customer"],[data-action="save-customer"],[data-action="login-merchant"],[data-action="register-merchant"]');
+  if(actionButton&&!actionButton.disabled){
+    event.preventDefault();
+    actionButton.click();
+  }
+});
+
+$('#modal').addEventListener('keydown',(event)=>{
+  if(event.key!=='Enter'||event.isComposing||event.target.matches('textarea,button'))return;
+  if(cartStep!=='checkout')return;
+  const confirm=$('#modal [data-action="place-order"]');
+  if(confirm&&!confirm.disabled){
+    event.preventDefault();
+    confirm.click();
+  }
 });
 
 $('#demo-client-tab')?.addEventListener('click', () => {prepareClientForVideo();setPage('inicio');});

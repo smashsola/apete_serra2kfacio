@@ -7,9 +7,9 @@
   <meta name="description" content="APETÊ — delivery local com restaurantes, padarias e produtores da região.">
   <title>APETÊ — Delivery local</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="styles.css?v=mobile-first-v2">
+  <link rel="stylesheet" href="styles.css?v=region-popover-v1">
   <script defer src="backend-client.js?v=mobile-first-v2"></script>
-  <script defer src="app.js?v=mobile-first-v2"></script>
+  <script defer src="app.js?v=region-popover-v1"></script>
 </head>
 <body>
   <div class="shell">
@@ -98,12 +98,20 @@
           </div>
         </div>
         <div class="top-actions">
-          <button id="locate" class="location-btn" title="Usar minha localização">
-            <span class="btn-icon">
-              <svg viewBox="0 0 24 24"><path d="M12 4v2M12 18v2M4 12H2M22 12h-2M18.36 5.64l-1.41 1.41M7.05 16.95l-1.41 1.41M18.36 18.36l-1.41-1.41M7.05 7.05 5.64 5.64M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-            </span>
-            <span id="location-label">Definir entrega</span>
-          </button>
+          <div class="location-control">
+            <button id="locate" class="location-btn" type="button" title="Trocar cidade de entrega" aria-haspopup="true" aria-expanded="false" aria-controls="region-popover">
+              <span class="btn-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 4v2M12 18v2M4 12H2M22 12h-2M18.36 5.64l-1.41 1.41M7.05 16.95l-1.41 1.41M18.36 18.36l-1.41-1.41M7.05 7.05 5.64 5.64M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </span>
+              <span id="location-label">Definir entrega</span>
+            </button>
+            <div id="region-popover" class="region-popover" hidden>
+              <strong>Cidade de entrega</strong>
+              <label for="regional-city-inline">Município</label>
+              <select id="regional-city-inline" class="select" aria-label="Cidade de entrega"></select>
+              <small>Usamos a cidade apenas para mostrar entrega, catálogo e recomendações compatíveis.</small>
+            </div>
+          </div>
 
           <button id="user-button" class="user-button" aria-label="Minha conta">
             <span class="btn-icon"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm-7 9a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>

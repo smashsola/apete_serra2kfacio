@@ -828,3 +828,12 @@ button:disabled,[aria-busy="true"]{cursor:wait;opacity:.68}
     padding:13px 15px;
   }
 }
+
+.input[aria-invalid="true"],.select[aria-invalid="true"],.textarea[aria-invalid="true"]{
+  border-color:#b84f3a!important;
+  box-shadow:0 0 0 4px rgba(184,79,58,.12)!important;
+}
+@media(max-width:640px){
+  .modal-actions{display:grid!important;grid-template-columns:1fr 1fr;width:100%}
+  .modal-actions>button{width:100%;justify-content:center}
+}

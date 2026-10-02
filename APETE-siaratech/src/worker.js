@@ -932,6 +932,9 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  }
  if(path==='/api/sabia/product'){const p=productById.get(body.productId);const info=validCity(body.city)&&['delivery','pickup'].includes(body.mode)?productInfo(p||{},body.city,body.mode):null;if(!info||!info.available)return failure('unavailable','Produto indisponível para esta cidade.',409);return response(info);}
  if(!safeId(body.conversationId)||typeof body.question!=='string'||!body.question.trim()||body.question.length>1200||!validCity(body.city)||!['delivery','pickup'].includes(body.mode))return failure('invalid_request','Pergunta ou cidade inválida.',400);
+ if(/^(?:o que e|como funciona|explique)\b.*\bultima fornada\b/.test(normalizedText(body.question))){
+  return response({text:'A Última Fornada ajuda estabelecimentos a oferecer itens do fim da produção com desconto e reduzir desperdício. O catálogo atual é demonstrativo e não informa as datas de validade das ofertas; por isso, não posso confirmar promoções válidas. Você pode conhecer os exemplos na seção Última Fornada e conferir preço, disponibilidade e condições com o estabelecimento antes de pedir.',provider:'rules',model:'last-batch-info-v1',products:[],stores:[],demo:true});
+ }
  const immediateSemantic=localSemanticIntent(body.question);
  if(immediateSemantic.action==='chat')return response({text:'Oi! Posso te ajudar a encontrar algo do catálogo, comparar opções ou montar um pedido.',provider:'rules',model:'conversation-v1',products:[],stores:[],demo:true});
  const vagueHealth=immediateSemantic.action==='clarify'&&(!immediateSemantic.preferences?.length)&&(immediateSemantic.modifiers?.includes('healthy')||/\b(?:dieta|regime)\b/.test(normalizedText(body.question)));

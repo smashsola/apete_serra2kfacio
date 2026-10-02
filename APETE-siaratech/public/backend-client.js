@@ -67,6 +67,7 @@
   }
 
   async function getSession() {
+    await authReady;
     const session=readSession();
     if(!session)return null;
     const expiresAt=Number(session.expires_at)||0;
@@ -81,7 +82,8 @@
       if(type==='privacy')legalMeta.legal_privacy_version=LEGAL_VERSIONS.privacy;
       if(type==='merchant_terms')legalMeta.legal_merchant_terms_version=LEGAL_VERSIONS.merchant_terms;
     }
-    const data=await request('/auth/v1/signup',{
+    const redirect='https://apete-serra2kfacio.betaniaaa.workers.dev/';
+    const data=await request('/auth/v1/signup?redirect_to='+encodeURIComponent(redirect),{
       method:'POST',
       body:{email,password,data:{full_name:name,phone,...legalMeta}}
     });
@@ -410,7 +412,26 @@
     return Array.isArray(rows)?rows[0]:rows;
   }
 
+  async function consumeConfirmationLink() {
+    if(typeof location==='undefined'||typeof history==='undefined')return;
+    const params=new URLSearchParams(location.hash.slice(1));
+    if(!params.has('access_token')&&!params.has('error'))return;
+    const accessToken=params.get('access_token');
+    const refreshToken=params.get('refresh_token');
+    // Remove credentials before app routing, analytics, or subsequent navigation.
+    history.replaceState(null,'',location.pathname+location.search);
+    if(params.has('error')||!accessToken||!refreshToken)return;
+    try {
+      const user=await request('/auth/v1/user',{accessToken});
+      if(!user?.id)return;
+      writeSession({access_token:accessToken,refresh_token:refreshToken,
+        expires_in:Number(params.get('expires_in'))||3600,user});
+    } catch { /* Invalid or expired links never replace an existing session. */ }
+  }
+  const authReady=consumeConfirmationLink();
+
   window.APETE_BACKEND={
+    ready:authReady,
     LEGAL_VERSIONS,
     hasStoredSession,getSession,getProfile,updateProfile,signUpCustomer,signInCustomer,signOut,
     acceptLegalDocuments,getLegalAcceptances,hasCurrentLegalAcceptances,

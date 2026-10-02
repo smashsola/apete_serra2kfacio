@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">APETÊ</string>
+    <string name="app_title">APETÊ · Serra da Ibiapaba</string>
+    <string name="connection_error">Não foi possível conectar ao APETÊ.\n\nConfira sua internet e tente novamente. Pedidos e Sabiá precisam de conexão.</string>
+    <string name="retry">Tentar novamente</string>
+    <string name="open_browser">Abrir no navegador</string>
+    <string name="no_link_handler">Nenhum aplicativo disponível para abrir esse link.</string>
+</resources>

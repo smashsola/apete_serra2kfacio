@@ -93,3 +93,12 @@ test('catálogo regional expõe cidades e variedade mínima sem quebrar a API',a
  assert.ok(data.products.length>=90);
  assert.equal(data.stores.filter(store=>store.producer).length,5);
 });
+
+
+test('atalho Última Fornada explica a iniciativa sem confirmar promoções sem validade',async()=>{
+ const data=await ask('O que é a Última Fornada? Há ofertas válidas?');
+ assert.equal(data.model,'last-batch-info-v1');
+ assert.match(data.text,/reduzir desperdício/);
+ assert.match(data.text,/não posso confirmar promoções válidas/);
+ assert.deepEqual(data.products,[]);
+});

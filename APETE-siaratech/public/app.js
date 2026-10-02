@@ -2525,13 +2525,13 @@ function toast(message, tone = 'normal') {
 
 function fallbackImage(label, mode = 'food') {
   const pal = { food:['#D68044','#FFF3E7'], producer:['#52785a','#eef6ef'], store:['#174d40','#eff7f3'] }[mode] || ['#D68044','#FFF3E7'];
-  const text = encodeURIComponent(label || 'APETÊ');
-  return `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 960 640'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop stop-color='${pal[0]}'/><stop offset='1' stop-color='${pal[1]}'/></linearGradient></defs><rect width='960' height='640' rx='28' fill='url(%23g)'/><text x='50%25' y='48%25' text-anchor='middle' fill='white' font-size='60' font-family='Arial' font-weight='700'>${text}</text><text x='50%25' y='58%25' text-anchor='middle' fill='white' font-size='24' font-family='Arial'>Imagem de apoio</text></svg>`;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640"><defs><linearGradient id="g"><stop stop-color="${pal[0]}"/><stop offset="1" stop-color="${pal[1]}"/></linearGradient></defs><rect width="960" height="640" rx="28" fill="url(#g)"/><text x="50%" y="48%" text-anchor="middle" fill="white" font-size="60" font-family="Arial" font-weight="700">${esc(label||'APETÊ')}</text><text x="50%" y="58%" text-anchor="middle" fill="white" font-size="24" font-family="Arial">Imagem de apoio</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
 
 function imgTag(src, alt, mode='food') {
   const safeSrc=String(src||'').trim()||fallbackImage(alt,mode);
-  return `<img src="${esc(safeSrc)}" alt="${esc(alt)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallbackImage(alt, mode)}'">`;
+  return `<img src="${esc(safeSrc)}" alt="${esc(alt)}" loading="lazy" decoding="async" data-fallback-src="${esc(fallbackImage(alt,mode))}">`;
 }
 
 function pageHead(title, desc) {
@@ -2661,7 +2661,8 @@ function closeModal({restoreFocus=true}={}) {
   $('#modal-body').innerHTML = '';
   document.body.classList.remove('modal-open');
   if(wasOpen&&restoreFocus&&modalReturnFocus?.isConnected){
-    requestAnimationFrame(()=>modalReturnFocus.focus({preventScroll:true}));
+    const focusTarget=modalReturnFocus;
+    requestAnimationFrame(()=>{if(focusTarget.isConnected)focusTarget.focus({preventScroll:true});});
   }
   modalReturnFocus=null;
 }
@@ -2860,7 +2861,7 @@ function homePage() {
         <p>Três atalhos realmente úteis para começar mais rápido.</p>
         <div class="quick-list">
           <div class="quick-pill"><div><strong>Entrega local</strong><small>Restaurantes, padaria e produtores da região</small></div><span>→</span></div>
-          <div class="quick-pill"><div><strong>Pagamento por Pix ou cartão</strong><small>Finalize o pedido do jeito que for melhor para você</small></div><span>→</span></div>
+          <div class="quick-pill"><div><strong>Combine o pagamento com a loja</strong><small>O APETÊ registra o método escolhido; a cobrança é feita pelo estabelecimento</small></div><span>→</span></div>
           <div class="quick-pill"><div><strong>Acompanhe seus pedidos</strong><small>Entre na conta para revisar e acompanhar tudo</small></div><span>→</span></div>
         </div>
       </article>
@@ -3298,7 +3299,7 @@ function merchantPage() {
   if(panels[tab]) body=panels[tab].length?panels[tab].map(o=>orderCard(o,true)).join(''):`<div class="empty"><b>Nenhum pedido nesta etapa</b> Você pode avançar um pedido pela etapa anterior.</div>`;
   if(tab==='produtos')body=merchantProductsView(products);
   if(tab==='fornada')body=merchantOffersView(products);
-  if(tab==='cadastro')body=`<section class="merchant-editor"><div class="merchant-section-heading"><div><span class="merchant-eyebrow">Configurações do perfil</span><h3>Dados de ${esc(store.name)}</h3><p>Personalize as informações exibidas na vitrine do estabelecimento.</p></div></div><form id="merchant-profile-form" class="merchant-edit-form"><div class="field-grid"><div class="field"><label>Nome da loja *</label><input id="merchant-edit-name" class="input" required value="${esc(store.name)}"></div><div class="field"><label>Categoria</label><input id="merchant-edit-category" class="input" value="${esc(storeCategoryLabel(store))}"></div><div class="field"><label>Cidade</label><input id="merchant-edit-city" class="input" value="${esc(store.city)}"></div><div class="field auth-wide"><label>Endereço / ponto de retirada</label><input id="merchant-edit-address" class="input" value="${esc(store.address||'')}" placeholder="Rua, bairro ou localidade"></div><div class="field"><label>Telefone</label><input id="merchant-edit-phone" class="input" value="${esc(state.merchant.phone)}"></div><div class="field"><label>Instagram da loja *</label><input id="merchant-edit-instagram" class="input" value="${esc(store.instagram||store.officialRef||'')}" placeholder="@sualoja"></div></div><div class="field"><label>Descrição</label><textarea id="merchant-edit-desc" class="textarea">${esc(storeDescription(store))}</textarea></div><div class="merchant-form-actions"><button class="primary-btn" type="submit">Salvar perfil</button></div></form></section>`;
+  if(tab==='cadastro')body=`<section class="merchant-editor"><div class="merchant-section-heading"><div><span class="merchant-eyebrow">Configurações do perfil</span><h3>Dados de ${esc(store.name)}</h3><p>Personalize as informações exibidas na vitrine do estabelecimento.</p></div></div><form id="merchant-profile-form" class="merchant-edit-form"><div class="field-grid"><div class="field"><label>Nome da loja *</label><input id="merchant-edit-name" class="input" required value="${esc(store.name)}"></div><div class="field"><label>Categoria</label><input id="merchant-edit-category" class="input" value="${esc(storeCategoryLabel(store))}"></div><div class="field"><label>Cidade</label><input id="merchant-edit-city" class="input" value="${esc(store.city)}"></div><div class="field auth-wide"><label>Endereço / ponto de retirada</label><input id="merchant-edit-address" class="input" value="${esc(store.address||'')}" placeholder="Rua, bairro ou localidade"></div><div class="field"><label>Telefone</label><input id="merchant-edit-phone" class="input" value="${esc(state.merchant.phone)}"></div><div class="field"><label>Instagram da loja *</label><input id="merchant-edit-instagram" class="input" value="${esc(store.instagram||store.officialRef||'')}" placeholder="@sualoja"></div></div><div class="field"><label>Descrição</label><textarea id="merchant-edit-desc" class="textarea">${esc(storeDescription(store))}</textarea></div><div class="merchant-form-actions"><button class="primary-btn" type="submit">Salvar perfil</button><button class="ghost-btn strong" type="button" data-action="logout-merchant">Sair da loja</button></div></form></section>`;
   const stageList=[['pendentes','Recebidos',pending.length],['preparando','Em preparo',preparing.length],['prontos','Prontos',ready.length],['concluidos','Finalizados',concluded.length]];
   return `${state.ui.presentationMerchant?'<div class="merchant-demo-notice">Visão de apresentação · Os pedidos e produtos são salvos apenas neste navegador.</div>':''}
    <section class="merchant-cover-card ${store.producer?'producer-cover-theme':''}"><div class="merchant-cover-picture">${imgTag(store.cover,store.name,store.producer?'producer':'store')}</div><div class="merchant-cover-copy"><span class="merchant-eyebrow">PAINEL DO ${store.producer?'PRODUTOR':'COMERCIANTE'}</span><h2>${esc(store.name)}</h2><p>${esc(storeCategoryLabel(store))} · ${esc(store.city)}</p><div class="merchant-cover-actions"><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="pendentes">Ver pedidos <span>${pending.length}</span></button><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="produtos">+ Produto</button><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="fornada">Última Fornada <span>${offerCount}</span></button></div></div></section>
@@ -3481,7 +3482,7 @@ function renderCartModal() {
     openModal('Finalizar pedido', `
       <div class="checkout-summary">
         <div class="summary-card"><h4>Entrega e pagamento</h4><div class="field-grid"><div class="field"><label>Nome</label><input id="checkout-name" class="input" autocomplete="name" value="${esc(checkoutDraft?.name??state.customer.name??'')}"></div><div class="field"><label>Telefone</label><input id="checkout-phone" class="input phone-only" inputmode="numeric" autocomplete="tel" maxlength="11" value="${esc(checkoutDraft?.phone??onlyDigits(state.customer.phone||''))}"></div><div class="field"><label>Bairro</label><input id="checkout-neighborhood" class="input" autocomplete="address-level3" value="${esc(checkoutDraft?.neighborhood??state.customer.neighborhood??'')}"></div><div class="field"><label>Endereço</label><input id="checkout-address" class="input" autocomplete="street-address" value="${esc(checkoutDraft?.address??state.customer.address??'')}"></div></div></div>
-        <div class="summary-card"><h4>Como você vai pagar?</h4><div class="payment-box"><button class="payment-option ${selectedPayment === 'pix' ? 'active' : ''}" data-action="select-payment" data-pay="pix"><strong>Pix</strong><span>Pagamento rápido</span></button><button class="payment-option ${selectedPayment === 'cartao' ? 'active' : ''}" data-action="select-payment" data-pay="cartao"><strong>Cartão</strong><span>Crédito ou débito</span></button><button class="payment-option ${selectedPayment === 'cartao-entrega' ? 'active' : ''}" data-action="select-payment" data-pay="cartao-entrega"><strong>Cartão na entrega</strong><span>Máquina no recebimento</span></button></div></div>
+        <div class="summary-card"><h4>Forma de pagamento a combinar</h4><p class="merchant-helper">O APETÊ não processa pagamentos nesta versão. Combine a cobrança e a disponibilidade do método com o estabelecimento.</p><div class="payment-box"><button class="payment-option ${selectedPayment === 'pix' ? 'active' : ''}" data-action="select-payment" data-pay="pix"><strong>Pix</strong><span>Combinado com a loja</span></button><button class="payment-option ${selectedPayment === 'cartao' ? 'active' : ''}" data-action="select-payment" data-pay="cartao"><strong>Cartão</strong><span>Consultar disponibilidade</span></button><button class="payment-option ${selectedPayment === 'cartao-entrega' ? 'active' : ''}" data-action="select-payment" data-pay="cartao-entrega"><strong>Cartão na entrega</strong><span>Máquina no recebimento</span></button></div></div>
         <div class="summary-card"><h4>Resumo do pedido</h4><div class="total-row"><span>Estabelecimento</span><strong>${esc(store.name)}</strong></div><div class="total-row"><span>Subtotal</span><strong>${money(subtotal)}</strong></div><div class="total-row"><span>Entrega</span><strong>${money(deliveryFee)}</strong></div><div class="total-row final"><span>Total</span><strong>${money(total)}</strong></div><div class="field" style="margin-top:12px"><label>Observações do pedido</label><textarea id="checkout-note" class="textarea" maxlength="500" placeholder="Ex.: sem cebola, entregar na portaria, chamar no WhatsApp">${esc(checkoutDraft?.note||'')}</textarea></div><div class="row" style="margin-top:14px"><button class="ghost-btn strong" data-action="back-to-cart">Voltar</button><button class="primary-btn" data-action="place-order">Confirmar pedido</button></div></div>
       </div>`);
     return;
@@ -4206,3 +4207,11 @@ setInterval(refreshVisibleOrders,15000);
 window.addEventListener('focus',refreshVisibleOrders);
 window.addEventListener('online',refreshVisibleOrders);
 document.addEventListener('visibilitychange',refreshVisibleOrders);
+
+document.addEventListener('error',(event)=>{
+  const image=event.target;
+  if(!(image instanceof HTMLImageElement)||!image.dataset.fallbackSrc)return;
+  const fallback=image.dataset.fallbackSrc;
+  delete image.dataset.fallbackSrc;
+  if(image.getAttribute('src')!==fallback)image.src=fallback;
+},true);

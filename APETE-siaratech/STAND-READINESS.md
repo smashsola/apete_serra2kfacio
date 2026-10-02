@@ -1,5 +1,12 @@
 # Preparação do estande — Siará Tech, dia 9
 
+## Atualização em 2 de outubro
+
+- Respostas da mentoria e perguntas adicionais em RESPOSTAS-MENTORIA.md. APETÊ não tem assinatura; o exemplo do áudio era de outra equipe.
+- Retorno de confirmação de e-mail agora remove tokens da URL e verifica o usuário no Auth antes de salvar a sessão. Cadastro solicita retorno para o endereço público. 161 testes passaram; a entrega do e-mail e o percurso completo ainda exigem uma caixa de teste acessível e a configuração correspondente de Redirect URLs no Supabase.
+- Primeiro APK Android em Java/WebView construído; lint sem avisos e assinatura v2 verificada. Usa o site publicado e requer internet. Não está na Play Store. Nenhum aparelho conectado foi detectado; instalação e teste físico permanecem pendentes.
+- Script de instalação por USB recusa ausência, ambiguidade ou dispositivo não autorizado. Build e instruções estão em android/README.md.
+
 ## Verificado em 1 de outubro
 
 - Login real do cliente pelo site publicado, usando conta QA temporária.

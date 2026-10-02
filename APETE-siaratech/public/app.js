@@ -2388,6 +2388,7 @@ async function refreshCustomerOrders({rerender=false}={}) {
 }
 
 async function restoreCustomerFromBackend() {
+  await window.APETE_BACKEND?.ready;
   if(!window.APETE_BACKEND?.hasStoredSession?.())return;
   try {
     const profile=await window.APETE_BACKEND.getProfile();
@@ -2495,6 +2496,7 @@ async function reviewMerchantApplication(applicationId,decision) {
 }
 
 async function restoreMerchantFromBackend() {
+  await window.APETE_BACKEND?.ready;
   if(!state.merchant?.backend||!window.APETE_BACKEND?.hasStoredSession?.())return;
   try{
     const memberships=await window.APETE_BACKEND.getMerchantMemberships();

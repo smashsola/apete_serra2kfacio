@@ -13,7 +13,7 @@ globalThis.localStorage={
 await import('../public/backend-client.js?backend-tests');
 const backend=window.APETE_BACKEND;
 
-const response=(data,status=200)=>new Response(data===null?'':JSON.stringify(data),{
+const response=(data,status=200)=>new Response(status===204?null:(data===null?'':JSON.stringify(data)),{
   status,
   headers:{'Content-Type':'application/json'}
 });
@@ -78,13 +78,13 @@ test('criação de pedido envia apenas IDs e quantidades; preço fica no servido
   await loginSession();
   let sent=null;
   globalThis.fetch=async(url,options)=>{
-    assert.match(String(url),/\/rest\/v1\/rpc\/create_order$/);
+    assert.match(String(url),/\/rest\/v1\/rpc\/create_order_once$/);
     assert.equal(options.headers.Authorization,'Bearer user-jwt');
     sent=JSON.parse(options.body);
     return response([{order_id:'cccccccc-cccc-cccc-cccc-cccccccccccc',public_number:42,subtotal:5000,delivery_fee:600,total:5600}]);
   };
   const created=await backend.createOrder({
-    storeId:2,city:'Guaraciaba do Norte',mode:'delivery',
+    requestId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',storeId:2,city:'Guaraciaba do Norte',mode:'delivery',
     customer:{name:'Cliente',phone:'88999999999',address:'Rua A',neighborhood:'Centro'},
     note:'sem cebola',payment:'pix',
     items:[{productId:7,qty:2,price:1,total:2}]
@@ -119,6 +119,7 @@ test('aceites legais usam versão atual e JWT do próprio usuário',async()=>{
     assert.match(String(url),/\/rest\/v1\/legal_acceptances\?on_conflict=/);
     assert.equal(options.method,'POST');
     assert.equal(options.headers.Authorization,'Bearer user-jwt');
+    assert.equal(options.headers.Prefer,'resolution=ignore-duplicates,return=minimal');
     sent=JSON.parse(options.body);
     return response(null,204);
   };
@@ -163,4 +164,9 @@ test('signup anônimo envia Authorization com a chave publicável',async()=>{
   assert.equal(sent.data.legal_terms_version,'2026-09-28-v1');
   assert.equal(sent.data.legal_privacy_version,'2026-09-28-v1');
   assert.equal(result.confirmationRequired,true);
+});
+
+test('status sem linha alterada nunca informa sucesso',async()=>{
+ memory.clear();await loginSession();globalThis.fetch=async()=>response([]);
+ await assert.rejects(backend.updateOrderStatus('order-id','ready'),/order_status_not_updated/);
 });

@@ -2237,6 +2237,9 @@ let checkoutDraft = null;
 let modalReturnFocus = null;
 let storageWarningShown = false;
 const busyActions = new Set();
+const checkoutController=window.APETE_ORDER_FLOW.createCheckoutController({storage:sessionStorage,crypto:window.crypto});
+const syncSingleFlight=window.APETE_ORDER_FLOW.createSingleFlight();
+const orderSync={customer:{error:'',updatedAt:null},merchant:{error:'',updatedAt:null}};
 let sabiaBusy = false;
 let sabiaResearch = false;
 let sabiaMode = 'checking';
@@ -2336,6 +2339,7 @@ function applyBackendCustomer(profile) {
     password:'',
     demo:false,
     backend:true,
+    userId:String(profile.id||''),
     role:String(profile.role||'customer')
   };
   state.ui.savedCustomerBeforeDemo=null;
@@ -2366,16 +2370,21 @@ function friendlyBackendError(error,fallback='Não foi possível concluir agora.
 
 async function refreshCustomerOrders({rerender=false}={}) {
   if(!window.APETE_BACKEND?.loadOrders||!window.APETE_BACKEND?.hasStoredSession?.())return;
-  try {
-    state.orders=await window.APETE_BACKEND.loadOrders();
-    if(isAdmin()&&window.APETE_BACKEND?.loadAdminMerchantApplications){
-      try{state.adminApplications=await window.APETE_BACKEND.loadAdminMerchantApplications();}catch{}
+  const owner=state.customer.userId;
+  return syncSingleFlight('customer:'+owner,async()=>{
+    try {
+      const orders=await window.APETE_BACKEND.loadOrders();
+      if(!isRealCustomerLogged()||state.customer.userId!==owner)return;
+      const changed=JSON.stringify(orders)!==JSON.stringify(state.orders);
+      state.orders=orders;
+      orderSync.customer={error:'',updatedAt:new Date()};
+      save();
+      if(changed&&rerender&&state.page==='pedidos'&&$('#modal').hidden&&!busyActions.size)render();
+    } catch(error) {
+      if(state.customer.userId===owner)orderSync.customer.error='Não foi possível atualizar. Os pedidos abaixo podem estar desatualizados.';
     }
-    save();
-    if(rerender&&state.page==='pedidos')render();
-  } catch(error) {
-    console.warn('apete_backend_orders',{message:String(error?.message||error).slice(0,180)});
-  }
+    updateOrdersSyncView();
+  });
 }
 
 async function restoreCustomerFromBackend() {
@@ -2424,13 +2433,42 @@ function applyMerchantMembership(membership,owner='') {
 
 async function refreshMerchantBackend({rerender=false}={}) {
   if(!state.merchant?.backend||!state.merchant.backendStoreId||!window.APETE_BACKEND?.loadMerchantOrders)return;
-  try{
-    state.merchantOrders=await window.APETE_BACKEND.loadMerchantOrders(state.merchant.backendStoreId);
-    save();
-    if(rerender&&state.page==='comerciante')render();
-  }catch(error){
-    console.warn('apete_backend_merchant_orders',{message:String(error?.message||error).slice(0,180)});
+  const owner=state.customer.userId,storeId=state.merchant.backendStoreId;
+  return syncSingleFlight('merchant:'+owner+':'+storeId,async()=>{
+    try{
+      const orders=await window.APETE_BACKEND.loadMerchantOrders(storeId);
+      if(!state.merchant?.backend||state.merchant.backendStoreId!==storeId||state.customer.userId!==owner)return;
+      const changed=JSON.stringify(orders)!==JSON.stringify(state.merchantOrders);
+      state.merchantOrders=orders;
+      orderSync.merchant={error:'',updatedAt:new Date()};
+      save();
+      if(changed&&rerender&&state.page==='comerciante'&&$('#modal').hidden&&!busyActions.size&&!$('#merchant-product-form')&&!$('#merchant-profile-form')&&!$('#merchant-offer-form'))render();
+    }catch(error){
+      if(state.merchant?.backendStoreId===storeId)orderSync.merchant.error='Não foi possível atualizar. Os pedidos abaixo podem estar desatualizados.';
+    }
+    updateOrdersSyncView();
+  });
+}
+
+function orderSyncText(kind){
+  const info=orderSync[kind];
+  if(info.error)return info.error;
+  if(info.updatedAt)return 'Atualizado às '+info.updatedAt.toLocaleTimeString('pt-BR')+'. Atualização automática enquanto esta página estiver aberta.';
+  return 'Consultando pedidos no servidor…';
+}
+function orderSyncMarkup(kind){
+  return `<div class="orders-sync" data-orders-sync="${kind}"><span role="status">${esc(orderSyncText(kind))}</span><button class="ghost-btn strong" data-action="refresh-orders">Atualizar pedidos</button></div>`;
+}
+function updateOrdersSyncView(){
+  for(const element of document.querySelectorAll('[data-orders-sync]')){
+    element.querySelector('[role="status"]').textContent=orderSyncText(element.dataset.ordersSync);
+    element.classList.toggle('has-error',Boolean(orderSync[element.dataset.ordersSync].error));
   }
+}
+async function refreshVisibleOrders(){
+  if(document.visibilityState==='hidden'||navigator.onLine===false||busyActions.size)return;
+  if(state.page==='pedidos'&&isRealCustomerLogged())await refreshCustomerOrders({rerender:true});
+  if(state.page==='comerciante'&&state.merchant?.backend)await refreshMerchantBackend({rerender:true});
 }
 
 async function refreshAdminApplications({rerender=false}={}) {
@@ -3115,7 +3153,7 @@ function ordersPage() {
   const inProgress = orders.filter((order) => ['pendente','preparando','pronto'].includes(order.status)).length;
   const concluded = orders.filter((order) => order.status === 'concluido').length;
   const totalSpent = orders.filter((order) => order.status !== 'cancelado').reduce((sum, order) => sum + order.total, 0);
-  return `${pageHead('Meus pedidos', 'Seu espaço como cliente: pedidos ativos, pedidos concluídos e todos os dados do que foi comprado.')}${state.ui.orderSuccessId ? `<div class="order-success-banner" role="status"><span class="success-check" aria-hidden="true">✓</span><div><strong>Pedido enviado!</strong><p>Pedido #${String(state.ui.orderSuccessId).padStart(3,'0')} registrado. Você pode acompanhar o andamento nesta página.</p></div><button class="success-dismiss" data-action="dismiss-order-success" aria-label="Fechar confirmação">×</button></div>` : ''}<section class="history-stats"><article class="history-stat"><strong>${orders.length}</strong><span>Pedidos no total</span></article><article class="history-stat"><strong>${inProgress}</strong><span>Em andamento</span></article><article class="history-stat"><strong>${concluded}</strong><span>Concluídos</span></article><article class="history-stat"><strong>${money(totalSpent)}</strong><span>Valor acumulado</span></article></section>${orders.length ? orders.map((order) => orderCard(order, false)).join('') : `<div class="empty"><b>Nenhum pedido ainda</b> Quando você finalizar uma compra, ela vai aparecer aqui.</div>`}`;
+  return `${pageHead('Meus pedidos', 'Seu espaço como cliente: pedidos ativos, pedidos concluídos e todos os dados do que foi comprado.')}${state.ui.orderSuccessId ? `<div class="order-success-banner" role="status"><span class="success-check" aria-hidden="true">✓</span><div><strong>Pedido enviado!</strong><p>Pedido #${String(state.ui.orderSuccessId).padStart(3,'0')} registrado. Você pode acompanhar o andamento nesta página.</p></div><button class="success-dismiss" data-action="dismiss-order-success" aria-label="Fechar confirmação">×</button></div>` : ''}${orderSyncMarkup('customer')}<section class="history-stats"><article class="history-stat"><strong>${orders.length}</strong><span>Pedidos no total</span></article><article class="history-stat"><strong>${inProgress}</strong><span>Em andamento</span></article><article class="history-stat"><strong>${concluded}</strong><span>Concluídos</span></article><article class="history-stat"><strong>${money(totalSpent)}</strong><span>Valor acumulado</span></article></section>${orders.length ? orders.map((order) => orderCard(order, false)).join('') : `<div class="empty"><b>Nenhum pedido ainda</b> Quando você finalizar uma compra, ela vai aparecer aqui.</div>`}`;
 }
 
 function merchantProductForm(product = null) {
@@ -3265,7 +3303,7 @@ function merchantPage() {
   return `${state.ui.presentationMerchant?'<div class="merchant-demo-notice">Visão de apresentação · Os pedidos e produtos são salvos apenas neste navegador.</div>':''}
    <section class="merchant-cover-card ${store.producer?'producer-cover-theme':''}"><div class="merchant-cover-picture">${imgTag(store.cover,store.name,store.producer?'producer':'store')}</div><div class="merchant-cover-copy"><span class="merchant-eyebrow">PAINEL DO ${store.producer?'PRODUTOR':'COMERCIANTE'}</span><h2>${esc(store.name)}</h2><p>${esc(storeCategoryLabel(store))} · ${esc(store.city)}</p><div class="merchant-cover-actions"><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="pendentes">Ver pedidos <span>${pending.length}</span></button><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="produtos">+ Produto</button><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="fornada">Última Fornada <span>${offerCount}</span></button></div></div></section>
    ${state.ui.presentationMerchant?`<div class="merchant-store-select"><label for="demo-merchant-store">Trocar estabelecimento no vídeo</label><select id="demo-merchant-store" class="select">${state.stores.map(s=>`<option value="${s.id}" ${s.id===store.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>`:''}
-   <div class="merchant-workflow" aria-label="Etapas do pedido">${stageList.map(([key,label,count])=>`<button class="merchant-stage ${tab===key?'selected':''}" data-action="merchant-panel-tab" data-tab="${key}" aria-pressed="${tab===key}" aria-label="${label}: ${count} ${count===1?'pedido':'pedidos'}"><span class="stage-label">${label}</span>${tab===key?`<span class="stage-count">${count} ${count===1?'pedido':'pedidos'}</span>`:''}</button>`).join('')}</div>
+   ${state.merchant?.backend?orderSyncMarkup('merchant'):''}<div class="merchant-workflow" aria-label="Etapas do pedido">${stageList.map(([key,label,count])=>`<button class="merchant-stage ${tab===key?'selected':''}" data-action="merchant-panel-tab" data-tab="${key}" aria-pressed="${tab===key}" aria-label="${label}: ${count} ${count===1?'pedido':'pedidos'}"><span class="stage-label">${label}</span>${tab===key?`<span class="stage-count">${count} ${count===1?'pedido':'pedidos'}</span>`:''}</button>`).join('')}</div>
    <div class="merchant-tabs" role="group" aria-label="Áreas do painel"><button class="merchant-tab ${['pendentes','preparando','prontos','concluidos'].includes(tab)?'selected':''}" data-action="merchant-panel-tab" data-tab="pendentes">Pedidos</button><button class="merchant-tab ${tab==='produtos'?'selected':''}" data-action="merchant-panel-tab" data-tab="produtos">Cardápio</button><button class="merchant-tab ${tab==='fornada'?'selected':''}" data-action="merchant-panel-tab" data-tab="fornada">Última Fornada</button><button class="merchant-tab ${tab==='cadastro'?'selected':''}" data-action="merchant-panel-tab" data-tab="cadastro">Meu perfil</button></div>
    <div class="merchant-main-body">${body}</div>`;
 }
@@ -3470,21 +3508,23 @@ async function placeOrder() {
   const store=getStore(items[0].product.storeId);
   if(!store)return toast('Estabelecimento indisponível.');
   try {
-    const created=await window.APETE_BACKEND.createOrder({
+    const created=await checkoutController.submit(window.APETE_BACKEND,{
       storeId:store.id,city:state.city,mode:'delivery',
       customer:{name,phone,address,neighborhood},note,payment:selectedPayment,
       items:items.map(item=>({productId:item.product.id,qty:item.qty}))
     });
     state.customer={...state.customer,name,phone,address,neighborhood};
-    try{await window.APETE_BACKEND.updateProfile({full_name:name,phone,address,neighborhood,city:state.city});}catch{}
-    state.orders=await window.APETE_BACKEND.loadOrders();
-    state.ui.orderSuccessId=Number(created?.public_number)||state.orders[0]?.id||null;
+    state.ui.orderSuccessId=Number(created.public_number);
     state.cart=[];
     checkoutDraft=null;
     save();
     closeModal();
     setPage('pedidos');
+    checkoutController.complete();
     toast('✓ Pedido enviado e salvo no APETÊ!', 'success');
+    try{await window.APETE_BACKEND.updateProfile({full_name:name,phone,address,neighborhood,city:state.city});}catch{}
+    await refreshCustomerOrders();
+    if(state.page==='pedidos')render();
     hydrateCatalogFromBackend();
   } catch(error) {
     toast(friendlyBackendError(error,'Não foi possível registrar o pedido. Confira os dados e tente novamente.'));
@@ -3752,7 +3792,8 @@ async function advanceOrder(orderId) {
     if(!next)return;
     try{
       await window.APETE_BACKEND.updateOrderStatus(order.backendId,next);
-      await refreshMerchantBackend({rerender:true});
+      await refreshMerchantBackend();
+      if(state.page==='comerciante')render();
       toast(`Pedido #${String(order.id).padStart(3,'0')} atualizado no banco`,'success');
     }catch(error){toast(friendlyBackendError(error,'Não foi possível atualizar o pedido.'));}
     return;
@@ -3770,7 +3811,8 @@ async function cancelOrder(orderId) {
   if(state.merchant?.backend){
     try{
       await window.APETE_BACKEND.updateOrderStatus(order.backendId,'cancelled');
-      await refreshMerchantBackend({rerender:true});
+      await refreshMerchantBackend();
+      if(state.page==='comerciante')render();
       toast(`Pedido #${String(order.id).padStart(3,'0')} cancelado no banco`,'success');
     }catch(error){toast(friendlyBackendError(error,'Não foi possível cancelar o pedido.'));}
     return;
@@ -4007,6 +4049,7 @@ $('#content').addEventListener('click', (event) => {
   if (action === 'new-product' || action === 'cancel-product-edit') {state.ui.productEditor=0;save();render();}
   if (action === 'end-offer') runBusyAction(button,`end-offer:${button.dataset.id}`,()=>endMerchantOffer(button.dataset.id));
   if (action === 'dismiss-order-success') { state.ui.orderSuccessId = null; save(); render(); }
+  if (action === 'refresh-orders') refreshVisibleOrders();
   if (action === 'save-customer') runBusyAction(button,'save-customer',saveCustomer);
   if (action === 'login-customer') runBusyAction(button,'login-customer',loginCustomer);
   if (action === 'login-merchant') runBusyAction(button,'login-merchant',loginMerchant);
@@ -4158,3 +4201,8 @@ document.addEventListener('pointerdown',(event)=>{
   const control=event.target.closest?.('.location-control');
   if(!control&&!$('#region-popover')?.hidden)closeRegionSelector();
 });
+
+setInterval(refreshVisibleOrders,15000);
+window.addEventListener('focus',refreshVisibleOrders);
+window.addEventListener('online',refreshVisibleOrders);
+document.addEventListener('visibilitychange',refreshVisibleOrders);

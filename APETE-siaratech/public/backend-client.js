@@ -180,11 +180,13 @@
     }));
   }
 
-  async function createOrder({storeId,city,mode='delivery',customer,note='',payment,items}) {
+  async function createOrder({storeId,city,mode='delivery',customer,note='',payment,items,requestId}) {
+    if(typeof requestId!=='string'||!(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i).test(requestId))throw new Error('invalid_order_request_id');
     const paymentMap={pix:'pix',cartao:'card','cartao-entrega':'card_on_delivery'};
-    const rows=await authed('/rest/v1/rpc/create_order',{
+    const rows=await authed('/rest/v1/rpc/create_order_once',{
       method:'POST',
       body:{
+        p_request_id:requestId,
         p_store_public_id:Number(storeId),
         p_city:city,
         p_mode:mode,
@@ -238,7 +240,7 @@
     await authed('/rest/v1/legal_acceptances?on_conflict=user_id,document_type,version',{
       method:'POST',
       body,
-      headers:{Prefer:'resolution=merge-duplicates,return=minimal'}
+      headers:{Prefer:'resolution=ignore-duplicates,return=minimal'}
     });
     return unique;
   }
@@ -356,7 +358,8 @@
     const rows=await authed('/rest/v1/orders?id=eq.'+encodeURIComponent(orderBackendId),{
       method:'PATCH',body:{status},headers:{Prefer:'return=representation'}
     });
-    return Array.isArray(rows)?rows[0]:rows;
+    if(!Array.isArray(rows)||rows.length!==1)throw new Error('order_status_not_updated');
+    return rows[0];
   }
 
   async function updateStoreProfile(storeBackendId,values) {

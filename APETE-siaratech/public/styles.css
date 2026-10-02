@@ -892,3 +892,7 @@ button:disabled,[aria-busy="true"]{cursor:wait;opacity:.68}
   opacity:.58;
   cursor:not-allowed;
 }
+
+.orders-sync{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0;font-size:.875rem;color:var(--muted)}
+.orders-sync.has-error{color:#9c3b22}
+@media(max-width:600px){.orders-sync{align-items:flex-start;flex-direction:column}}

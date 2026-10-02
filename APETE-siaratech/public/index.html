@@ -7,8 +7,10 @@
   <meta name="description" content="APETÊ — delivery local com restaurantes, padarias e produtores da região.">
   <title>APETÊ — Delivery local</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="styles.css">
-  <script defer src="app.js?v=sabia-etapa1"></script>
+  <link rel="stylesheet" href="styles.css?v=checkout-v1">
+  <script defer src="order-flow.js?v=checkout-v1"></script>
+  <script defer src="backend-client.js?v=checkout-v1"></script>
+  <script defer src="app.js?v=checkout-v1"></script>
 </head>
 <body>
   <div class="shell">
@@ -66,7 +68,7 @@
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 7v6l4 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
           Meus pedidos
         </a>
-        <a id="customer-nav-link" href="entrar.html" data-page="entrar">
+        <a id="customer-nav-link" href="index.html#entrar" data-page="entrar">
           <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 4h6a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-6M10 8l4 4-4 4M14 12H4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="customer-nav-label">Entrar</span>
         </a>
       </nav>
@@ -91,18 +93,29 @@
     <div class="app-area">
       <header class="topbar">
         <div class="top-left">
-          <button id="menu-toggle" class="icon-btn menu-toggle" aria-label="Abrir menu">☰</button>
+          <button id="menu-toggle" class="icon-btn menu-toggle" aria-expanded="false" aria-label="Abrir menu">☰</button>
           <div>
             <h1 id="page-title">Início</h1>
           </div>
         </div>
         <div class="top-actions">
-          <button id="locate" class="location-btn" title="Usar minha localização">
-            <span class="btn-icon">
-              <svg viewBox="0 0 24 24"><path d="M12 4v2M12 18v2M4 12H2M22 12h-2M18.36 5.64l-1.41 1.41M7.05 16.95l-1.41 1.41M18.36 18.36l-1.41-1.41M7.05 7.05 5.64 5.64M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-            </span>
-            <span id="location-label">Definir entrega</span>
-          </button>
+          <div class="location-control">
+            <button id="locate" class="location-btn" type="button" title="Trocar cidade de entrega" aria-haspopup="true" aria-expanded="false" aria-controls="region-popover">
+              <span class="btn-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 4v2M12 18v2M4 12H2M22 12h-2M18.36 5.64l-1.41 1.41M7.05 16.95l-1.41 1.41M18.36 18.36l-1.41-1.41M7.05 7.05 5.64 5.64M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </span>
+              <span id="location-label">Definir entrega</span>
+            </button>
+            <div id="region-popover" class="region-popover" hidden>
+              <strong>Cidade de entrega</strong>
+              <label for="regional-city-inline">Município</label>
+              <select id="regional-city-inline" class="select" aria-label="Cidade de entrega"></select>
+              <button id="use-location-inline" class="ghost-btn strong region-location-btn" type="button">
+                Usar minha localização
+              </button>
+              <small id="region-location-note">A localização só é solicitada quando você tocar no botão. Você também pode escolher a cidade manualmente.</small>
+            </div>
+          </div>
 
           <button id="user-button" class="user-button" aria-label="Minha conta">
             <span class="btn-icon"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm-7 9a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
@@ -117,15 +130,25 @@
         </div>
       </header>
 
-      <div class="etapa-demo-note">Demonstração · Estabelecimentos, preços e operações fictícios. Pedidos e cadastros continuam locais.</div>
+      <div class="etapa-demo-note">Demonstração · O catálogo base é fictício. Contas e pedidos reais usam o backend; o modo de apresentação continua separado.</div>
       <main id="content" tabindex="-1"></main>
-      <footer class="site-footer"><span>APETÊ</span><span>Guaraciaba do Norte · Ceará</span><span>Projeto desenvolvido por Max e Paulo</span></footer>
+      <footer class="site-footer">
+        <div class="footer-brand"><span>APETÊ</span><small>Guaraciaba do Norte · Ceará</small></div>
+        <nav class="footer-legal" aria-label="Informações legais">
+          <a href="#termos" data-page="termos">Termos</a>
+          <a href="#privacidade" data-page="privacidade">Privacidade</a>
+          <a href="#cookies" data-page="cookies">Cookies e armazenamento</a>
+          <a href="#cancelamentos" data-page="cancelamentos">Cancelamentos</a>
+          <a href="#regras-comerciante" data-page="regras-comerciante">Regras do comerciante</a>
+        </nav>
+        <span>Projeto desenvolvido por Max e Paulo</span>
+      </footer>
     </div>
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <div id="modal" class="modal" hidden>
+  <div id="modal" class="modal" aria-hidden="true" hidden>
     <div class="modal-shade" data-action="close"></div>
     <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <header class="modal-head">

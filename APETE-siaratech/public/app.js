@@ -2956,7 +2956,7 @@ function sabiaPage() {
           <button class="ghost-btn strong" data-action="send-suggestion" data-text="Como posso valorizar os produtores locais nas minhas refeições?" ${sabiaBusy?'disabled':''}>Conversar sobre a Serra</button>
         </div>
         <div class="sabia-mode"><span>${sabiaMode==='generative'?'IA generativa configurada':sabiaMode==='checking'?'Verificando conexão':'IA indisponível'}</span><small id="sabia-mode-label">${esc(sabiaStatusMessage)}</small><button class="ghost-btn strong" data-action="sabia-check">Verificar conexão</button></div>
-        <div class="sabia-diagnostic">
+        ${new URLSearchParams(location.search).get('diagnostic')==='1'?`<div class="sabia-diagnostic">
           <strong>Diagnóstico temporário</strong>
           <small>Testa só um provedor usando a mensagem digitada no chat. Não usa os outros e não cai na Reserva.</small>
           <div class="row">
@@ -2972,6 +2972,7 @@ function sabiaPage() {
             ${sabiaDiagnostic.validatedText?`<small><b>Validado pelo APETÊ:</b> ${esc(sabiaDiagnostic.validatedText)}</small>`:''}
           </div>`:''}
         </div>
+        `:''}
         <p class="note">As mensagens são enviadas ao provedor de IA. Não informe senhas, documentos ou dados pessoais. A conversa desta sessão expira no servidor após seis horas.</p>
         <p class="note">O catálogo da IA é o catálogo cadastrado no servidor. Alterações locais no painel de demonstração ainda não sincronizam com ele.</p>
       </article>

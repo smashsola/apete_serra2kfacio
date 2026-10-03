@@ -10,7 +10,7 @@ test('posição recente pode sugerir cidade sem solicitar GPS de alta precisão'
   let options;
   const result=await requestPosition({getCurrentPosition(success,error,received){options=received;success({coords:{latitude:-4.41317,longitude:-40.90254,accuracy:100}});}});
   assert.equal(options.enableHighAccuracy,false);
-  assert.equal(options.maximumAge,900000);
+  assert.equal(options.maximumAge,120000);
   assert.equal(nearestCity(result.coords,centers).city,'Croatá');
 });
 test('prazo da aplicação encerra espera mesmo quando navegador não responde; callback atrasado é ignorado',async()=>{
@@ -26,6 +26,24 @@ test('localização imprecisa, inválida ou fora da região exige seleção manu
 });
 test('permissão recusada é devolvida sem nova tentativa automática',async()=>{
   await assert.rejects(requestPosition({getCurrentPosition(success,error){error({code:1});}}),error=>error.code===1);
+});
+test('posição muito imprecisa tenta GPS fresco dentro do mesmo prazo',async()=>{
+  const attempts=[];
+  const result=await requestPosition({getCurrentPosition(success,error,options){
+    attempts.push(options);
+    success({coords:{latitude:-4.41317,longitude:-40.90254,accuracy:options.enableHighAccuracy?30:12000}});
+  }});
+  assert.equal(attempts.length,2);
+  assert.equal(attempts[0].timeout,3000);
+  assert.equal(attempts[1].enableHighAccuracy,true);
+  assert.equal(attempts[1].maximumAge,0);
+  assert.ok(attempts[1].timeout<=3000);
+  assert.equal(result.coords.accuracy,30);
+});
+test('GPS ainda impreciso não escolhe cidade automaticamente',async()=>{
+  let attempts=0;
+  await assert.rejects(requestPosition({getCurrentPosition(success){attempts++;success({coords:{accuracy:16000}});}}),error=>error.code===2);
+  assert.equal(attempts,2);
 });
 test('seleção manual durante localização não é substituída pelo resultado atrasado',async()=>{
   const app=fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8');

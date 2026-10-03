@@ -72,7 +72,7 @@ export function localIntent(current,previous=null){
  if(hasStem(clean,['complet','combo']))modifiers.push('complete');
  let components=[];
  if(/\bcafe da manha\b|\bdesjejum\b|comec\w* (?:bem )?o dia/.test(clean)||hasNearWord(clean,['desjejum','matinal','comecar']))components.push('breakfast');
- if(hasStem(clean,['almoc','jantar','refeic','prato','comida','rango','marmita'])||hasNearWord(clean,['almoco','jantar','refeicao','prato','comida','rango','marmita']))components.push('meal');
+ if(hasStem(clean,['almoc','jantar','refeic','prato','comida','rango','marmita','pizza'])||hasNearWord(clean,['almoco','jantar','refeicao','prato','comida','rango','marmita','pizza']))components.push('meal');
  if(hasStem(clean,['sobrem','doce','bolo','docinh'])||hasNearWord(clean,['sobremesa','doce','bolo','docinho']))components.push('dessert');
  if(hasStem(clean,['lanch','tapioca','sandu','pao','salgad','petisc'])||hasNearWord(clean,['lanche','tapioca','sanduiche','pao','salgado','petisco']))components.push('snack');
  if(hasStem(clean,['beb','sede','suco','refriger','refri','agua','tomar'])||hasNearWord(clean,['bebida','beber','suco','refrigerante','refri','agua','tomar'])||(/\bcafe\b/.test(clean)&&!components.includes('breakfast')))components.push('drink');

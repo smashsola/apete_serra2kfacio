@@ -102,3 +102,22 @@ test('atalho Última Fornada explica a iniciativa sem confirmar promoções sem 
  assert.match(data.text,/não posso confirmar promoções válidas/);
  assert.deepEqual(data.products,[]);
 });
+
+test('pedido de pizza reconhece categoria expandida e respeita cidade e orçamento',async()=>{
+ const data=await ask('Quero uma pizza até R$ 80 com entrega.',{city:'Tianguá'});
+ assert.ok(data.products.length>0);
+ for(const p of data.products){assert.match(p.name,/pizza/i);assert.equal(p.city,'Tianguá');assert.ok(p.total<=8000);}
+});
+
+test('café e pão de queijo não são substituídos por pão de coco',async()=>{
+ const data=await ask('Quero café e pão de queijo até R$ 30 com entrega.',{city:'Ubajara'});
+ assert.ok(data.products.some(p=>/pão de queijo/i.test(p.name)));
+ assert.ok(data.products.some(p=>/café|cappuccino/i.test(p.name)));
+ assert.ok(data.products.every(p=>!/pão de coco/i.test(p.name)));
+});
+
+test('excluir pizza não transforma a exclusão em uma exigência de pizza',async()=>{
+ const data=await ask('Quero almoço, não quero pizza, até R$ 60.',{city:'Guaraciaba do Norte'});
+ assert.ok(data.products.length>0);
+ assert.ok(data.products.every(p=>!/pizza/i.test(p.name)));
+});

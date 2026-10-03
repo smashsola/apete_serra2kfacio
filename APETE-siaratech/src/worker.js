@@ -137,13 +137,20 @@ function conversationIntent(question,prior){
 function intentScore(item,intent,query){
  const name=normalizedText(item.name),category=item.category;
  let score=0;
- const mealCategory=['Regional','Caseiro','Vegetariano'].includes(category);
+ const mealCategory=['Regional','Caseiro','Vegetariano','Almoço','Pizzas'].includes(category);
+ const requested=normalizedText(query);
+ const excludedWords=requestConstraints(query).excluded;
+ const permittedTerm=term=>!normalizedWords(term).some(word=>excludedWords.includes(word));
+ // Specific foods are requirements, even when an AI suggests a generic category match.
+ if(intent.kind==='meal'&&permittedTerm('pizza')&&/\bpizza\b/.test(requested)&&!/\bpizza\b/.test(name))return 0;
+ if(['snack','breakfast'].includes(intent.kind)&&permittedTerm('pao de queijo')&&/\bpao de queijo\b/.test(requested)&&!/\bpao de queijo\b/.test(name))return 0;
+ if(intent.kind==='drink'&&permittedTerm('cafe')&&/\bcafe\b/.test(requested)&&!/\bcafe da manha\b/.test(requested)&&!(/\bcafe\b|cappuccino/.test(name)))return 0;
  const scores={
   meal:mealCategory?100:0,
-  dessert:category==='Doces'?120:/\b(bolo|geleia|doce|pudim|chocolate|sorvete|mel)\b/.test(name)?100:0,
+  dessert:['Doces','Bolos','Sobremesas'].includes(category)?120:/\b(bolo|geleia|doce|pudim|chocolate|sorvete|mel)\b/.test(name)?100:0,
   drink:category==='Bebidas'&&(!intent.juice||/\bsuco\b/.test(name))?100:0,
-  snack:category==='Padaria'?110:category==='Doces'?80:0,
-  breakfast:category==='Padaria'?110:category==='Doces'||category==='Bebidas'&&/\bcafe\b/.test(name)?80:0
+  snack:['Padaria','Lanches','Tapiocas','Café regional'].includes(category)?110:category==='Doces'?80:0,
+  breakfast:['Padaria','Café da manhã','Café regional','Tapiocas'].includes(category)?110:category==='Doces'||category==='Bebidas'&&/\bcafe\b/.test(name)?80:0
  };
  if(intent.withDrink){
   if(mealCategory)score=130;

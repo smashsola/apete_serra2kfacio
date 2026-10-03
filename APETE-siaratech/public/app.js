@@ -2298,7 +2298,7 @@ const PRODUCTS = [
     "cat": "Almoço",
     "price": 2800,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-carne-panela.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2335,7 +2335,7 @@ const PRODUCTS = [
     "cat": "Almoço",
     "price": 3200,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-peixe-pure.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2369,7 +2369,7 @@ const PRODUCTS = [
     "cat": "Café da manhã",
     "price": 1200,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-cuscuz-ovo.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2407,7 +2407,7 @@ const PRODUCTS = [
     "cat": "Lanches",
     "price": 1100,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-pao-queijo.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2504,7 +2504,7 @@ const PRODUCTS = [
     "cat": "Legumes",
     "price": 700,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-abobora.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2544,7 +2544,7 @@ const PRODUCTS = [
     "cat": "Grãos",
     "price": 800,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-feijao-verde.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2584,7 +2584,7 @@ const PRODUCTS = [
     "cat": "Almoço",
     "price": 2800,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-carne-panela.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2621,7 +2621,7 @@ const PRODUCTS = [
     "cat": "Almoço",
     "price": 3200,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-peixe-pure.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2655,7 +2655,7 @@ const PRODUCTS = [
     "cat": "Café da manhã",
     "price": 1200,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-cuscuz-ovo.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2693,7 +2693,7 @@ const PRODUCTS = [
     "cat": "Lanches",
     "price": 1100,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-pao-queijo.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2712,7 +2712,7 @@ const PRODUCTS = [
     "cat": "Tapiocas",
     "price": 1200,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-tapioca-banana.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2790,7 +2790,7 @@ const PRODUCTS = [
     "cat": "Raízes",
     "price": 800,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-batata-doce.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2830,7 +2830,7 @@ const PRODUCTS = [
     "cat": "Grãos",
     "price": 800,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-feijao-verde.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2850,7 +2850,7 @@ const PRODUCTS = [
     "cat": "Vegetariano",
     "price": 2500,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-escondidinho-veg.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2870,7 +2870,7 @@ const PRODUCTS = [
     "cat": "Almoço",
     "price": 2800,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-carne-panela.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2907,7 +2907,7 @@ const PRODUCTS = [
     "cat": "Almoço",
     "price": 3200,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-peixe-pure.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2941,7 +2941,7 @@ const PRODUCTS = [
     "cat": "Café da manhã",
     "price": 1200,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-cuscuz-ovo.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2979,7 +2979,7 @@ const PRODUCTS = [
     "cat": "Lanches",
     "price": 1100,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-pao-queijo.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -2998,7 +2998,7 @@ const PRODUCTS = [
     "cat": "Lanches",
     "price": 1400,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-sanduiche-queijo.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -3116,7 +3116,7 @@ const PRODUCTS = [
     "cat": "Grãos",
     "price": 800,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-feijao-verde.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -3153,7 +3153,7 @@ const PRODUCTS = [
     "cat": "Almoço",
     "price": 2800,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-carne-panela.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -3190,7 +3190,7 @@ const PRODUCTS = [
     "cat": "Almoço",
     "price": 3200,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-peixe-pure.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -3224,7 +3224,7 @@ const PRODUCTS = [
     "cat": "Café da manhã",
     "price": 1200,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-cuscuz-ovo.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -3262,7 +3262,7 @@ const PRODUCTS = [
     "cat": "Lanches",
     "price": 1100,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-pao-queijo.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -3281,7 +3281,7 @@ const PRODUCTS = [
     "cat": "Bolos",
     "price": 900,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-bolo-banana.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -3399,7 +3399,7 @@ const PRODUCTS = [
     "cat": "Grãos",
     "price": 800,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-feijao-verde.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -3457,7 +3457,7 @@ const PRODUCTS = [
     "cat": "Vegetariano",
     "price": 2600,
     "stock": 20,
-    "image": "",
+    "image": "assets/images/prod-escondidinho-veg.webp",
     "oldPrice": 0,
     "lastBatch": false,
     "demo": true,
@@ -3571,7 +3571,7 @@ function initialState() {
     page: 'inicio',
     storeViewId: 1,
     filters: { query: '', category: 'Todos', storeId: '0', sort: 'relevancia' },
-    ui: { accountTab: 'entrar', accountRole: 'cliente', merchantAuthTab: 'entrar', merchantPanelTab: 'pendentes', presentationMerchant: false, productEditor: 0 },
+    ui: { catalogScope: 'region', accountTab: 'entrar', accountRole: 'cliente', merchantAuthTab: 'entrar', merchantPanelTab: 'pendentes', presentationMerchant: false, productEditor: 0 },
     sabiaContext: {budget: null, people: 1, preference: '', exclude: [], storeId: 0},
     chat: [{ me: false, text: 'Oi! Sou a Sabiá. Posso te ajudar com produtos, preços, Última Fornada, produtores e sugestões do cardápio.' }]
   };
@@ -4190,7 +4190,7 @@ function productCard(product) {
         ${product.offerActive?`<p class="note">Oferta até ${esc(dateTime(product.offer.endsAt))}.</p>`:''}
         <div class="price-line"><strong>${money(product.price)}</strong>${product.offerActive ? `<del>${money(product.oldPrice)}</del>` : ''}<span class="subtle">${product.stock} disponíveis</span></div>
         <div class="product-foot">
-          ${isMerchantView() ? `<button class="profile-btn" data-action="edit-product" data-id="${product.id}">Editar produto</button><span class="chip ${product.offerActive?'orange':'soft'}">${product.offerActive?'Última Fornada':'No cardápio'}</span>` : `${state.page==='loja' && Number(state.storeViewId)===store.id ? `<span class="product-profile-context">${esc(store.name)} · ${esc(store.city)}</span>` : `<button class="profile-btn" data-action="goto-store" data-id="${store.id}">Ver perfil</button>`}<button class="add-btn" data-action="add-cart" data-id="${product.id}" aria-label="Adicionar à sacola">+</button>`}
+          ${isMerchantView() ? `<button class="profile-btn" data-action="edit-product" data-id="${product.id}">Editar produto</button><span class="chip ${product.offerActive?'orange':'soft'}">${product.offerActive?'Última Fornada':'No cardápio'}</span>` : `${state.page==='loja' && Number(state.storeViewId)===store.id ? `<span class="product-profile-context">${esc(store.name)} · ${esc(store.city)}</span>` : `<button class="profile-btn" data-action="goto-store" data-id="${store.id}">Ver perfil</button>`}${storeServesSelectedCity(store)?`<button class="add-btn" data-action="add-cart" data-id="${product.id}" aria-label="Adicionar à sacola">+</button>`:`<button class="profile-btn" data-action="choose-store-city" data-id="${store.id}">Escolher ${esc(store.city)}</button>`}`}
         </div>
       </div>
     </article>
@@ -4289,8 +4289,16 @@ function merchantActions(order) {
   return '';
 }
 
-function storeServesSelectedCity(store){return !!store&&store.open!==false&&(store.city===state.city||store.serviceAreas?.includes(state.city));}
-function publicProductAvailable(product){return product.available!==false&&product.stock>0&&storeServesSelectedCity(getStore(product.storeId));}
+function storeServesSelectedCity(store){return !!store&&store.open!==false&&(store.city===state.city||store.serviceAreas?.includes(state.city)===true);}
+function publicStoreVisible(store){return !!store&&store.open!==false&&(state.ui.catalogScope!=='city'||storeServesSelectedCity(store));}
+function publicProductAvailable(product){return product.available!==false&&product.stock>0&&publicStoreVisible(getStore(product.storeId));}
+function catalogOverview(){
+  const stores=state.stores.filter(store=>store.open!==false);
+  const products=state.products.filter(product=>product.available!==false&&product.stock>0&&stores.some(store=>store.id===product.storeId));
+  const localStores=stores.filter(storeServesSelectedCity);
+  const localProducts=products.filter(product=>storeServesSelectedCity(getStore(product.storeId)));
+  return `<section class="catalog-overview" aria-label="Abrangência do catálogo"><div><strong>${stores.length} estabelecimentos · ${products.length} produtos na Serra</strong><p>Em ${esc(state.city)}: ${localStores.length} estabelecimentos e ${localProducts.length} produtos. Catálogo demonstrativo com fotos ilustrativas.</p></div><div class="catalog-scope" role="group" aria-label="Onde explorar"><button class="ghost-btn strong" data-action="catalog-scope" data-scope="region" aria-pressed="${state.ui.catalogScope!=='city'}">Toda a Serra</button><button class="ghost-btn strong" data-action="catalog-scope" data-scope="city" aria-pressed="${state.ui.catalogScope==='city'}">Entrega em ${esc(state.city)}</button></div><p class="note">Explorar outras cidades não altera sua cidade de entrega. A Sabiá continua buscando opções para ${esc(state.city)}.</p></section>`;
+}
 function homePage() {
   const stores = state.stores.filter(store=>!store.producer&&storeServesSelectedCity(store));
   const producers = state.stores.filter(store=>store.producer&&storeServesSelectedCity(store));
@@ -4298,7 +4306,7 @@ function homePage() {
   const offers = state.products.filter(product=>publicProductAvailable(product)&&globalThis.APETE_OFFERS.isActive(product)).slice(0, 5);
   const heroImage = asset('cover-casa.webp');
   return `
-    ${pageHead('Peça sem complicação', 'Escolha seu próximo pedido entre os restaurantes, padarias e produtores da região.')}
+    ${pageHead('Peça sem complicação', 'Escolha seu próximo pedido entre os restaurantes, padarias e produtores da região.')}${catalogOverview()}
     <section class="hero-mini home-hero-alt">
       <article class="hero-card">${imgTag(heroImage, 'Destaque APETÊ', 'store')}<div class="hero-copy"><h2>Escolha onde pedir hoje.</h2><p>Explore o cardápio, entre na sua conta só quando precisar comprar e acompanhe seus pedidos sem enrolação.</p><div class="hero-actions"><button class="primary-btn" data-action="go-page" data-page="cardapio">Explorar cardápio</button><button class="ghost-btn strong" data-action="go-page" data-page="estabelecimentos">Ver perfis</button></div></div></article>
       <article class="hero-panel">
@@ -4312,7 +4320,7 @@ function homePage() {
       </article>
     </section>
     <section class="home-calls">
-      <article class="call-card warm-card"><h3>Última Fornada</h3><p>Ofertas com prazo cadastrado para ajudar a reduzir o desperdício. Confira as condições de consumo com a loja.</p><div class="offer-grid compact-offers">${offers.slice(0,3).map(offerCard).join('')}</div></article>
+      <article class="call-card warm-card"><h3>Última Fornada</h3><p>Ofertas com prazo cadastrado para ajudar a reduzir o desperdício. Confira as condições de consumo com a loja.</p><button class="ghost-btn strong" data-action="go-page" data-page="fornada">Abrir Última Fornada</button>${offers.length?`<div class="offer-grid compact-offers">${offers.slice(0,3).map(offerCard).join('')}</div>`:'<p class="note">Nenhuma oferta válida para sua cidade agora. Você pode abrir a seção e consultar outras cidades.</p>'}</article>
       <article class="call-card merchant-tone"><span class="chip soft">Comerciantes</span><h3>Peça refeições e lanches</h3><p>Perfis com cardápio, tempo de entrega e itens em destaque.</p><button class="ghost-btn strong" data-action="go-page" data-page="estabelecimentos">Abrir estabelecimentos</button></article>
       <article class="call-card producer-tone"><span class="chip producer-alt">Produtores</span><h3>Compre direto de quem produz</h3><p>Hortaliças, cestas, mel e outros itens locais com entrega.</p><button class="ghost-btn strong" data-action="go-page" data-page="produtores">Ver produtores</button></article>
 
@@ -4324,13 +4332,13 @@ function homePage() {
 }
 
 function storesPage() {
-  const merchants = state.stores.filter(store=>!store.producer&&storeServesSelectedCity(store));
-  const producers = state.stores.filter(store=>store.producer&&storeServesSelectedCity(store));
-  return `${pageHead('Estabelecimentos', 'Explore restaurantes, padaria e produtores da região.')}<section style="margin-bottom:24px"><div class="section-head"><div><h3>Comerciantes</h3><p>Restaurantes e padaria com capa própria e miniaturas dos itens.</p></div></div><div class="store-grid">${merchants.map(storeCard).join('')}</div></section><section><div class="section-head"><div><h3>Produtores locais</h3><p>Perfis em cor diferente, com lista de produtos e miniaturas.</p></div></div><div class="producer-grid">${producers.map(producerCard).join('')}</div></section>`;
+  const merchants = state.stores.filter(store=>!store.producer&&publicStoreVisible(store));
+  const producers = state.stores.filter(store=>store.producer&&publicStoreVisible(store));
+  return `${pageHead('Estabelecimentos', 'Explore restaurantes, padaria e produtores da região.')}${catalogOverview()}<section style="margin-bottom:24px"><div class="section-head"><div><h3>Comerciantes</h3><p>Restaurantes e padaria com capa própria e miniaturas dos itens.</p></div></div><div class="store-grid">${merchants.map(storeCard).join('')}</div></section><section><div class="section-head"><div><h3>Produtores locais</h3><p>Perfis em cor diferente, com lista de produtos e miniaturas.</p></div></div><div class="producer-grid">${producers.map(producerCard).join('')}</div></section>`;
 }
 
 function menuFilters() {
-  const storeOptions = ['<option value="0">Todos os perfis</option>'].concat(state.stores.filter(storeServesSelectedCity).map((store) => `<option value="${store.id}" ${String(store.id) === state.filters.storeId ? 'selected' : ''}>${esc(store.name)}</option>`)).join('');
+  const storeOptions = ['<option value="0">Todos os perfis</option>'].concat(state.stores.filter(publicStoreVisible).map((store) => `<option value="${store.id}" ${String(store.id) === state.filters.storeId ? 'selected' : ''}>${esc(store.name)}</option>`)).join('');
   const categories = ['Todos', ...new Set(state.products.filter(publicProductAvailable).map((item) => item.cat))];
   return `
     <section class="filter-box">
@@ -4342,7 +4350,7 @@ function menuFilters() {
 }
 
 function filteredProducts() {
-  if(state.filters.storeId!=='0'&&!storeServesSelectedCity(getStore(state.filters.storeId)))state.filters.storeId='0';
+  if(state.filters.storeId!=='0'&&!publicStoreVisible(getStore(state.filters.storeId)))state.filters.storeId='0';
   if(state.filters.category!=='Todos'&&!state.products.some(p=>publicProductAvailable(p)&&p.cat===state.filters.category))state.filters.category='Todos';
   let items = state.products.filter(publicProductAvailable).map(product=>globalThis.APETE_OFFERS.project(product));
   if (state.filters.query) {
@@ -4358,17 +4366,17 @@ function filteredProducts() {
 
 function catalogPage() {
   const items = filteredProducts();
-  return `${pageHead('Cardápio', 'Encontre comidas e produtos que atendem à cidade selecionada.')}${menuFilters()}<div class="product-grid">${items.length?items.map(productCard).join(''):'<div class="empty">Nenhum produto encontrado. Tente outro filtro ou outra busca.</div>'}</div>`;
+  return `${pageHead('Cardápio', 'Explore comidas e produtos da Serra ou filtre pela sua cidade de entrega.')}${catalogOverview()}${menuFilters()}<p class="note">${items.length} produto(s) nesta seleção.</p><div class="product-grid">${items.length?items.map(productCard).join(''):'<div class="empty">Nenhum produto encontrado. Tente outro filtro ou outra busca.</div>'}</div>`;
 }
 
 function lastBatchPage() {
   const items = state.products.filter(item=>publicProductAvailable(item)&&globalThis.APETE_OFFERS.isActive(item));
-  return `${pageHead('Última Fornada', 'Produtos selecionados pelos estabelecimentos para oferecer com desconto e ajudar a reduzir desperdício.')}<p class="note">Só aparecem ofertas dentro do prazo cadastrado e com estoque. Confirme as condições de conservação com a loja. Os itens demonstrativos são exemplos.</p><div class="product-grid">${items.length?items.map(productCard).join(''):'<div class="empty">Nenhuma oferta dentro do prazo no momento.</div>'}</div>`;
+  return `${pageHead('Última Fornada', 'Produtos selecionados pelos estabelecimentos para oferecer com desconto e ajudar a reduzir desperdício.')}${catalogOverview()}<p class="note">Só aparecem ofertas dentro do prazo cadastrado e com estoque. Confirme as condições de conservação com a loja. Os itens demonstrativos são exemplos.</p><div class="product-grid">${items.length?items.map(productCard).join(''):'<div class="empty">Nenhuma oferta dentro do prazo no momento.</div>'}</div>`;
 }
 
 function producersPage() {
-  const items = state.stores.filter(store=>store.producer&&storeServesSelectedCity(store));
-  return `${pageHead('Do produtor', 'Frutas, verduras e produtos feitos por quem vive e produz na região.')}<div class="producer-grid">${items.map(producerCard).join('')}</div>`;
+  const items = state.stores.filter(store=>store.producer&&publicStoreVisible(store));
+  return `${pageHead('Do produtor', 'Frutas, verduras e produtos feitos por quem vive e produz na região.')}${catalogOverview()}<div class="producer-grid">${items.map(producerCard).join('')}</div>`;
 }
 
 function renderSabiaHistory() {
@@ -4868,6 +4876,7 @@ function addToCart(productId) {
   const product = getProduct(productId);
   if (!product) return;
   if (product.stock <= 0) return toast('Produto indisponível no momento.');
+  if(!storeServesSelectedCity(getStore(product.storeId)))return toast('Este estabelecimento não atende sua cidade de entrega. Escolha a cidade da loja para continuar.');
   const firstProduct = state.cart.length ? getProduct(state.cart[0].productId) : null;
   if (firstProduct && firstProduct.storeId !== product.storeId) {
     const firstStore=getStore(firstProduct.storeId);
@@ -5295,53 +5304,31 @@ async function logoutMerchant() {
   save();
   setPage('comerciante-entrar');
 }
+let locationRequestId=0;
+function cancelLocationRequest(){locationRequestId++;locating=false;}
 async function useMyLocation() {
   if(locating)return;
   if(!navigator.geolocation)return toast('Seu navegador não oferece geolocalização.');
-  locating=true;
-  const locateButton=$('#use-location-inline');
-  if(locateButton){locateButton.disabled=true;locateButton.textContent='Localizando…';}
-
-  const finish=()=>{
-    locating=false;
-    updateGeolocationControl();
-    $('#location-label').textContent=state.city||'Guaraciaba do Norte';
-  };
-  const toRad=value=>value*Math.PI/180;
-  const distanceKm=(lat1,lon1,lat2,lon2)=>{
-    const R=6371;
-    const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);
-    const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-    return 2*R*Math.asin(Math.sqrt(a));
-  };
-
-  navigator.geolocation.getCurrentPosition(({coords})=>{
-    const matches=Object.entries(REGIONAL_CITY_CENTERS)
-      .map(([city,[lat,lon]])=>({city,distance:distanceKm(coords.latitude,coords.longitude,lat,lon)}))
-      .sort((a,b)=>a.distance-b.distance);
-    const nearest=matches[0];
-
-    if(!nearest||nearest.distance>70){
-      finish();
-      toast('Sua localização parece estar fora da área regional cadastrada. Escolha a cidade manualmente.');
-      return;
-    }
-
-    state.city=nearest.city;
-    state.location=`Próximo de ${nearest.city}`;
-    save();
-    closeRegionSelector();
-    render();
-    finish();
-    toast(`Cidade de entrega ajustada para ${nearest.city}`,'success');
-  },error=>{
-    finish();
+  const requestId=++locationRequestId;
+  locating=true;updateGeolocationControl();
+  try{
+    const {coords}=await globalThis.APETE_LOCATION.requestPosition(navigator.geolocation);
+    if(requestId!==locationRequestId)return;
+    const nearest=globalThis.APETE_LOCATION.nearestCity(coords,REGIONAL_CITY_CENTERS);
+    if(!nearest){toast('A localização não foi precisa o suficiente ou está fora da Serra. Escolha a cidade manualmente.');return;}
+    if(state.cart.length&&state.city!==nearest.city){toast('Finalize ou esvazie sua sacola antes de trocar a cidade de entrega.');return;}
+    state.city=nearest.city;state.location='Próximo de '+nearest.city;state.ui.catalogScope='city';
+    save();closeRegionSelector();render();
+    toast('Cidade sugerida: '+nearest.city+'. Você pode ajustar no seletor.','success');
+  }catch(error){
+    if(requestId!==locationRequestId)return;
     if(error.code===1)toast('Localização bloqueada. Escolha a cidade manualmente ou libere a permissão no navegador.');
-    else if(error.code===3)toast('A localização demorou demais. Escolha a cidade manualmente.');
+    else if(error.code===3)toast('Não obtivemos a posição em 4 segundos. Escolha sua cidade para continuar.');
     else toast('Não foi possível obter sua localização. Escolha a cidade manualmente.');
-  },{enableHighAccuracy:false,timeout:8000,maximumAge:300000});
+  }finally{
+    if(requestId===locationRequestId){locating=false;updateGeolocationControl();}
+  }
 }
-
 async function sabiaRequest(path, body, authenticated=true) {
   if (!navigator.onLine) throw new Error('Você está sem conexão. O catálogo local e a sacola continuam disponíveis.');
   const controller=new AbortController();
@@ -5453,8 +5440,9 @@ async function updateGeolocationControl(){
     return;
   }
   button.hidden=false;
-  button.disabled=false;
-  button.textContent='Usar minha localização';
+  button.disabled=locating;
+  button.textContent=locating?'Localizando…':'Usar minha localização';
+  if(locating){note.textContent='Tentando obter a cidade por até 4 segundos. A escolha manual continua disponível.';return;}
   if(!navigator.permissions?.query)return;
   try{
     const status=await navigator.permissions.query({name:'geolocation'});
@@ -5501,6 +5489,18 @@ $('#content').addEventListener('click', (event) => {
   if (!button) return;
   if(button.matches('a[href]'))event.preventDefault();
   const action = button.dataset.action;
+  if(action==='catalog-scope'){
+    state.ui.catalogScope=button.dataset.scope==='city'?'city':'region';
+    state.filters={...state.filters,category:'Todos',storeId:'0'};
+    save();render();return;
+  }
+  if(action==='choose-store-city'){
+    const store=getStore(button.dataset.id);
+    if(!store||!REGIONAL_CITIES.includes(store.city))return;
+    if(state.cart.length)return toast('Finalize ou esvazie sua sacola antes de trocar a cidade de entrega.');
+    cancelLocationRequest();state.city=store.city;state.location=store.city;state.ui.catalogScope='city';
+    save();render();toast(`Cidade de entrega: ${store.city}`,'success');return;
+  }
   if (action === 'go-page') setPage(button.dataset.page);
   if (action === 'goto-store') setPage('loja', button.dataset.id);
   if (action === 'filter-store') { state.filters.storeId = String(button.dataset.id); save(); setPage('cardapio'); }
@@ -5535,8 +5535,10 @@ $('#content').addEventListener('click', (event) => {
 $('#regional-city-inline')?.addEventListener('change',(event)=>{
   const city=event.target.value;
   if(!REGIONAL_CITIES.includes(city))return;
+  cancelLocationRequest();
   state.city=city;
   state.location=city;
+  state.ui.catalogScope='city';
   save();
   $('#location-label').textContent=city;
   closeRegionSelector();

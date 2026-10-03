@@ -4858,7 +4858,6 @@ function renderUnsafe() {
     enterLink.setAttribute('aria-label', logged ? 'Minha conta' : 'Entrar');
   }
   $$('.side-nav a').forEach((link) => link.classList.toggle('active', link.dataset.page === visualPage));
-  window.dispatchEvent(new CustomEvent('apete:page',{detail:visualPage}));
 }
 
 function render() {
@@ -5484,9 +5483,6 @@ if(!AUTH_PAGE){
   if(location.hash!==initialHash)history.replaceState({apetePage:state.page},'',initialHash);
   else history.replaceState({apetePage:state.page},'',location.href);
 }
-window.addEventListener('apete:navigate',event=>{
-  if(typeof event.detail==='string'&&VALID_PAGES.has(event.detail))setPage(event.detail);
-});
 render();
 hydrateCatalogFromBackend();
 restoreCustomerFromBackend();

@@ -71,3 +71,9 @@ Comprovante local: outputs/stand-qa/pedido-cliente.png, na área de trabalho do 
 - Dock React inspirado na referência fornecida, com Framer Motion e Lucide: ícones ampliam conforme a distância do mouse (44–72 px), links reais com indicação da página atual, rótulos visíveis e tamanho de toque estável no celular. Preferência de movimento reduzido respeitada. Rodapé tem espaço para a navegação fixa.
 - Integração isolada em components/ui/dock.tsx; TypeScript e estrutura shadcn configurados. Tailwind compilado sem preflight para preservar as telas existentes. npm run build:dock recompila os arquivos publicados; npm run check:dock valida os tipos.
 - 184 testes, sintaxe e tipos passaram; navegação, digitação, largura de tela e magnificação conferidas no navegador. Prévia de frontend por servidor estático porque o runtime local do Worker não iniciou neste Windows.
+
+## Navegação somente no cabeçalho — 3 de outubro
+
+- Removido o dock inferior da página e seus arquivos de execução/estilo da carga inicial. O componente fica guardado no código, sem aparecer ou alterar o rodapé.
+- Mantidos os tamanhos, espaçamentos e altura do cabeçalho existentes. Cidade, conta e sacola usam efeito leve de hover sem mudar o layout; menu de três barrinhas disponível também no desktop.
+- Chat responsivo e correção dos avisos vazios preservados. 184 testes e sintaxe passaram.

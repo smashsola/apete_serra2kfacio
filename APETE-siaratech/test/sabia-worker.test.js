@@ -36,6 +36,14 @@ async function ask(question,{history=[],city='Guaraciaba do Norte',mode='deliver
  return response.json();
 }
 
+test('frete variável é uma estimativa inicial e não confirma o orçamento final',async()=>{
+ const data=await ask('quero almoço até 40 reais');
+ assert.ok(data.products.length>0);
+ assert.ok(data.products.every(item=>item.deliveryVariable&&item.feePerKm===100));
+ assert.match(data.text,/orçamento só pode ser confirmado depois desse cálculo/);
+ assert.match(data.text,/distância pela estrada/);
+});
+
 test('API reserva respeita exclusão em linguagem natural',async()=>{
  const data=await ask('quero almoço, não quero carne');
  assert.ok(data.products.length>0);

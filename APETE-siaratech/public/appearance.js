@@ -1,8 +1,8 @@
 (() => {
   const key = 'apete_appearance';
   let dark = false;
-  const palettes = ['serra', 'caju', 'amora', 'oceano'];
-  let palette = 'caju';
+  const palettes = ['serra', 'caju', 'amora', 'oceano', 'serra-caju', 'serra-oceano', 'broto'];
+  let palette = 'serra-caju';
   try { dark = localStorage.getItem(key) === 'dark'; } catch {}
   try { const saved = localStorage.getItem('apete_palette'); if (palettes.includes(saved)) palette = saved; } catch {}
   const root = document.documentElement;
@@ -10,7 +10,7 @@
     root.dataset.theme = dark ? 'dark' : 'light';
     root.dataset.palette = palette;
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = dark ? {serra:'#10251f',caju:'#2b1914',amora:'#23172c',oceano:'#10262e'}[palette] : {serra:'#fbf8f3',caju:'#fff5ea',amora:'#faf3fb',oceano:'#f0f8fb'}[palette];
+    if (meta) meta.content = dark ? {serra:'#10251f',caju:'#2b1914',amora:'#23172c',oceano:'#10262e','serra-caju':'#10251f','serra-oceano':'#102a28',broto:'#182017'}[palette] : {serra:'#fbf8f3',caju:'#fff5ea',amora:'#faf3fb',oceano:'#f0f8fb','serra-caju':'#fbf5e9','serra-oceano':'#f0f8f3',broto:'#e0edc5'}[palette];
     const toggle = document.getElementById('theme-toggle');
     if (toggle) {
       toggle.setAttribute('aria-pressed', String(dark));

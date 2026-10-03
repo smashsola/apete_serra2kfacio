@@ -22,6 +22,7 @@ test('migrações reais: retry atômico, estoque e isolamento por usuário',asyn
  await db.exec(`insert into auth.users(id,raw_user_meta_data) values ('${a}','{"legal_terms_version":"2026-09-28-v1","legal_privacy_version":"2026-09-28-v1"}'),('${b}','{"legal_terms_version":"2026-09-28-v1","legal_privacy_version":"2026-09-28-v1"}');
  insert into stores(public_id,name,city,service_areas,delivery_fee) values (9001,'Loja teste','Teste',array['Teste'],500);
  insert into products(public_id,store_id,name,price,stock) select 9001,id,'Produto teste',1200,10 from stores where public_id=9001;`);
+ await db.exec(`update stores set delivery_fee=500,delivery_fee_per_km=0,delivery_minimum_fee=0 where public_id=9001;`);
  await db.exec(`insert into store_members(store_id,user_id,role) select id,'${b}','owner' from stores where public_id=9001;`);
  const request='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
  const call=(qty=2)=>db.query(`select * from public.create_order_once($1,9001,'Teste','delivery','Cliente Teste','88999999999','Rua Teste 100','Centro','','pix',$2::jsonb)`,[request,JSON.stringify([{productId:9001,quantity:qty}])]);
@@ -38,7 +39,8 @@ test('migrações reais: retry atômico, estoque e isolamento por usuário',asyn
  assert.equal((await db.query('select count(*)::int n from orders')).rows[0].n,1);
  await db.exec('reset role');
  await db.exec(`insert into store_members(store_id,user_id,role) select id,'${b}','owner' from stores where public_id=9001;`);
- await asUser(b);assert.equal((await db.query("update orders set status='preparing' where id=$1 returning id",[first.order_id])).rows.length,1);
+ await asUser(b);await assert.rejects(db.query('update stores set delivery_fee=9999 where public_id=9001'),/permission denied/);
+ assert.equal((await db.query("update orders set status='preparing' where id=$1 returning id",[first.order_id])).rows.length,1);
  await assert.rejects(db.query("update orders set status='pending' where id=$1",[first.order_id]),/invalid_order_status_transition/);
  await assert.rejects(db.query('select * from private.checkout_requests'),/permission denied/);
  await db.exec("reset role;set role anon;select set_config('request.jwt.claim.sub','',false)");await assert.rejects(call(),/permission denied/);
@@ -58,5 +60,25 @@ test('migrações reais: retry atômico, estoque e isolamento por usuário',asyn
  await db.exec('reset role');
  await assert.rejects(db.exec('update products set offer_starts_at=null,offer_ends_at=null where public_id=9002'),/invalid_offer_window/);
  await assert.rejects(db.exec("update products set offer_starts_at=now(),offer_ends_at=now()-interval '1 hour' where public_id=9002"),/invalid_offer_window/);
+ await db.exec(`reset role;update stores set delivery_fee=0,delivery_fee_per_km=150,delivery_minimum_fee=300 where public_id=9001;`);
+ assert.equal((await db.query('select private.delivery_fee_for(200,100,500,3) fee')).rows[0].fee,500);
+ assert.equal((await db.query('select private.delivery_fee_for(200,100,500,10) fee')).rows[0].fee,1200);
+ assert.equal((await db.query('select private.delivery_fee_for(0,150,300,2) fee')).rows[0].fee,300);
+ assert.equal((await db.query('select private.delivery_fee_for(500,150,0,3) fee')).rows[0].fee,950);
+ await asUser(a);
+ const distanceRequest='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+ const distanceOrder=(km=4,expected=600)=>db.query(`select * from public.create_order_distance_once($1,9001,'Teste','delivery','Cliente Teste','88999999999','Rua Teste 100','Centro','','pix','[{"productId":9001,"quantity":1}]',$2,$3)`,[distanceRequest,km,expected]);
+ await assert.rejects(distanceOrder(4,1),/delivery_price_changed/);
+ await assert.rejects(distanceOrder(-1,600),/invalid_delivery_distance/);
+ await assert.rejects(distanceOrder(null,600),/distance_required/);
+ const distanceCreated=(await distanceOrder()).rows[0];
+ assert.equal(distanceCreated.delivery_fee,600);assert.equal(distanceCreated.total,1800);
+ assert.deepEqual((await distanceOrder()).rows[0],distanceCreated);
+ await assert.rejects(distanceOrder(5,750),/order_request_conflict/);
+ const snapshot=(await db.query('select delivery_distance_km,delivery_rate_per_km,delivery_base_fee,delivery_minimum_fee from orders where id=$1',[distanceCreated.order_id])).rows[0];
+ assert.equal(Number(snapshot.delivery_distance_km),4);assert.equal(snapshot.delivery_rate_per_km,150);assert.equal(snapshot.delivery_base_fee,0);assert.equal(snapshot.delivery_minimum_fee,300);
+ await assert.rejects(db.query(`select * from public.create_order_once('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',9001,'Teste','delivery','Cliente Teste','88999999999','Rua Teste 100','Centro','','pix','[{"productId":9001,"quantity":1}]')`),/distance_required/);
+ await db.exec('reset role;set role anon');
+ await assert.rejects(distanceOrder(),/permission denied/);
  }finally{await db.close();}
 });

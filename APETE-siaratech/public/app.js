@@ -715,6 +715,9 @@ const STORES = [
   }
 ];
 
+// Shared platform tariff for the fictional fallback catalogue. Real quotes come from the backend.
+STORES.forEach(store=>Object.assign(store,{fee:500,deliveryBaseFee:200,feePerKm:100,minimumFee:500}));
+
 const PRODUCTS = [
   {
     "id": 1,
@@ -3791,6 +3794,8 @@ function friendlyBackendError(error,fallback='Não foi possível concluir agora.
   if(/email not confirmed/.test(message))return 'Confirme seu e-mail antes de entrar.';
   if(/user already registered|already been registered/.test(message))return 'Esse e-mail já possui cadastro.';
   if(/authentication_required|jwt|unauthorized/.test(message))return 'Sua sessão expirou. Entre novamente.';
+  if(/delivery_price_changed/.test(message))return 'A taxa da loja mudou. Confira o frete atualizado antes de confirmar.';
+  if(/distance_required|invalid_delivery_distance/.test(message))return 'Informe uma distância válida, combinada com a loja.';
   if(/price_changed/.test(message))return 'O preço mudou ou a oferta terminou. Confira o valor atualizado na sacola antes de confirmar.';
   if(/invalid_offer_window/.test(message))return 'Informe início e fim válidos para a oferta, com término no futuro.';
   if(/insufficient_stock/.test(message))return 'Um dos produtos não tem mais essa quantidade em estoque.';
@@ -4151,20 +4156,52 @@ async function runBusyAction(button,key,task) {
   }
 }
 
+function deliveryLabel(store) {
+  if (!store.feePerKm) return 'Entrega '+money(store.fee);
+  if (window.APETE_DELIVERY.isRegional(store)) return 'Entrega R$ 5 até 3 km · + R$ 1/km adicional';
+  const base=store.deliveryBaseFee??0;
+  return (base?'Entrega '+money(base)+' + ':'Entrega ')+money(store.feePerKm)+'/km'+(store.minimumFee?' · mínimo '+money(store.minimumFee):'');
+}
+function deliveryDistanceControl(store) {
+  if (!store.feePerKm) return '';
+  return `<div class="field delivery-distance-field"><label for="delivery-distance">Distância combinada com a loja (km)</label><input id="delivery-distance" class="input" inputmode="decimal" maxlength="6" placeholder="Ex.: 3,5" value="${esc(checkoutDraft?.distanceKm??'')}" aria-describedby="delivery-distance-note"><small id="delivery-distance-note" class="note">${esc(deliveryLabel(store))}. Tabela experimental do APETÊ. Informe a distância pela estrada, combinada com a loja. Para sítios ou outra cidade, confirme atendimento e horário. O GPS ainda não mede a rota.</small><span id="delivery-calculation" class="note" aria-live="polite"></span></div>`;
+}
+function updateDeliveryQuote() {
+  const field=$('#delivery-distance');
+  if (!field) return;
+  captureCheckoutDraft();
+  const items=state.cart.map(item=>({...item,product:getProduct(item.productId)})).filter(item=>item.product);
+  const store=getStore(items[0]?.product.storeId);
+  if (!store) return;
+  const quote=window.APETE_DELIVERY.quote(store,field.value);
+  const subtotal=items.reduce((sum,item)=>sum+item.qty*item.product.price,0);
+  $('#delivery-amount').textContent=quote.ready?money(quote.fee):'Informe a distância';
+  $('#delivery-total').textContent=quote.ready?money(subtotal+quote.fee):'A calcular';
+  $('#delivery-calculation').textContent=quote.ready?(window.APETE_DELIVERY.isRegional(store)?(quote.distanceKm<=3?'Até 3 km: '+money(quote.fee):'R$ 5 + '+(quote.distanceKm-3).toFixed(2).replace('.',',')+' km adicionais × R$ 1 = '+money(quote.fee)):((store.deliveryBaseFee?'Taxa inicial '+money(store.deliveryBaseFee)+' + ':'')+quote.distanceKm+' km × '+money(store.feePerKm)+(store.minimumFee?' · mínimo '+money(store.minimumFee):'')+' = '+money(quote.fee))):(quote.reason==='invalid_delivery_distance'?'Use de 0 a 200 km, com até duas casas decimais.':'');
+  const confirm=$('[data-action="place-order"]');
+  if(confirm)confirm.disabled=!quote.ready;
+}
+
 function captureCheckoutDraft() {
-  if(cartStep!=='checkout')return checkoutDraft;
+  if(cartStep!=='checkout') {
+    const distance=$('#delivery-distance');
+    if(distance)checkoutDraft={...(checkoutDraft||{}),distanceKm:distance.value};
+    return checkoutDraft;
+  }
   const name=$('#checkout-name')?.value;
   const phone=$('#checkout-phone')?.value;
   const neighborhood=$('#checkout-neighborhood')?.value;
   const address=$('#checkout-address')?.value;
   const note=$('#checkout-note')?.value;
-  if([name,phone,neighborhood,address,note].some(value=>value!==undefined)){
+  const distanceKm=$('#delivery-distance')?.value;
+  if([name,phone,neighborhood,address,note,distanceKm].some(value=>value!==undefined)){
     checkoutDraft={
       name:name??checkoutDraft?.name??state.customer.name??'',
       phone:phone??checkoutDraft?.phone??onlyDigits(state.customer.phone||''),
       neighborhood:neighborhood??checkoutDraft?.neighborhood??state.customer.neighborhood??'',
       address:address??checkoutDraft?.address??state.customer.address??'',
-      note:note??checkoutDraft?.note??''
+      note:note??checkoutDraft?.note??'',
+      distanceKm:distanceKm??checkoutDraft?.distanceKm??''
     };
   }
   return checkoutDraft;
@@ -4220,7 +4257,7 @@ function storeCard(store) {
         </div>
       </div>
       <div class="store-body">
-        <div class="chip-row"><span class="chip orange">${store.open ? 'Aberto agora' : 'Fechado'}</span><span class="chip soft">Entrega ${money(store.fee)}</span></div>
+        <div class="chip-row"><span class="chip orange">${store.open ? 'Aberto agora' : 'Fechado'}</span><span class="chip soft">${esc(deliveryLabel(store))}</span></div>
         <p>${esc(storeDescription(store))}</p>
         <div class="fact-row">${instagramBadge(store)}<span>${esc(store.address||store.city)}</span></div>
         <div class="mini-products-row">${items}</div>
@@ -4251,7 +4288,7 @@ function producerCard(store) {
         </div>
       </div>
       <div class="producer-body">
-        <div class="chip-row"><span class="chip soft producer-chip">Colheita local</span><span class="chip producer-alt">Entrega ${money(store.fee)}</span></div>
+        <div class="chip-row"><span class="chip soft producer-chip">Colheita local</span><span class="chip producer-alt">${esc(deliveryLabel(store))}</span></div>
         <p>${esc(storeDescription(store))}</p>
         <p class="store-address">${esc(store.address||store.city)}</p>
         <ul class="kv producer-list with-thumbs">${products}</ul>
@@ -4387,7 +4424,7 @@ function renderSabiaHistory() {
       const image = getProduct(p.id)?.image;
       return `<article class="sabia-product-card">
         <div class="sabia-result"><span class="mini-thumb">${image?imgTag(image,p.name):''}</span><span><b>${esc(p.name)}</b><small>${esc(p.storeName)} · ${esc(p.city)}</small><small>Preço unitário: ${money(p.price)}</small></span></div>
-        <p class="note">${p.recommendation?`${p.quantity} unidade(s) · porção cadastrada para ${p.servesTotal} pessoa(s)<br>`:''}Produtos: ${money(p.subtotal??p.price)} + entrega: ${money(p.fee)}<br><strong>Total: ${money(p.total)}</strong></p>
+        <p class="note">${p.recommendation?`${p.quantity} unidade(s) · porção cadastrada para ${p.servesTotal} pessoa(s)<br>`:''}Produtos: ${money(p.subtotal??p.price)} + ${p.deliveryVariable?'entrega inicial':'entrega'}: ${money(p.fee)}<br><strong>${p.deliveryVariable?'Total inicial':'Total'}: ${money(p.total)}</strong>${p.deliveryVariable?'<br>Frete final calculado por km na sacola.':''}</p>
         ${p.offerValid?`<p class="note">Desconto: ${money(p.discountCents)} · oferta válida até ${dateTime(p.offerEndsAt)}</p>`:''}
         <div class="row"><button class="primary-btn" data-action="sabia-review" data-entry="${index}" data-id="${p.id}">Revisar para adicionar</button><button class="ghost-btn strong" data-action="goto-store" data-id="${p.storeId}">Ver estabelecimento</button></div>
       </article>`;
@@ -4768,7 +4805,7 @@ function merchantPage() {
   if(panels[tab]) body=panels[tab].length?panels[tab].map(o=>orderCard(o,true)).join(''):`<div class="empty"><b>Nenhum pedido nesta etapa</b> Você pode avançar um pedido pela etapa anterior.</div>`;
   if(tab==='produtos')body=merchantProductsView(products);
   if(tab==='fornada')body=merchantOffersView(products);
-  if(tab==='cadastro')body=`<section class="merchant-editor"><div class="merchant-section-heading"><div><span class="merchant-eyebrow">Configurações do perfil</span><h3>Dados de ${esc(store.name)}</h3><p>Personalize as informações exibidas na vitrine do estabelecimento.</p></div></div><form id="merchant-profile-form" class="merchant-edit-form"><div class="field-grid"><div class="field"><label>Nome da loja *</label><input id="merchant-edit-name" class="input" required value="${esc(store.name)}"></div><div class="field"><label>Categoria</label><input id="merchant-edit-category" class="input" value="${esc(storeCategoryLabel(store))}"></div><div class="field"><label>Cidade</label><input id="merchant-edit-city" class="input" value="${esc(store.city)}"></div><div class="field auth-wide"><label>Endereço / ponto de retirada</label><input id="merchant-edit-address" class="input" value="${esc(store.address||'')}" placeholder="Rua, bairro ou localidade"></div><div class="field"><label>Telefone</label><input id="merchant-edit-phone" class="input" value="${esc(state.merchant.phone)}"></div><div class="field"><label>Instagram da loja *</label><input id="merchant-edit-instagram" class="input" value="${esc(store.instagram||store.officialRef||'')}" placeholder="@sualoja"></div></div><div class="field"><label>Descrição</label><textarea id="merchant-edit-desc" class="textarea">${esc(storeDescription(store))}</textarea></div><div class="merchant-form-actions"><button class="primary-btn" type="submit">Salvar perfil</button><button class="ghost-btn strong" type="button" data-action="logout-merchant">Sair da loja</button></div></form></section>`;
+  if(tab==='cadastro')body=`<section class="merchant-editor"><div class="merchant-section-heading"><div><span class="merchant-eyebrow">Configurações do perfil</span><h3>Dados de ${esc(store.name)}</h3><p>Personalize as informações exibidas na vitrine do estabelecimento.</p></div></div><form id="merchant-profile-form" class="merchant-edit-form"><div class="field-grid"><div class="field"><label>Nome da loja *</label><input id="merchant-edit-name" class="input" required value="${esc(store.name)}"></div><div class="field"><label>Categoria</label><input id="merchant-edit-category" class="input" value="${esc(storeCategoryLabel(store))}"></div><div class="field"><label>Cidade</label><input id="merchant-edit-city" class="input" value="${esc(store.city)}"></div><div class="field auth-wide"><label>Endereço / ponto de retirada</label><input id="merchant-edit-address" class="input" value="${esc(store.address||'')}" placeholder="Rua, bairro ou localidade"></div><div class="field"><label>Telefone</label><input id="merchant-edit-phone" class="input" value="${esc(state.merchant.phone)}"></div><div class="field"><label>Instagram da loja *</label><input id="merchant-edit-instagram" class="input" value="${esc(store.instagram||store.officialRef||'')}" placeholder="@sualoja"></div></div><div class="delivery-distance-field"><strong>Frete definido pelo APETÊ</strong><p class="merchant-helper">${esc(deliveryLabel(store))}. A loja não altera a tabela pelo painel. Estes valores são experimentais; trajetos rurais e entre cidades precisam de confirmação de atendimento.</p></div><div class="field"><label>Descrição</label><textarea id="merchant-edit-desc" class="textarea">${esc(storeDescription(store))}</textarea></div><div class="merchant-form-actions"><button class="primary-btn" type="submit">Salvar perfil</button><button class="ghost-btn strong" type="button" data-action="logout-merchant">Sair da loja</button></div></form></section>`;
   const stageList=[['pendentes','Recebidos',pending.length],['preparando','Em preparo',preparing.length],['prontos','Prontos',ready.length],['concluidos','Finalizados',concluded.length]];
   return `${state.ui.presentationMerchant?'<div class="merchant-demo-notice">Visão de apresentação · Os pedidos e produtos são salvos apenas neste navegador.</div>':''}
    <section class="merchant-cover-card ${store.producer?'producer-cover-theme':''}"><div class="merchant-cover-picture">${imgTag(store.cover,store.name,store.producer?'producer':'store')}</div><div class="merchant-cover-copy"><span class="merchant-eyebrow">PAINEL DO ${store.producer?'PRODUTOR':'COMERCIANTE'}</span><h2>${esc(store.name)}</h2><p>${esc(storeCategoryLabel(store))} · ${esc(store.city)}</p><div class="merchant-cover-actions"><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="pendentes">Ver pedidos <span>${pending.length}</span></button><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="produtos">+ Produto</button><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="fornada">Última Fornada <span>${offerCount}</span></button></div></div></section>
@@ -4782,7 +4819,7 @@ function storeDetailPage() {
   const store = getStore(state.storeViewId);
   if(!store)return `${pageHead('Estabelecimento indisponível','Esse perfil não está mais disponível.')}<div class="empty"><b>Não encontramos essa loja</b> Volte para a lista de estabelecimentos.<div class="row" style="justify-content:center;margin-top:14px"><button class="primary-btn" data-action="go-page" data-page="estabelecimentos">Ver estabelecimentos</button></div></div>`;
   const products = state.products.filter((product) => product.storeId === store.id);
-  return `${pageHead(store.name, storeHeroText(store))}<section class="store-detail"><article class="detail-hero ${store.producer ? 'producer-tone' : 'merchant-tone'}"><div class="detail-cover">${imgTag(store.cover, store.name, store.producer ? 'producer' : 'store')}<div class="cover-overlay ${store.producer ? 'producer' : ''}"></div><div class="cover-copy"><span class="cover-kicker">${esc(storeCategoryLabel(store))}</span><h4>${esc(store.name)}</h4><div class="cover-meta"><span>${esc(store.city)}</span>${storeRating(store)?`<span>★ ${storeRating(store).toFixed(1)}</span>`:'<span>Novo no APETÊ</span>'}<span>${esc(storeEta(store))}</span></div></div></div><div class="detail-info"><div class="chip-row"><span class="chip ${store.producer ? 'producer-alt' : 'orange'}">Entrega ${money(store.fee)}</span>${instagramBadge(store)}</div><p>${esc(storeDescription(store))}</p><p class="store-address"><strong>Local:</strong> ${esc(store.address||store.city)} · ${esc(store.city)}</p><div class="row detail-actions" style="margin-top:18px"><button class="primary-btn" data-action="filter-store" data-id="${store.id}">Ver tudo no catálogo</button><button class="ghost-btn strong" data-action="go-page" data-page="estabelecimentos">Voltar</button></div></div></article><div class="product-grid">${products.map(productCard).join('')}</div></section>`;
+  return `${pageHead(store.name, storeHeroText(store))}<section class="store-detail"><article class="detail-hero ${store.producer ? 'producer-tone' : 'merchant-tone'}"><div class="detail-cover">${imgTag(store.cover, store.name, store.producer ? 'producer' : 'store')}<div class="cover-overlay ${store.producer ? 'producer' : ''}"></div><div class="cover-copy"><span class="cover-kicker">${esc(storeCategoryLabel(store))}</span><h4>${esc(store.name)}</h4><div class="cover-meta"><span>${esc(store.city)}</span>${storeRating(store)?`<span>★ ${storeRating(store).toFixed(1)}</span>`:'<span>Novo no APETÊ</span>'}<span>${esc(storeEta(store))}</span></div></div></div><div class="detail-info"><div class="chip-row"><span class="chip ${store.producer ? 'producer-alt' : 'orange'}">${esc(deliveryLabel(store))}</span>${instagramBadge(store)}</div><p>${esc(storeDescription(store))}</p><p class="store-address"><strong>Local:</strong> ${esc(store.address||store.city)} · ${esc(store.city)}</p><div class="row detail-actions" style="margin-top:18px"><button class="primary-btn" data-action="filter-store" data-id="${store.id}">Ver tudo no catálogo</button><button class="ghost-btn strong" data-action="go-page" data-page="estabelecimentos">Voltar</button></div></div></article><div class="product-grid">${products.map(productCard).join('')}</div></section>`;
 }
 
 // Patch the existing Sabiá nodes so status updates never replace the active input.
@@ -4878,6 +4915,7 @@ function addToCart(productId) {
   if (product.stock <= 0) return toast('Produto indisponível no momento.');
   if(!storeServesSelectedCity(getStore(product.storeId)))return toast('Este estabelecimento não atende sua cidade de entrega. Escolha a cidade da loja para continuar.');
   const firstProduct = state.cart.length ? getProduct(state.cart[0].productId) : null;
+  if (!firstProduct && checkoutDraft) checkoutDraft.distanceKm='';
   if (firstProduct && firstProduct.storeId !== product.storeId) {
     const firstStore=getStore(firstProduct.storeId);
     toast(`Sua sacola já tem produtos de ${firstStore?.name||'outro estabelecimento'}. Finalize esse pedido antes de comprar de outro perfil.`);
@@ -4945,8 +4983,9 @@ function renderCartModal() {
     return;
   }
   const subtotal = items.reduce((sum, item) => sum + item.product.price * item.qty, 0);
-  const deliveryFee = Number(store.fee)||0;
-  const total = subtotal + deliveryFee;
+  const deliveryQuote = window.APETE_DELIVERY.quote(store, checkoutDraft?.distanceKm);
+  const deliveryFee = deliveryQuote.ready ? deliveryQuote.fee : null;
+  const total = deliveryFee === null ? null : subtotal + deliveryFee;
 
   if (cartStep === 'checkout') {
     checkoutPrices=new Map(items.map(item=>[item.product.id,item.product.price]));
@@ -4954,12 +4993,12 @@ function renderCartModal() {
       <div class="checkout-summary">
         <div class="summary-card"><h4>Entrega e pagamento</h4><div class="field-grid"><div class="field"><label>Nome</label><input id="checkout-name" class="input" autocomplete="name" value="${esc(checkoutDraft?.name??state.customer.name??'')}"></div><div class="field"><label>Telefone</label><input id="checkout-phone" class="input phone-only" inputmode="numeric" autocomplete="tel" maxlength="11" value="${esc(checkoutDraft?.phone??onlyDigits(state.customer.phone||''))}"></div><div class="field"><label>Bairro</label><input id="checkout-neighborhood" class="input" autocomplete="address-level3" value="${esc(checkoutDraft?.neighborhood??state.customer.neighborhood??'')}"></div><div class="field"><label>Endereço</label><input id="checkout-address" class="input" autocomplete="street-address" value="${esc(checkoutDraft?.address??state.customer.address??'')}"></div></div></div>
         <div class="summary-card"><h4>Forma de pagamento a combinar</h4><p class="merchant-helper">O APETÊ não processa pagamentos nesta versão. Combine a cobrança e a disponibilidade do método com o estabelecimento.</p><div class="payment-box"><button class="payment-option ${selectedPayment === 'pix' ? 'active' : ''}" data-action="select-payment" data-pay="pix"><strong>Pix</strong><span>Combinado com a loja</span></button><button class="payment-option ${selectedPayment === 'cartao' ? 'active' : ''}" data-action="select-payment" data-pay="cartao"><strong>Cartão</strong><span>Consultar disponibilidade</span></button><button class="payment-option ${selectedPayment === 'cartao-entrega' ? 'active' : ''}" data-action="select-payment" data-pay="cartao-entrega"><strong>Cartão na entrega</strong><span>Máquina no recebimento</span></button></div></div>
-        <div class="summary-card"><h4>Resumo do pedido</h4><div class="total-row"><span>Estabelecimento</span><strong>${esc(store.name)}</strong></div><div class="total-row"><span>Subtotal</span><strong>${money(subtotal)}</strong></div><div class="total-row"><span>Entrega</span><strong>${money(deliveryFee)}</strong></div><div class="total-row final"><span>Total</span><strong>${money(total)}</strong></div><div class="field" style="margin-top:12px"><label>Observações do pedido</label><textarea id="checkout-note" class="textarea" maxlength="500" placeholder="Ex.: sem cebola, entregar na portaria, chamar no WhatsApp">${esc(checkoutDraft?.note||'')}</textarea></div><div class="row" style="margin-top:14px"><button class="ghost-btn strong" data-action="back-to-cart">Voltar</button><button class="primary-btn" data-action="place-order">Confirmar pedido</button></div></div>
+        <div class="summary-card"><h4>Resumo do pedido</h4>${deliveryDistanceControl(store)}<div class="total-row"><span>Estabelecimento</span><strong>${esc(store.name)}</strong></div><div class="total-row"><span>Subtotal</span><strong>${money(subtotal)}</strong></div><div class="total-row"><span>Entrega</span><strong id="delivery-amount">${deliveryFee===null?'Informe a distância':money(deliveryFee)}</strong></div><div class="total-row final"><span>Total</span><strong id="delivery-total">${total===null?'A calcular':money(total)}</strong></div><div class="field" style="margin-top:12px"><label>Observações do pedido</label><textarea id="checkout-note" class="textarea" maxlength="500" placeholder="Ex.: sem cebola, entregar na portaria, chamar no WhatsApp">${esc(checkoutDraft?.note||'')}</textarea></div><div class="row" style="margin-top:14px"><button class="ghost-btn strong" data-action="back-to-cart">Voltar</button><button class="primary-btn" data-action="place-order" ${deliveryQuote.ready?'':'disabled'}>Confirmar pedido</button></div></div>
       </div>`);
     return;
   }
 
-  openModal('Sua sacola', `${items.map((item) => {const itemStore=getStore(item.product.storeId);return `<div class="cart-line"><div class="cart-thumb">${imgTag(item.product.image, item.product.name, itemStore?.producer ? 'producer' : 'food')}</div><div><strong>${esc(item.product.name)}</strong><p class="note">${esc(itemStore?.name||'Estabelecimento')}</p><div class="qty-row"><button data-action="qty-cart" data-id="${item.productId}" data-step="-1">−</button><strong>${item.qty}</strong><button data-action="qty-cart" data-id="${item.productId}" data-step="1">+</button><button class="link-danger" data-action="remove-cart" data-id="${item.productId}">Remover</button></div></div><strong>${money(item.product.price * item.qty)}</strong></div>`}).join('')}<div class="summary-card"><div class="total-row"><span>Subtotal</span><strong>${money(subtotal)}</strong></div><div class="total-row"><span>Entrega</span><strong>${money(deliveryFee)}</strong></div><div class="total-row final"><span>Total</span><strong>${money(total)}</strong></div><div class="row" style="margin-top:16px"><button class="ghost-btn strong" data-action="close">Continuar navegando</button><button class="primary-btn" data-action="go-checkout">Finalizar compra</button></div></div>`);
+  openModal('Sua sacola', `${items.map((item) => {const itemStore=getStore(item.product.storeId);return `<div class="cart-line"><div class="cart-thumb">${imgTag(item.product.image, item.product.name, itemStore?.producer ? 'producer' : 'food')}</div><div><strong>${esc(item.product.name)}</strong><p class="note">${esc(itemStore?.name||'Estabelecimento')}</p><div class="qty-row"><button data-action="qty-cart" data-id="${item.productId}" data-step="-1">−</button><strong>${item.qty}</strong><button data-action="qty-cart" data-id="${item.productId}" data-step="1">+</button><button class="link-danger" data-action="remove-cart" data-id="${item.productId}">Remover</button></div></div><strong>${money(item.product.price * item.qty)}</strong></div>`}).join('')}<div class="summary-card">${deliveryDistanceControl(store)}<div class="total-row"><span>Subtotal</span><strong>${money(subtotal)}</strong></div><div class="total-row"><span>Entrega</span><strong id="delivery-amount">${deliveryFee===null?'Informe a distância':money(deliveryFee)}</strong></div><div class="total-row final"><span>Total</span><strong id="delivery-total">${total===null?'A calcular':money(total)}</strong></div><div class="row" style="margin-top:16px"><button class="ghost-btn strong" data-action="close">Continuar navegando</button><button class="primary-btn" data-action="go-checkout">Finalizar compra</button></div></div>`);
 }
 
 async function placeOrder() {
@@ -4980,8 +5019,10 @@ async function placeOrder() {
   const store=getStore(items[0].product.storeId);
   if(!store)return toast('Estabelecimento indisponível.');
   try {
+    const deliveryQuote=window.APETE_DELIVERY.quote(store,checkoutDraft?.distanceKm);
+    if(!deliveryQuote.ready)return fieldError('#delivery-distance','Informe a distância combinada com a loja, de 0 a 200 km.');
     const created=await checkoutController.submit(window.APETE_BACKEND,{
-      storeId:store.id,city:state.city,mode:'delivery',
+      storeId:store.id,city:state.city,mode:'delivery',distanceKm:deliveryQuote.distanceKm,expectedDeliveryFee:deliveryQuote.fee,
       customer:{name,phone,address,neighborhood},note,payment:selectedPayment,
       items:items.map(item=>({productId:item.product.id,qty:item.qty,expectedPrice:checkoutPrices.get(item.product.id)??item.product.price}))
     });
@@ -4999,7 +5040,7 @@ async function placeOrder() {
     if(state.page==='pedidos')render();
     hydrateCatalogFromBackend();
   } catch(error) {
-    if(/price_changed/.test(String(error?.message))){await hydrateCatalogFromBackend();openCartModal();}
+    if(/price_changed|delivery_price_changed/.test(String(error?.message))){await hydrateCatalogFromBackend();openCartModal();}
     toast(friendlyBackendError(error,'Não foi possível registrar o pedido. Confira os dados e tente novamente.'));
   }
 }
@@ -5572,6 +5613,7 @@ $('#content').addEventListener('submit', event=>{
   const input=$('#sabia-input');
   if(input) sendToSabia(input.value);
 });
+$('#modal-body').addEventListener('input',event=>{if(event.target.id==='delivery-distance')updateDeliveryQuote();});
 $('#content').addEventListener('input', (event) => {
   const t = event.target;
   if (t.id === 'sabia-input') sabiaDraft=t.value;

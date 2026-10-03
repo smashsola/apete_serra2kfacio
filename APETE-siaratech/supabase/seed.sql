@@ -748,3 +748,6 @@ update public.stores set cover = 'assets/images/photo-store-109-v2.webp' where d
 update public.stores set cover = 'assets/images/photo-store-110-v2.webp' where demo = true and public_id = 110 and name = 'Mesa do Ipu · Demo' and cover = 'assets/images/product-caseiro.webp';
 update public.stores set cover = 'assets/images/photo-store-111-v2.webp' where demo = true and public_id = 111 and name = 'Forno do Ipu · Demo' and cover = 'assets/images/product-bakery.webp';
 update public.stores set cover = 'assets/images/photo-store-112-v2.webp' where demo = true and public_id = 112 and name = 'Horta do Ipu · Demo' and cover = 'assets/images/product-produce.webp';
+
+-- Keep fictional seed shops aligned with the platform demonstration tariff.
+update public.stores set delivery_fee=200,delivery_fee_per_km=100,delivery_minimum_fee=500 where demo;

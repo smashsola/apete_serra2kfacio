@@ -182,13 +182,15 @@
     }));
   }
 
-  async function createOrder({storeId,city,mode='delivery',customer,note='',payment,items,requestId}) {
+  async function createOrder({storeId,city,mode='delivery',customer,note='',payment,items,requestId,distanceKm,expectedDeliveryFee}) {
     if(typeof requestId!=='string'||!(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i).test(requestId))throw new Error('invalid_order_request_id');
     const paymentMap={pix:'pix',cartao:'card','cartao-entrega':'card_on_delivery'};
-    const rows=await authed('/rest/v1/rpc/create_order_once',{
+    const rows=await authed('/rest/v1/rpc/create_order_distance_once',{
       method:'POST',
       body:{
         p_request_id:requestId,
+        p_distance_km:distanceKm??null,
+        p_expected_delivery_fee:expectedDeliveryFee,
         p_store_public_id:Number(storeId),
         p_city:city,
         p_mode:mode,
@@ -206,7 +208,7 @@
 
   async function loadCatalog() {
     const [stores,products]=await Promise.all([
-      request('/rest/v1/stores?select=id,public_id,name,category,city,address,description,hero,delivery_fee,producer,delivery,pickup,service_areas,cover,verified,active,demo,instagram,contact_phone&active=eq.true&order=public_id.asc'),
+      request('/rest/v1/stores?select=id,public_id,name,category,city,address,description,hero,delivery_fee,delivery_fee_per_km,delivery_minimum_fee,producer,delivery,pickup,service_areas,cover,verified,active,demo,instagram,contact_phone&active=eq.true&order=public_id.asc'),
       request('/rest/v1/products?select=id,public_id,store_id,name,description,category,price,stock,image,old_price,last_batch,offer_starts_at,offer_ends_at,preferences,serves,active,demo&active=eq.true&order=public_id.asc')
     ]);
     const publicStoreId=new Map(stores.map(store=>[store.id,Number(store.public_id)]));
@@ -214,7 +216,7 @@
       stores:stores.map(store=>({
         id:Number(store.public_id),backendId:store.id,name:store.name,category:store.category,city:store.city,
         address:store.address||'',
-        desc:store.description||'',hero:store.hero||'',fee:Number(store.delivery_fee)||0,producer:Boolean(store.producer),
+        desc:store.description||'',hero:store.hero||'',fee:Math.max(Number(store.delivery_fee)||0,Number(store.delivery_minimum_fee)||0),deliveryBaseFee:Number(store.delivery_fee)||0,feePerKm:Number(store.delivery_fee_per_km)||0,minimumFee:Number(store.delivery_minimum_fee)||0,producer:Boolean(store.producer),
         delivery:Boolean(store.delivery),pickup:Boolean(store.pickup),serviceAreas:Array.isArray(store.service_areas)?store.service_areas:[],
         cover:store.cover||'',verified:Boolean(store.verified),open:Boolean(store.active),demo:Boolean(store.demo),
         instagram:store.instagram||'',contactPhone:store.contact_phone||''
@@ -294,7 +296,7 @@
   async function getMerchantMemberships() {
     const session=await getSession();
     if(!session?.user?.id)return [];
-    const select='store_id,role,stores(id,public_id,name,category,city,address,description,delivery_fee,producer,delivery,pickup,service_areas,cover,verified,active,instagram,contact_phone)';
+    const select='store_id,role,stores(id,public_id,name,category,city,address,description,delivery_fee,delivery_fee_per_km,delivery_minimum_fee,producer,delivery,pickup,service_areas,cover,verified,active,instagram,contact_phone)';
     const rows=await authed('/rest/v1/store_members?select='+encodeURIComponent(select)+'&user_id=eq.'+encodeURIComponent(session.user.id));
     return (rows||[]).filter(row=>row.stores).map(row=>({
       role:row.role,
@@ -306,7 +308,8 @@
         city:row.stores.city||'',
         address:row.stores.address||'',
         desc:row.stores.description||'',
-        fee:Number(row.stores.delivery_fee)||0,
+        fee:Math.max(Number(row.stores.delivery_fee)||0,Number(row.stores.delivery_minimum_fee)||0),
+        deliveryBaseFee:Number(row.stores.delivery_fee)||0,feePerKm:Number(row.stores.delivery_fee_per_km)||0,minimumFee:Number(row.stores.delivery_minimum_fee)||0,
         producer:Boolean(row.stores.producer),
         delivery:Boolean(row.stores.delivery),
         pickup:Boolean(row.stores.pickup),

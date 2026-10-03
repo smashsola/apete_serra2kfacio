@@ -49,3 +49,11 @@ Comprovante local: outputs/stand-qa/pedido-cliente.png, na área de trabalho do 
 - Formulário de oferta criado e encerrado pela interface de demonstração, com início/fim e indicação de prazo. Nenhuma promoção fictícia permanente foi ativada.
 - Groq e Gemini responderam na publicação. Cloudflare teve um timeout de 18 segundos e respondeu na repetição em cerca de 12,7 segundos; o resultado não garante disponibilidade futura.
 - Advisor do Supabase: dois avisos de funções SECURITY DEFINER públicas autenticadas, tabela privada sem política por bloqueio deliberado e proteção de senhas vazadas desativada. [Referência das funções](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable) e [proteção de senhas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Nenhuma permissão de dados foi ampliada além das colunas de prazo protegidas pelas políticas existentes.
+
+## Fotos corrigidas e localização rápida — 2 de outubro
+
+- Revisão visual de todas as associações: 123 fotos de produto e 25 capas substituídas. Os 153 produtos e 30 estabelecimentos têm arquivos distintos, verificados também por hash; imagens ilustrativas de demonstração.
+- Associação preservada entre app, seed, Worker e banco. Atualizações do banco limitadas a registros demo, nome e imagem antiga esperados, sem substituir uploads posteriores dos comerciantes.
+- Localização: limite total de 3 segundos, posição em cache de até dois minutos e uma tentativa de alta precisão quando a primeira resposta é imprecisa. Seleção manual permanece disponível e resultados atrasados são ignorados. Nenhuma coordenada exata é enviada ou persistida. GPS real em celular físico ainda exige conferência.
+- 183 testes passaram, incluindo repetição de fotos e demora/recusa/imprecisão do GPS. CLI Supabase bloqueada pelo Controle de Aplicativo do Windows; DML aplicado e verificado pelo conector, com SQL correspondente versionado.
+- Cloudflare: versão 0d1922b6-7849-439a-b2b0-d5080f1004c5.

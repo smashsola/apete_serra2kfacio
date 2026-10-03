@@ -1,0 +1,953 @@
+{
+  "version": 2,
+  "illustrative": true,
+  "products": [
+    {
+      "id": 1,
+      "name": "Baião da casa para dois",
+      "image": "assets/images/photo-product-1-v2.webp"
+    },
+    {
+      "id": 2,
+      "name": "Galinha caipira com pirão",
+      "image": "assets/images/prod-galinha.webp"
+    },
+    {
+      "id": 3,
+      "name": "Escondidinho de carne",
+      "image": "assets/images/prod-escondidinho.webp"
+    },
+    {
+      "id": 4,
+      "name": "Macaxeira dourada",
+      "image": "assets/images/prod-macaxeira.webp"
+    },
+    {
+      "id": 5,
+      "name": "Suco de acerola",
+      "image": "assets/images/prod-acerola.webp"
+    },
+    {
+      "id": 6,
+      "name": "Pão de fermentação lenta",
+      "image": "assets/images/prod-pao.webp"
+    },
+    {
+      "id": 7,
+      "name": "Bolo de milho caseiro",
+      "image": "assets/images/photo-product-7-v2.webp"
+    },
+    {
+      "id": 8,
+      "name": "Tapioca com queijo coalho",
+      "image": "assets/images/prod-tapioca.webp"
+    },
+    {
+      "id": 9,
+      "name": "Café coado",
+      "image": "assets/images/photo-product-9-v2.webp"
+    },
+    {
+      "id": 10,
+      "name": "Combo café da manhã",
+      "image": "assets/images/prod-combo-cafe.webp"
+    },
+    {
+      "id": 11,
+      "name": "Prato da Serra",
+      "image": "assets/images/prod-prato-serra.webp"
+    },
+    {
+      "id": 12,
+      "name": "Caldinho de feijão",
+      "image": "assets/images/prod-caldinho.webp"
+    },
+    {
+      "id": 13,
+      "name": "Almoço vegetariano",
+      "image": "assets/images/photo-product-13-v2.webp"
+    },
+    {
+      "id": 14,
+      "name": "Panelada da Serra",
+      "image": "assets/images/prod-panelada.webp"
+    },
+    {
+      "id": 15,
+      "name": "Suco de cajá",
+      "image": "assets/images/prod-caja.webp"
+    },
+    {
+      "id": 16,
+      "name": "Banana da estação",
+      "image": "assets/images/prod-banana.webp"
+    },
+    {
+      "id": 17,
+      "name": "Café da Serra",
+      "image": "assets/images/prod-cafe-serra.webp"
+    },
+    {
+      "id": 18,
+      "name": "Geleia de goiaba",
+      "image": "assets/images/prod-geleia-goiaba.webp"
+    },
+    {
+      "id": 19,
+      "name": "Cesta de hortaliças",
+      "image": "assets/images/prod-cesta-hortalicas.webp"
+    },
+    {
+      "id": 20,
+      "name": "Tomate da horta",
+      "image": "assets/images/prod-tomate.webp"
+    },
+    {
+      "id": 21,
+      "name": "Cesta orgânica semanal",
+      "image": "assets/images/prod-cesta-organica.webp"
+    },
+    {
+      "id": 22,
+      "name": "Mel da região",
+      "image": "assets/images/prod-mel.webp"
+    },
+    {
+      "id": 23,
+      "name": "Alface crespa",
+      "image": "assets/images/prod-alface.webp"
+    },
+    {
+      "id": 24,
+      "name": "Cenoura orgânica",
+      "image": "assets/images/prod-cenoura.webp"
+    },
+    {
+      "id": 25,
+      "name": "Queijo coalho artesanal",
+      "image": "assets/images/photo-product-25-v2.webp"
+    },
+    {
+      "id": 26,
+      "name": "Pão francês da fornada",
+      "image": "assets/images/photo-product-26-v2.webp"
+    },
+    {
+      "id": 27,
+      "name": "Sonho de creme",
+      "image": "assets/images/photo-product-27-v2.webp"
+    },
+    {
+      "id": 28,
+      "name": "Bolo fofo de laranja",
+      "image": "assets/images/photo-product-28-v2.webp"
+    },
+    {
+      "id": 29,
+      "name": "Cuscuz com queijo coalho",
+      "image": "assets/images/photo-product-29-v2.webp"
+    },
+    {
+      "id": 30,
+      "name": "Kit fim de fornada",
+      "image": "assets/images/photo-product-30-v2.webp"
+    },
+    {
+      "id": 31,
+      "name": "Pão de coco",
+      "image": "assets/images/photo-product-31-v2.webp"
+    },
+    {
+      "id": 32,
+      "name": "Croissant de queijo",
+      "image": "assets/images/photo-product-32-v2.webp"
+    },
+    {
+      "id": 33,
+      "name": "Pão de queijo",
+      "image": "assets/images/photo-product-33-v2.webp"
+    },
+    {
+      "id": 34,
+      "name": "Bolo de macaxeira",
+      "image": "assets/images/photo-product-34-v2.webp"
+    },
+    {
+      "id": 35,
+      "name": "Cesta da fornada do dia",
+      "image": "assets/images/photo-product-35-v2.webp"
+    },
+    {
+      "id": 36,
+      "name": "Brownie de chocolate",
+      "image": "assets/images/photo-product-36-v2.webp"
+    },
+    {
+      "id": 37,
+      "name": "Brigadeiro artesanal",
+      "image": "assets/images/photo-product-37-v2.webp"
+    },
+    {
+      "id": 38,
+      "name": "Bolo no pote de ninho",
+      "image": "assets/images/photo-product-38-v2.webp"
+    },
+    {
+      "id": 39,
+      "name": "Pudim caseiro",
+      "image": "assets/images/photo-product-39-v2.webp"
+    },
+    {
+      "id": 40,
+      "name": "Caixa mini doces",
+      "image": "assets/images/photo-product-40-v2.webp"
+    },
+    {
+      "id": 41,
+      "name": "Fatia red velvet",
+      "image": "assets/images/photo-product-41-v2.webp"
+    },
+    {
+      "id": 42,
+      "name": "Churros com doce de leite",
+      "image": "assets/images/photo-product-42-v2.webp"
+    },
+    {
+      "id": 43,
+      "name": "Palha italiana",
+      "image": "assets/images/photo-product-43-v2.webp"
+    },
+    {
+      "id": 44,
+      "name": "Copo da felicidade",
+      "image": "assets/images/photo-product-44-v2.webp"
+    },
+    {
+      "id": 45,
+      "name": "Bolo de cenoura com chocolate",
+      "image": "assets/images/photo-product-45-v2.webp"
+    },
+    {
+      "id": 46,
+      "name": "Torta de chocolate",
+      "image": "assets/images/photo-product-46-v2.webp"
+    },
+    {
+      "id": 47,
+      "name": "Cheesecake de frutas vermelhas",
+      "image": "assets/images/photo-product-47-v2.webp"
+    },
+    {
+      "id": 48,
+      "name": "Cappuccino da casa",
+      "image": "assets/images/photo-product-48-v2.webp"
+    },
+    {
+      "id": 49,
+      "name": "Brownie com sorvete",
+      "image": "assets/images/photo-product-49-v2.webp"
+    },
+    {
+      "id": 50,
+      "name": "Caixa de trufas",
+      "image": "assets/images/photo-product-50-v2.webp"
+    },
+    {
+      "id": 51,
+      "name": "X-burger da casa",
+      "image": "assets/images/photo-product-51-v2.webp"
+    },
+    {
+      "id": 52,
+      "name": "Sanduíche de frango",
+      "image": "assets/images/photo-product-52-v2.webp"
+    },
+    {
+      "id": 53,
+      "name": "Batata frita crocante",
+      "image": "assets/images/photo-product-53-v2.webp"
+    },
+    {
+      "id": 54,
+      "name": "Cachorro-quente completo",
+      "image": "assets/images/photo-product-54-v2.webp"
+    },
+    {
+      "id": 55,
+      "name": "Suco de cajá 400 ml",
+      "image": "assets/images/photo-product-55-v2.webp"
+    },
+    {
+      "id": 56,
+      "name": "Cuscuz com carne de sol",
+      "image": "assets/images/photo-product-56-v2.webp"
+    },
+    {
+      "id": 57,
+      "name": "Cuscuz com ovo e queijo",
+      "image": "assets/images/photo-product-57-v2.webp"
+    },
+    {
+      "id": 58,
+      "name": "Tapioca de frango",
+      "image": "assets/images/photo-product-58-v2.webp"
+    },
+    {
+      "id": 59,
+      "name": "Café com leite",
+      "image": "assets/images/photo-product-59-v2.webp"
+    },
+    {
+      "id": 60,
+      "name": "Bolo pé de moleque",
+      "image": "assets/images/photo-product-60-v2.webp"
+    },
+    {
+      "id": 61,
+      "name": "Pizza muçarela média",
+      "image": "assets/images/photo-product-61-v2.webp"
+    },
+    {
+      "id": 62,
+      "name": "Pizza calabresa média",
+      "image": "assets/images/photo-product-62-v2.webp"
+    },
+    {
+      "id": 63,
+      "name": "Pizza frango cremosa média",
+      "image": "assets/images/photo-product-63-v2.webp"
+    },
+    {
+      "id": 64,
+      "name": "Pizza marguerita média",
+      "image": "assets/images/photo-product-64-v2.webp"
+    },
+    {
+      "id": 65,
+      "name": "Combo pizza e refrigerante",
+      "image": "assets/images/photo-product-65-v2.webp"
+    },
+    {
+      "id": 66,
+      "name": "Marmita de frango grelhado",
+      "image": "assets/images/photo-product-66-v2.webp"
+    },
+    {
+      "id": 67,
+      "name": "Carne de panela completa",
+      "image": "assets/images/photo-product-67-v2.webp"
+    },
+    {
+      "id": 68,
+      "name": "Peixe grelhado com legumes",
+      "image": "assets/images/photo-product-68-v2.webp"
+    },
+    {
+      "id": 69,
+      "name": "Marmita vegetariana",
+      "image": "assets/images/photo-product-69-v2.webp"
+    },
+    {
+      "id": 70,
+      "name": "Feijoada individual",
+      "image": "assets/images/photo-product-70-v2.webp"
+    },
+    {
+      "id": 71,
+      "name": "Café coado da Serra",
+      "image": "assets/images/photo-product-71-v2.webp"
+    },
+    {
+      "id": 72,
+      "name": "Cappuccino cremoso",
+      "image": "assets/images/photo-product-72-v2.webp"
+    },
+    {
+      "id": 73,
+      "name": "Pão de queijo grande",
+      "image": "assets/images/photo-product-73-v2.webp"
+    },
+    {
+      "id": 74,
+      "name": "Sanduíche natural de frango",
+      "image": "assets/images/photo-product-74-v2.webp"
+    },
+    {
+      "id": 75,
+      "name": "Bolo de banana com canela",
+      "image": "assets/images/photo-product-75-v2.webp"
+    },
+    {
+      "id": 76,
+      "name": "Alface crespa",
+      "image": "assets/images/photo-product-76-v2.webp"
+    },
+    {
+      "id": 77,
+      "name": "Cheiro-verde",
+      "image": "assets/images/photo-product-77-v2.webp"
+    },
+    {
+      "id": 78,
+      "name": "Tomate da Serra 1 kg",
+      "image": "assets/images/photo-product-78-v2.webp"
+    },
+    {
+      "id": 79,
+      "name": "Cenoura 1 kg",
+      "image": "assets/images/photo-product-79-v2.webp"
+    },
+    {
+      "id": 80,
+      "name": "Cesta de salada",
+      "image": "assets/images/photo-product-80-v2.webp"
+    },
+    {
+      "id": 81,
+      "name": "Mel artesanal 500 g",
+      "image": "assets/images/photo-product-81-v2.webp"
+    },
+    {
+      "id": 82,
+      "name": "Geleia de goiaba 250 g",
+      "image": "assets/images/photo-product-82-v2.webp"
+    },
+    {
+      "id": 83,
+      "name": "Rapadura tradicional",
+      "image": "assets/images/photo-product-83-v2.webp"
+    },
+    {
+      "id": 84,
+      "name": "Farinha de mandioca 1 kg",
+      "image": "assets/images/photo-product-84-v2.webp"
+    },
+    {
+      "id": 85,
+      "name": "Queijo coalho artesanal 500 g",
+      "image": "assets/images/photo-product-85-v2.webp"
+    },
+    {
+      "id": 86,
+      "name": "Banana prata 1 kg",
+      "image": "assets/images/photo-product-86-v2.webp"
+    },
+    {
+      "id": 87,
+      "name": "Macaxeira 1 kg",
+      "image": "assets/images/photo-product-87-v2.webp"
+    },
+    {
+      "id": 88,
+      "name": "Batata-doce 1 kg",
+      "image": "assets/images/photo-product-88-v2.webp"
+    },
+    {
+      "id": 89,
+      "name": "Feijão verde 1 kg",
+      "image": "assets/images/photo-product-89-v2.webp"
+    },
+    {
+      "id": 90,
+      "name": "Cesta da roça",
+      "image": "assets/images/photo-product-90-v2.webp"
+    },
+    {
+      "id": 1001,
+      "name": "Arroz de galinha",
+      "image": "assets/images/photo-product-1001-v2.webp"
+    },
+    {
+      "id": 1002,
+      "name": "Carne de panela com arroz",
+      "image": "assets/images/prod-carne-panela.webp"
+    },
+    {
+      "id": 1003,
+      "name": "Almoço vegetariano de legumes",
+      "image": "assets/images/photo-product-1003-v2.webp"
+    },
+    {
+      "id": 1004,
+      "name": "Peixe com purê de macaxeira",
+      "image": "assets/images/prod-peixe-pure.webp"
+    },
+    {
+      "id": 1005,
+      "name": "Suco de cajá 400 ml",
+      "image": "assets/images/photo-product-1005-v2.webp"
+    },
+    {
+      "id": 1006,
+      "name": "Cuscuz com ovo",
+      "image": "assets/images/prod-cuscuz-ovo.webp"
+    },
+    {
+      "id": 1007,
+      "name": "Tapioca com queijo coalho",
+      "image": "assets/images/photo-product-1007-v2.webp"
+    },
+    {
+      "id": 1008,
+      "name": "Pão de queijo — 3 unidades",
+      "image": "assets/images/prod-pao-queijo.webp"
+    },
+    {
+      "id": 1009,
+      "name": "Bolo de milho — fatia",
+      "image": "assets/images/photo-product-1009-v2.webp"
+    },
+    {
+      "id": 1010,
+      "name": "Café coado 200 ml",
+      "image": "assets/images/photo-product-1010-v2.webp"
+    },
+    {
+      "id": 1011,
+      "name": "Cesta de hortaliças",
+      "image": "assets/images/photo-product-1011-v2.webp"
+    },
+    {
+      "id": 1012,
+      "name": "Banana prata 1 kg",
+      "image": "assets/images/photo-product-1012-v2.webp"
+    },
+    {
+      "id": 1013,
+      "name": "Abóbora 1 kg",
+      "image": "assets/images/prod-abobora.webp"
+    },
+    {
+      "id": 1014,
+      "name": "Geleia de goiaba 250 g",
+      "image": "assets/images/photo-product-1014-v2.webp"
+    },
+    {
+      "id": 1015,
+      "name": "Feijão verde 500 g",
+      "image": "assets/images/photo-product-1015-v2.webp"
+    },
+    {
+      "id": 1016,
+      "name": "Baião vegetariano",
+      "image": "assets/images/photo-product-1016-v2.webp"
+    },
+    {
+      "id": 1017,
+      "name": "Carne de panela com arroz",
+      "image": "assets/images/photo-product-1017-v2.webp"
+    },
+    {
+      "id": 1018,
+      "name": "Almoço vegetariano de legumes",
+      "image": "assets/images/photo-product-1018-v2.webp"
+    },
+    {
+      "id": 1019,
+      "name": "Peixe com purê de macaxeira",
+      "image": "assets/images/photo-product-1019-v2.webp"
+    },
+    {
+      "id": 1020,
+      "name": "Suco de cajá 400 ml",
+      "image": "assets/images/photo-product-1020-v2.webp"
+    },
+    {
+      "id": 1021,
+      "name": "Cuscuz com ovo",
+      "image": "assets/images/photo-product-1021-v2.webp"
+    },
+    {
+      "id": 1022,
+      "name": "Tapioca com queijo coalho",
+      "image": "assets/images/photo-product-1022-v2.webp"
+    },
+    {
+      "id": 1023,
+      "name": "Pão de queijo — 3 unidades",
+      "image": "assets/images/photo-product-1023-v2.webp"
+    },
+    {
+      "id": 1024,
+      "name": "Tapioca de banana e canela",
+      "image": "assets/images/prod-tapioca-banana.webp"
+    },
+    {
+      "id": 1025,
+      "name": "Café coado 200 ml",
+      "image": "assets/images/photo-product-1025-v2.webp"
+    },
+    {
+      "id": 1026,
+      "name": "Cesta de hortaliças",
+      "image": "assets/images/photo-product-1026-v2.webp"
+    },
+    {
+      "id": 1027,
+      "name": "Banana prata 1 kg",
+      "image": "assets/images/photo-product-1027-v2.webp"
+    },
+    {
+      "id": 1028,
+      "name": "Batata-doce 1 kg",
+      "image": "assets/images/prod-batata-doce.webp"
+    },
+    {
+      "id": 1029,
+      "name": "Geleia de goiaba 250 g",
+      "image": "assets/images/photo-product-1029-v2.webp"
+    },
+    {
+      "id": 1030,
+      "name": "Feijão verde 500 g",
+      "image": "assets/images/photo-product-1030-v2.webp"
+    },
+    {
+      "id": 1031,
+      "name": "Escondidinho de legumes",
+      "image": "assets/images/prod-escondidinho-veg.webp"
+    },
+    {
+      "id": 1032,
+      "name": "Carne de panela com arroz",
+      "image": "assets/images/photo-product-1032-v2.webp"
+    },
+    {
+      "id": 1033,
+      "name": "Almoço vegetariano de legumes",
+      "image": "assets/images/photo-product-1033-v2.webp"
+    },
+    {
+      "id": 1034,
+      "name": "Peixe com purê de macaxeira",
+      "image": "assets/images/photo-product-1034-v2.webp"
+    },
+    {
+      "id": 1035,
+      "name": "Suco de cajá 400 ml",
+      "image": "assets/images/photo-product-1035-v2.webp"
+    },
+    {
+      "id": 1036,
+      "name": "Cuscuz com ovo",
+      "image": "assets/images/photo-product-1036-v2.webp"
+    },
+    {
+      "id": 1037,
+      "name": "Tapioca com queijo coalho",
+      "image": "assets/images/photo-product-1037-v2.webp"
+    },
+    {
+      "id": 1038,
+      "name": "Pão de queijo — 3 unidades",
+      "image": "assets/images/photo-product-1038-v2.webp"
+    },
+    {
+      "id": 1039,
+      "name": "Sanduíche de queijo e tomate",
+      "image": "assets/images/prod-sanduiche-queijo.webp"
+    },
+    {
+      "id": 1040,
+      "name": "Café coado 200 ml",
+      "image": "assets/images/photo-product-1040-v2.webp"
+    },
+    {
+      "id": 1041,
+      "name": "Cesta de hortaliças",
+      "image": "assets/images/photo-product-1041-v2.webp"
+    },
+    {
+      "id": 1042,
+      "name": "Banana prata 1 kg",
+      "image": "assets/images/photo-product-1042-v2.webp"
+    },
+    {
+      "id": 1043,
+      "name": "Tomate 1 kg",
+      "image": "assets/images/photo-product-1043-v2.webp"
+    },
+    {
+      "id": 1044,
+      "name": "Geleia de goiaba 250 g",
+      "image": "assets/images/photo-product-1044-v2.webp"
+    },
+    {
+      "id": 1045,
+      "name": "Feijão verde 500 g",
+      "image": "assets/images/photo-product-1045-v2.webp"
+    },
+    {
+      "id": 1046,
+      "name": "Frango com cuscuz",
+      "image": "assets/images/photo-product-1046-v2.webp"
+    },
+    {
+      "id": 1047,
+      "name": "Carne de panela com arroz",
+      "image": "assets/images/photo-product-1047-v2.webp"
+    },
+    {
+      "id": 1048,
+      "name": "Almoço vegetariano de legumes",
+      "image": "assets/images/photo-product-1048-v2.webp"
+    },
+    {
+      "id": 1049,
+      "name": "Peixe com purê de macaxeira",
+      "image": "assets/images/photo-product-1049-v2.webp"
+    },
+    {
+      "id": 1050,
+      "name": "Suco de cajá 400 ml",
+      "image": "assets/images/photo-product-1050-v2.webp"
+    },
+    {
+      "id": 1051,
+      "name": "Cuscuz com ovo",
+      "image": "assets/images/photo-product-1051-v2.webp"
+    },
+    {
+      "id": 1052,
+      "name": "Tapioca com queijo coalho",
+      "image": "assets/images/photo-product-1052-v2.webp"
+    },
+    {
+      "id": 1053,
+      "name": "Pão de queijo — 3 unidades",
+      "image": "assets/images/photo-product-1053-v2.webp"
+    },
+    {
+      "id": 1054,
+      "name": "Bolo de banana — fatia",
+      "image": "assets/images/prod-bolo-banana.webp"
+    },
+    {
+      "id": 1055,
+      "name": "Café coado 200 ml",
+      "image": "assets/images/photo-product-1055-v2.webp"
+    },
+    {
+      "id": 1056,
+      "name": "Cesta de hortaliças",
+      "image": "assets/images/photo-product-1056-v2.webp"
+    },
+    {
+      "id": 1057,
+      "name": "Banana prata 1 kg",
+      "image": "assets/images/photo-product-1057-v2.webp"
+    },
+    {
+      "id": 1058,
+      "name": "Cenoura 1 kg",
+      "image": "assets/images/photo-product-1058-v2.webp"
+    },
+    {
+      "id": 1059,
+      "name": "Geleia de goiaba 250 g",
+      "image": "assets/images/photo-product-1059-v2.webp"
+    },
+    {
+      "id": 1060,
+      "name": "Feijão verde 500 g",
+      "image": "assets/images/photo-product-1060-v2.webp"
+    },
+    {
+      "id": 1061,
+      "name": "Marmita vegetariana da casa",
+      "image": "assets/images/photo-product-1061-v2.webp"
+    },
+    {
+      "id": 1062,
+      "name": "Baião vegetariano individual",
+      "image": "assets/images/photo-product-1062-v2.webp"
+    },
+    {
+      "id": 1063,
+      "name": "Escondidinho de legumes",
+      "image": "assets/images/photo-product-1063-v2.webp"
+    }
+  ],
+  "stores": [
+    {
+      "id": 1,
+      "name": "Casa do Baião",
+      "category": "Comida regional",
+      "cover": "assets/images/cover-casa.webp"
+    },
+    {
+      "id": 2,
+      "name": "Forno & Afeto",
+      "category": "Padaria artesanal",
+      "cover": "assets/images/cover-forno.webp"
+    },
+    {
+      "id": 3,
+      "name": "Quintal da Serra",
+      "category": "Cozinha caseira",
+      "cover": "assets/images/cover-quintal.webp"
+    },
+    {
+      "id": 4,
+      "name": "Sítio Boa Vista",
+      "category": "Produtor local",
+      "cover": "assets/images/cover-sitio.webp"
+    },
+    {
+      "id": 5,
+      "name": "Serra Verde Orgânicos",
+      "category": "Produtor local",
+      "cover": "assets/images/cover-serraverde.webp"
+    },
+    {
+      "id": 6,
+      "name": "Pão da Praça",
+      "category": "Padaria",
+      "cover": "assets/images/photo-store-6-v2.webp"
+    },
+    {
+      "id": 7,
+      "name": "Padaria Neblina",
+      "category": "Padaria e café",
+      "cover": "assets/images/photo-store-7-v2.webp"
+    },
+    {
+      "id": 8,
+      "name": "Doce Encanto da Serra",
+      "category": "Doceria",
+      "cover": "assets/images/photo-store-8-v2.webp"
+    },
+    {
+      "id": 9,
+      "name": "Açúcar & Canela",
+      "category": "Doceria e bolos",
+      "cover": "assets/images/photo-store-9-v2.webp"
+    },
+    {
+      "id": 10,
+      "name": "Flor de Cacau",
+      "category": "Café e doceria",
+      "cover": "assets/images/photo-store-10-v2.webp"
+    },
+    {
+      "id": 11,
+      "name": "Chapa do Norte",
+      "category": "Lanchonete",
+      "cover": "assets/images/photo-store-11-v2.webp"
+    },
+    {
+      "id": 12,
+      "name": "Ponto do Cuscuz",
+      "category": "Café regional",
+      "cover": "assets/images/photo-store-12-v2.webp"
+    },
+    {
+      "id": 13,
+      "name": "Massa da Serra",
+      "category": "Pizzaria",
+      "cover": "assets/images/photo-store-13-v2.webp"
+    },
+    {
+      "id": 14,
+      "name": "Panelinha Ibiapaba",
+      "category": "Restaurante caseiro",
+      "cover": "assets/images/photo-store-14-v2.webp"
+    },
+    {
+      "id": 15,
+      "name": "Café Jatobá",
+      "category": "Cafeteria",
+      "cover": "assets/images/photo-store-15-v2.webp"
+    },
+    {
+      "id": 16,
+      "name": "Horta Pedra Branca",
+      "category": "Produtor local",
+      "cover": "assets/images/photo-store-16-v2.webp"
+    },
+    {
+      "id": 17,
+      "name": "Mel & Raiz da Serra",
+      "category": "Produtor artesanal",
+      "cover": "assets/images/photo-store-17-v2.webp"
+    },
+    {
+      "id": 18,
+      "name": "Roçado da Ibiapaba",
+      "category": "Produtor local",
+      "cover": "assets/images/photo-store-18-v2.webp"
+    },
+    {
+      "id": 101,
+      "name": "Cozinha de Viçosa · Demo",
+      "category": "Restaurante caseiro",
+      "cover": "assets/images/photo-store-101-v2.webp"
+    },
+    {
+      "id": 102,
+      "name": "Forno de Viçosa · Demo",
+      "category": "Padaria e café",
+      "cover": "assets/images/photo-store-102-v2.webp"
+    },
+    {
+      "id": 103,
+      "name": "Horta de Viçosa · Demo",
+      "category": "Produtor local",
+      "cover": "assets/images/photo-store-103-v2.webp"
+    },
+    {
+      "id": 104,
+      "name": "Mesa de Carnaubal · Demo",
+      "category": "Restaurante caseiro",
+      "cover": "assets/images/photo-store-104-v2.webp"
+    },
+    {
+      "id": 105,
+      "name": "Pão de Carnaubal · Demo",
+      "category": "Padaria e café",
+      "cover": "assets/images/photo-store-105-v2.webp"
+    },
+    {
+      "id": 106,
+      "name": "Roça de Carnaubal · Demo",
+      "category": "Produtor local",
+      "cover": "assets/images/photo-store-106-v2.webp"
+    },
+    {
+      "id": 107,
+      "name": "Cozinha de Croatá · Demo",
+      "category": "Restaurante caseiro",
+      "cover": "assets/images/photo-store-107-v2.webp"
+    },
+    {
+      "id": 108,
+      "name": "Café de Croatá · Demo",
+      "category": "Padaria e café",
+      "cover": "assets/images/photo-store-108-v2.webp"
+    },
+    {
+      "id": 109,
+      "name": "Colheita de Croatá · Demo",
+      "category": "Produtor local",
+      "cover": "assets/images/photo-store-109-v2.webp"
+    },
+    {
+      "id": 110,
+      "name": "Mesa do Ipu · Demo",
+      "category": "Restaurante caseiro",
+      "cover": "assets/images/photo-store-110-v2.webp"
+    },
+    {
+      "id": 111,
+      "name": "Forno do Ipu · Demo",
+      "category": "Padaria e café",
+      "cover": "assets/images/photo-store-111-v2.webp"
+    },
+    {
+      "id": 112,
+      "name": "Horta do Ipu · Demo",
+      "category": "Produtor local",
+      "cover": "assets/images/photo-store-112-v2.webp"
+    }
+  ]
+}

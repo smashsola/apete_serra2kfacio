@@ -1,13 +1,37 @@
 'use strict';
 (function(root){
-  function requestPosition(geolocation,{timeoutMs=4000,setTimer=setTimeout,clearTimer=clearTimeout}={}){
+  function requestPosition(geolocation,{timeoutMs=3000,setTimer=setTimeout,clearTimer=clearTimeout}={}){
     return new Promise((resolve,reject)=>{
       let settled=false;
       const finish=(callback,value)=>{if(settled)return;settled=true;clearTimer(timer);callback(value);};
       const timer=setTimer(()=>finish(reject,{code:3}),timeoutMs);
-      try{
-        geolocation.getCurrentPosition(position=>finish(resolve,position),error=>finish(reject,error),{enableHighAccuracy:false,timeout:timeoutMs,maximumAge:900000});
-      }catch(error){finish(reject,error);}
+      const started=Date.now();
+      let retried=false;
+      const retry=()=>{
+        if(settled||retried)return;
+        retried=true;
+        const remaining=Math.max(1,timeoutMs-(Date.now()-started));
+        request(true,remaining,0);
+      };
+      const request=(precise,timeout,maximumAge)=>{
+        try{
+          geolocation.getCurrentPosition(position=>{
+            if(settled)return;
+            const accuracy=position?.coords?.accuracy;
+            if(!Number.isFinite(accuracy)||accuracy>5000){
+              if(!precise)retry();
+              else finish(reject,{code:2});
+              return;
+            }
+            finish(resolve,position);
+          },error=>{
+            if(settled)return;
+            if(error.code===2&&!precise)retry();
+            else finish(reject,error);
+          },{enableHighAccuracy:precise,timeout,maximumAge});
+        }catch(error){finish(reject,error);}
+      };
+      request(false,timeoutMs,120000);
     });
   }
   function nearestCity(coords,centers){

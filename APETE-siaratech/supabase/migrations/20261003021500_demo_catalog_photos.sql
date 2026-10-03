@@ -1,0 +1,28 @@
+-- Fill missing illustrative photos in demo catalogue only. Never overwrite merchant photos.
+update public.products set image = 'assets/images/prod-carne-panela.webp' where demo = true and public_id = 1002 and name = 'Carne de panela com arroz' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-peixe-pure.webp' where demo = true and public_id = 1004 and name = 'Peixe com purê de macaxeira' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-cuscuz-ovo.webp' where demo = true and public_id = 1006 and name = 'Cuscuz com ovo' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-pao-queijo.webp' where demo = true and public_id = 1008 and name = 'Pão de queijo — 3 unidades' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-abobora.webp' where demo = true and public_id = 1013 and name = 'Abóbora 1 kg' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-feijao-verde.webp' where demo = true and public_id = 1015 and name = 'Feijão verde 500 g' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-carne-panela.webp' where demo = true and public_id = 1017 and name = 'Carne de panela com arroz' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-peixe-pure.webp' where demo = true and public_id = 1019 and name = 'Peixe com purê de macaxeira' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-cuscuz-ovo.webp' where demo = true and public_id = 1021 and name = 'Cuscuz com ovo' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-pao-queijo.webp' where demo = true and public_id = 1023 and name = 'Pão de queijo — 3 unidades' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-tapioca-banana.webp' where demo = true and public_id = 1024 and name = 'Tapioca de banana e canela' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-batata-doce.webp' where demo = true and public_id = 1028 and name = 'Batata-doce 1 kg' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-feijao-verde.webp' where demo = true and public_id = 1030 and name = 'Feijão verde 500 g' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-escondidinho-veg.webp' where demo = true and public_id = 1031 and name = 'Escondidinho de legumes' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-carne-panela.webp' where demo = true and public_id = 1032 and name = 'Carne de panela com arroz' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-peixe-pure.webp' where demo = true and public_id = 1034 and name = 'Peixe com purê de macaxeira' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-cuscuz-ovo.webp' where demo = true and public_id = 1036 and name = 'Cuscuz com ovo' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-pao-queijo.webp' where demo = true and public_id = 1038 and name = 'Pão de queijo — 3 unidades' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-sanduiche-queijo.webp' where demo = true and public_id = 1039 and name = 'Sanduíche de queijo e tomate' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-feijao-verde.webp' where demo = true and public_id = 1045 and name = 'Feijão verde 500 g' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-carne-panela.webp' where demo = true and public_id = 1047 and name = 'Carne de panela com arroz' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-peixe-pure.webp' where demo = true and public_id = 1049 and name = 'Peixe com purê de macaxeira' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-cuscuz-ovo.webp' where demo = true and public_id = 1051 and name = 'Cuscuz com ovo' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-pao-queijo.webp' where demo = true and public_id = 1053 and name = 'Pão de queijo — 3 unidades' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-bolo-banana.webp' where demo = true and public_id = 1054 and name = 'Bolo de banana — fatia' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-feijao-verde.webp' where demo = true and public_id = 1060 and name = 'Feijão verde 500 g' and coalesce(image,'') = '';
+update public.products set image = 'assets/images/prod-escondidinho-veg.webp' where demo = true and public_id = 1063 and name = 'Escondidinho de legumes' and coalesce(image,'') = '';

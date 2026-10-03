@@ -895,4 +895,11 @@ button:disabled,[aria-busy="true"]{cursor:wait;opacity:.68}
 
 .orders-sync{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0;font-size:.875rem;color:var(--muted)}
 .orders-sync.has-error{color:#9c3b22}
+.catalog-overview{background:var(--white,#fff);border:1px solid #dce5df;border-radius:18px;padding:20px;margin:0 0 24px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.catalog-overview strong{font-size:1.1rem;color:var(--green)}
+.catalog-overview p{margin:8px 0 0;color:var(--muted)}
+.catalog-overview>.note{flex-basis:100%;font-size:.85rem}
+.catalog-scope{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.catalog-scope button[aria-pressed="true"]{background:var(--green);color:#fff;border-color:var(--green)}
+@media(max-width:600px){.catalog-scope{margin-left:0;width:100%}.catalog-scope button{flex:1;white-space:normal}.catalog-overview{padding:16px}}
 @media(max-width:600px){.orders-sync{align-items:flex-start;flex-direction:column}}

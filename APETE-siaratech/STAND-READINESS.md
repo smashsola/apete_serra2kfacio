@@ -39,6 +39,10 @@ Comprovante local: outputs/stand-qa/pedido-cliente.png, na área de trabalho do 
 
 ## Avanço em 2 de outubro
 
+- Navegação regional: botão Abrir Última Fornada na página inicial, total regional visível e seleção entre Toda a Serra e entrega na cidade. Navegador publicado conferido com 30 cards de estabelecimentos e 153 cards de produtos; Croatá filtra 3 lojas e 15 produtos. Explorar outra cidade não altera a cidade usada pela Sabiá e pelo checkout.
+- 27 produtos sem foto receberam 11 novas imagens ilustrativas geradas e otimizadas em WebP. Catálogo publicado com 153 produtos e nenhuma foto vazia; 46 arquivos distintos de imagens e capas verificados por HTTP 200 com tipo image. As imagens demonstrativas não comprovam produtos ou estabelecimentos reais.
+- Localização reaproveita posição recente e encerra a espera após 4 segundos, mesmo se o navegador não responder. Posição imprecisa exige escolha manual; resultado atrasado não desfaz escolha manual. Coordenada exata não é salva nem enviada. Testes com posições simuladas; obtenção de GPS em aparelho físico permanece pendente.
+- 178 testes passaram após estas mudanças; navegação e fotos também conferidas no navegador público.
 - 30 lojas e 153 produtos demonstrativos nas nove cidades; 9 exemplos de produtores. Viçosa, Carnaubal, Croatá e Ipu agora têm três perfis e 15 produtos cada. Guaraciaba recebeu três refeições vegetarianas.
 - 171 testes passando. Migrações e seed exercitados em Postgres local, incluindo preço ativo, futuro e vencido e rejeição de preço antigo sem consumir estoque.
 - Pedido com preço antigo também recusado no banco publicado; pedido com preço normal conferido em transação revertida, sem vendas ou alterações persistentes de estoque.

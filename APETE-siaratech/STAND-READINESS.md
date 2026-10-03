@@ -108,3 +108,9 @@ Comprovante local: outputs/stand-qa/pedido-cliente.png, na área de trabalho do 
 - As 30 lojas demonstrativas usam a tabela. Inserções novas recebem o padrão no banco, inclusive aprovações de cadastro. Sabiá identifica totais iniciais e informa que o orçamento final depende da distância.
 - 188 testes passaram. Conferidos três temas em ambos os modos, persistência após reload, frete no navegador publicado e telas 320/390 px sem overflow. Nenhum pedido real foi submetido no teste.
 - Evidências: outputs/stand-qa/apete-broto-desktop.png e apete-frete-broto-mobile.png, no workspace pai.
+
+
+## Identidade única de comida — 3 de outubro
+- Removidos seletor, sete paletas e preferência antiga. Identidade única de creme, dourado e vermelho queimado, suavizada após feedback: vermelho #8B4230 nos destaques, CTA #EFB85D, menu #51352B. Modo escuro preservado em tons quentes.
+- Cabeçalho e animações preservados; sem alteração de catálogo, frete, IA ou pedidos. Sintaxe conferida, modo escuro e catálogo verificados em 320/390 px sem overflow. Header permanece 79/116 px.
+- Publicado no Cloudflare: versão 44e4e40e-95d8-4a8a-95f2-629f3e075b38. Evidência visual: outputs/stand-qa/apete-comida-suave-desktop.png no workspace pai.

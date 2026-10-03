@@ -1,25 +1,22 @@
 (() => {
   const key = 'apete_appearance';
   let dark = false;
-  const palettes = ['serra', 'caju', 'amora', 'oceano', 'serra-caju', 'serra-oceano', 'broto'];
-  let palette = 'serra-caju';
-  try { dark = localStorage.getItem(key) === 'dark'; } catch {}
-  try { const saved = localStorage.getItem('apete_palette'); if (palettes.includes(saved)) palette = saved; } catch {}
+  try {
+    dark = localStorage.getItem(key) === 'dark';
+    localStorage.removeItem('apete_palette');
+  } catch {}
   const root = document.documentElement;
+  root.removeAttribute('data-palette');
   function apply() {
     root.dataset.theme = dark ? 'dark' : 'light';
-    root.dataset.palette = palette;
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = dark ? {serra:'#10251f',caju:'#2b1914',amora:'#23172c',oceano:'#10262e','serra-caju':'#10251f','serra-oceano':'#102a28',broto:'#182017'}[palette] : {serra:'#fbf8f3',caju:'#fff5ea',amora:'#faf3fb',oceano:'#f0f8fb','serra-caju':'#fbf5e9','serra-oceano':'#f0f8f3',broto:'#e0edc5'}[palette];
+    if (meta) meta.content = dark ? '#211512' : '#fff8ef';
     const toggle = document.getElementById('theme-toggle');
     if (toggle) {
       toggle.setAttribute('aria-pressed', String(dark));
       toggle.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
       toggle.title = dark ? 'Ativar modo claro' : 'Ativar modo escuro';
     }
-    document.querySelectorAll('[data-palette-choice]').forEach(button => {
-      button.setAttribute('aria-pressed', String(button.dataset.paletteChoice === palette));
-    });
   }
   apply();
   document.addEventListener('DOMContentLoaded', () => {
@@ -28,15 +25,6 @@
       dark = !dark;
       apply();
       try { localStorage.setItem(key, dark ? 'dark' : 'light'); } catch {}
-    });
-    document.querySelectorAll('[data-palette-choice]').forEach(button => {
-      button.addEventListener('click', () => {
-        const choice = button.dataset.paletteChoice;
-        if (!palettes.includes(choice)) return;
-        palette = choice;
-        apply();
-        try { localStorage.setItem('apete_palette', palette); } catch {}
-      });
     });
   }, { once: true });
 })();

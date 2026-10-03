@@ -72,6 +72,11 @@ Comprovante local: outputs/stand-qa/pedido-cliente.png, na área de trabalho do 
 - Integração isolada em components/ui/dock.tsx; TypeScript e estrutura shadcn configurados. Tailwind compilado sem preflight para preservar as telas existentes. npm run build:dock recompila os arquivos publicados; npm run check:dock valida os tipos.
 - 184 testes, sintaxe e tipos passaram; navegação, digitação, largura de tela e magnificação conferidas no navegador. Prévia de frontend por servidor estático porque o runtime local do Worker não iniciou neste Windows.
 
+## Animação do cabeçalho — 3 de outubro
+- Efeito de proximidade e mola do Framer Motion nos quatro botões existentes. Pressionar no celular anima o botão, soltá-lo restaura a escala, sem bloquear os cliques ou alterar as dimensões do layout.
+- Preferência de movimento reduzido respeitada. Bundle independente de 56 KB; componente React original continua em components/ui/dock.tsx. Tipagem, sintaxe e 184 testes passaram.
+- Conferido no site publicado em desktop e viewport de 390 px: escala visual de 1.14 e tamanho base preservado. Corrigido também o cabeçalho de seção que ultrapassava a largura no início mobile.
+
 ## Navegação somente no cabeçalho — 3 de outubro
 
 - Removido o dock inferior da página e seus arquivos de execução/estilo da carga inicial. O componente fica guardado no código, sem aparecer ou alterar o rodapé.

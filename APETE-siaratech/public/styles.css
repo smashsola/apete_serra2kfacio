@@ -954,3 +954,19 @@ button:disabled,[aria-busy="true"]{cursor:wait;opacity:.68}
   #content:has(.sabia-layout) > .page-head p { font-size:14px; line-height:1.45; margin:0; }
   .sabia-chat .chat-log { height:clamp(180px,30dvh,300px); min-height:180px; max-height:300px; }
 }
+
+/* A navegação usa apenas os controles existentes no cabeçalho. */
+.menu-toggle { display:grid; flex-shrink:0; }
+.top-actions .location-btn, .top-actions .user-button, .top-actions .cart-button {
+  transform-origin:center;
+  transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s ease;
+}
+@media(hover:hover) and (pointer:fine) {
+  .top-actions .location-btn:hover, .top-actions .user-button:hover, .top-actions .cart-button:hover,
+  .menu-toggle:hover { transform:translateY(-1px) scale(1.06); }
+}
+@media(prefers-reduced-motion:reduce) {
+  .top-actions .location-btn, .top-actions .user-button, .top-actions .cart-button, .menu-toggle { transition:none; }
+  .top-actions .location-btn:hover, .top-actions .user-button:hover, .top-actions .cart-button:hover,
+  .menu-toggle:hover { transform:none; }
+}

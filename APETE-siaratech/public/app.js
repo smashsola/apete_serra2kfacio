@@ -4424,7 +4424,7 @@ function renderSabiaHistory() {
       const image = getProduct(p.id)?.image;
       return `<article class="sabia-product-card">
         <div class="sabia-result"><span class="mini-thumb">${image?imgTag(image,p.name):''}</span><span><b>${esc(p.name)}</b><small>${esc(p.storeName)} · ${esc(p.city)}</small><small>Preço unitário: ${money(p.price)}</small></span></div>
-        <p class="note">${p.recommendation?`${p.quantity} unidade(s) · porção cadastrada para ${p.servesTotal} pessoa(s)<br>`:''}Produtos: ${money(p.subtotal??p.price)} + ${p.deliveryVariable?'entrega inicial':'entrega'}: ${money(p.fee)}<br><strong>${p.deliveryVariable?'Total inicial':'Total'}: ${money(p.total)}</strong>${p.deliveryVariable?'<br>Frete final calculado por km na sacola.':''}</p>
+        <p class="note">${p.recommendation?`${p.quantity} unidade(s)${Number.isInteger(p.servesTotal)&&p.servesTotal>0?` · porção cadastrada para ${p.servesTotal} pessoa(s)`:''}<br>`:''}Produtos: ${money(p.subtotal??p.price)} + ${p.deliveryVariable?'entrega inicial':'entrega'}: ${money(p.fee)}<br><strong>${p.deliveryVariable?'Total inicial':'Total'}: ${money(p.total)}</strong>${p.deliveryVariable?'<br>Frete final calculado por km na sacola.':''}</p>
         ${p.offerValid?`<p class="note">Desconto: ${money(p.discountCents)} · oferta válida até ${dateTime(p.offerEndsAt)}</p>`:''}
         <div class="row"><button class="primary-btn" data-action="sabia-review" data-entry="${index}" data-id="${p.id}">Revisar para adicionar</button><button class="ghost-btn strong" data-action="goto-store" data-id="${p.storeId}">Ver estabelecimento</button></div>
       </article>`;

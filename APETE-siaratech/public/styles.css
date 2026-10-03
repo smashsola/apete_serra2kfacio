@@ -961,7 +961,10 @@ button:disabled,[aria-busy="true"]{cursor:wait;opacity:.68}
   #content:has(.sabia-layout) > .page-head { margin-bottom:12px; }
   #content:has(.sabia-layout) > .page-head h2 { display:none; }
   #content:has(.sabia-layout) > .page-head p { font-size:14px; line-height:1.45; margin:0; }
-  .sabia-chat .chat-log { height:clamp(180px,30dvh,300px); min-height:180px; max-height:300px; }
+  .sabia-chat .chat-log { height:auto; min-height:180px; max-height:none; overflow-y:visible; overscroll-behavior-y:auto; }
+  .sabia-chat .chat-bubble:not(.me) { width:100%; max-width:100%; box-sizing:border-box; }
+  .sabia-chat .sabia-results { width:100%; }
+  .sabia-chat .sabia-product-card .row { display:grid; grid-template-columns:minmax(0,1fr); }
 }
 
 /* A navegação usa apenas os controles existentes no cabeçalho. */

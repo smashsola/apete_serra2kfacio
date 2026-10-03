@@ -1,5 +1,5 @@
 import '../public/offer-pricing.js';
-const STORE_FIELDS='id,public_id,name,category,city,address,description,hero,delivery_fee,producer,delivery,pickup,service_areas,cover,verified,active,demo';
+const STORE_FIELDS='id,public_id,name,category,city,address,description,hero,delivery_fee,delivery_fee_per_km,delivery_minimum_fee,producer,delivery,pickup,service_areas,cover,verified,active,demo';
 const PRODUCT_FIELDS='id,public_id,store_id,name,description,category,price,stock,image,old_price,last_batch,offer_starts_at,offer_ends_at,preferences,serves,active,demo';
 export function hasLiveCatalog(env) {return Boolean(env.SUPABASE_URL&&env.SUPABASE_PUBLISHABLE_KEY);}
 export async function loadLiveCatalog(env,cities) {
@@ -28,7 +28,7 @@ export async function loadLiveCatalog(env,cities) {
   const stores=storeRows.map(s=>{
    if(!Number.isSafeInteger(Number(s.public_id))||Number(s.public_id)<=0||!Number.isSafeInteger(s.delivery_fee)||s.delivery_fee<0)throw Error('invalid_catalog_store');
    idMap.set(s.id,Number(s.public_id));
-   return {id:Number(s.public_id),name:s.name,category:s.category,city:s.city,address:s.address||'',desc:s.description||'',hero:s.hero||'',fee:s.delivery_fee,
+   return {id:Number(s.public_id),name:s.name,category:s.category,city:s.city,address:s.address||'',desc:s.description||'',hero:s.hero||'',fee:Math.max(s.delivery_fee,s.delivery_minimum_fee||0),deliveryBaseFee:s.delivery_fee,feePerKm:s.delivery_fee_per_km||0,minimumFee:s.delivery_minimum_fee||0,
     producer:s.producer===true,delivery:s.delivery===true,pickup:s.pickup===true,serviceAreas:Array.isArray(s.service_areas)?s.service_areas:[],cover:s.cover||'',verified:s.verified===true,open:s.active===true,demo:s.demo===true};
   });
   const products=productRows.filter(p=>idMap.has(p.store_id)).map(p=>{

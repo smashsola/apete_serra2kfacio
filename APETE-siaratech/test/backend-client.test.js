@@ -78,7 +78,7 @@ test('criação de pedido envia apenas IDs e quantidades; preço fica no servido
   await loginSession();
   let sent=null;
   globalThis.fetch=async(url,options)=>{
-    assert.match(String(url),/\/rest\/v1\/rpc\/create_order_once$/);
+    assert.match(String(url),/\/rest\/v1\/rpc\/create_order_distance_once$/);
     assert.equal(options.headers.Authorization,'Bearer user-jwt');
     sent=JSON.parse(options.body);
     return response([{order_id:'cccccccc-cccc-cccc-cccc-cccccccccccc',public_number:42,subtotal:5000,delivery_fee:600,total:5600}]);
@@ -86,10 +86,12 @@ test('criação de pedido envia apenas IDs e quantidades; preço fica no servido
   const created=await backend.createOrder({
     requestId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',storeId:2,city:'Guaraciaba do Norte',mode:'delivery',
     customer:{name:'Cliente',phone:'88999999999',address:'Rua A',neighborhood:'Centro'},
-    note:'sem cebola',payment:'pix',
+    note:'sem cebola',payment:'pix',distanceKm:4,expectedDeliveryFee:600,
     items:[{productId:7,qty:2,price:1,total:2}]
   });
   assert.equal(created.public_number,42);
+  assert.equal(sent.p_distance_km,4);
+  assert.equal(sent.p_expected_delivery_fee,600);
   assert.deepEqual(sent.p_items,[{productId:7,quantity:2}]);
   assert.equal('price' in sent.p_items[0],false);
   assert.equal('total' in sent.p_items[0],false);

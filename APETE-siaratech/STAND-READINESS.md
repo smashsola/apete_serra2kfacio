@@ -98,3 +98,13 @@ Comprovante local: outputs/stand-qa/pedido-cliente.png, na área de trabalho do 
 - Paletas aplicadas ao fundo, superfícies, header, sidebar, hero e ações. Vitrine com foto maior, selo da marca e destaques coloridos. Resumo regional mais compacto no desktop.
 - Bordas de Ver perfil, Escolher cidade e ações secundárias reforçadas para 2 px com cores de maior contraste.
 - 184 testes e sintaxe passaram. Quatro paletas conferidas em ambos os modos, persistência após reload e seleção no celular. Catálogo em 320 px sem overflow e borda computada de 2 px.
+
+
+## Paletas combinadas e tabela regional experimental — 3 de outubro
+- Serra + Caju e Serra + Oceano usam verde como principal. Broto combina #C8FFBE, #92AA83 e #E0EDC5; todas com claro/escuro e persistência local. Header mantém 79 px no desktop e 116 px no celular.
+- Tabela demonstrativa central: R$5 até 3 km, mais R$1/km excedente. Representada em centavos por max(500,200+100*distância); 3,5 km = R$5,50, 10 km = R$12. Sem taxa adicional da plataforma nesta versão.
+- Distância pela estrada informada e combinada com a loja; GPS só identifica cidade e NÃO calcula rota. Atendimento rural/entre cidades deve ser confirmado. Preços são hipóteses para validar com entregadores locais, não valores comprovados para a região.
+- Banco recalcula frete, exige correspondência com o valor visto pelo cliente e salva distância/tarifa no pedido. Mantidos idempotência, estoque e isolamento por usuário. Comerciantes não têm permissão de alterar colunas de frete; a administração da plataforma controla a tabela.
+- As 30 lojas demonstrativas usam a tabela. Inserções novas recebem o padrão no banco, inclusive aprovações de cadastro. Sabiá identifica totais iniciais e informa que o orçamento final depende da distância.
+- 188 testes passaram. Conferidos três temas em ambos os modos, persistência após reload, frete no navegador publicado e telas 320/390 px sem overflow. Nenhum pedido real foi submetido no teste.
+- Evidências: outputs/stand-qa/apete-broto-desktop.png e apete-frete-broto-mobile.png, no workspace pai.

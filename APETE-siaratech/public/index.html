@@ -7,15 +7,16 @@
   <meta name="description" content="APETÊ — delivery local com restaurantes, padarias e produtores da região.">
   <title>APETÊ — Delivery local</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <script src="appearance.js?v=palettes-v10"></script>
+  <script src="appearance.js?v=delivery-palettes-v11"></script>
   <link rel="stylesheet" href="styles.css?v=palettes-v10">
-  <link rel="stylesheet" href="appearance.css?v=palettes-v10">
+  <link rel="stylesheet" href="appearance.css?v=delivery-palettes-v11">
   <script type="module" src="header-dock.js?v=visual-v9"></script>
   <script defer src="offer-pricing.js?v=offer-dates-v1"></script>
+  <script defer src="delivery-pricing.js?v=delivery-palettes-v11"></script>
   <script defer src="order-flow.js?v=checkout-v1"></script>
-  <script defer src="backend-client.js?v=offer-dates-v1"></script>
+  <script defer src="backend-client.js?v=delivery-palettes-v11"></script>
   <script defer src="regional-location.js?v=geo-acquisition-v4"></script>
-  <script defer src="app.js?v=palettes-v10"></script>
+  <script defer src="app.js?v=delivery-palettes-v11"></script>
 </head>
 <body>
   <div class="shell">
@@ -81,6 +82,9 @@
       <section class="palette-picker" aria-label="Paleta de cores">
         <span class="side-label">CORES DO APETÊ</span>
         <div class="palette-options">
+          <button type="button" data-palette-choice="serra-caju" aria-pressed="false"><span class="palette-swatch swatch-serra-caju" aria-hidden="true"></span>Serra + Caju</button>
+          <button type="button" data-palette-choice="serra-oceano" aria-pressed="false"><span class="palette-swatch swatch-serra-oceano" aria-hidden="true"></span>Serra + Oceano</button>
+          <button type="button" data-palette-choice="broto" aria-pressed="false"><span class="palette-swatch swatch-broto" aria-hidden="true"></span>Broto</button>
           <button type="button" data-palette-choice="serra" aria-pressed="false"><span class="palette-swatch swatch-serra" aria-hidden="true"></span>Serra</button>
           <button type="button" data-palette-choice="caju" aria-pressed="true"><span class="palette-swatch swatch-caju" aria-hidden="true"></span>Caju</button>
           <button type="button" data-palette-choice="amora" aria-pressed="false"><span class="palette-swatch swatch-amora" aria-hidden="true"></span>Amora</button>

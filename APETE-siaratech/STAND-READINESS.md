@@ -86,3 +86,9 @@ Comprovante local: outputs/stand-qa/pedido-cliente.png, na área de trabalho do 
 ## Efeito habilitado explicitamente — 3 de outubro
 - A pedido do usuário, a animação dos botões do cabeçalho funciona mesmo com preferência de movimento reduzido do sistema. Demais componentes mantêm suas preferências.
 - Conferido no navegador original: movimento reduzido ativo, botão com escala 1.14, largura base 118 px e cabeçalho 79 px. Pressão e abertura do menu verificadas em 390 px. Build e TypeScript passaram.
+
+## Visual, tema e menu lateral — 3 de outubro
+- Ampliação do header reduzida de 14% para 5,5%, deslocamento de 3 px para 1,4 px e mola com menos oscilação. Links e controles do menu lateral animam com mouse, pressão e teclado (2,5%).
+- Alternância claro/escuro no header com rótulo acessível, aria-pressed e preferência local salva. Tema aplicado também ao catálogo, filtros, Sabiá, formulários e sacola.
+- Fundo em papel claro/verde profundo, bordas e sombras consistentes, melhores fotos, tipografia e composição da página inicial em duas colunas no desktop. Header mantém altura e dimensões dos botões.
+- 184 testes, build, TypeScript e sintaxe passaram. Verificados persistência após reload, catálogo e Sabiá no tema escuro em 390 px, sem transbordamento horizontal.

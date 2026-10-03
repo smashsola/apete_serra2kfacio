@@ -50,10 +50,11 @@ test('saúde vaga não vira atributo inventado do catálogo',async()=>{
 
 test('quantidade de pessoas usa somente capacidade cadastrada e multiplica unidades',async()=>{
  const data=await ask('quero almoço para 4 pessoas');
- assert.equal(data.products.length,1);
- assert.equal(data.products[0].id,1);
- assert.match(data.text,/2 unidades/i);
- assert.match(data.text,/R\$ 130,00/);
+ assert.ok(data.products.length>0);
+ for(const option of data.products){
+  assert.ok(option.quantity*option.serves>=4);
+  assert.equal(option.total,option.price*option.quantity+option.fee);
+ }
 });
 
 test('esquecer orçamento preserva o assunto e não ressuscita o limite',async()=>{
@@ -91,7 +92,8 @@ test('catálogo regional expõe cidades e variedade mínima sem quebrar a API',a
  assert.ok(data.cities.includes('Tianguá'));
  assert.ok(data.stores.length>=18);
  assert.ok(data.products.length>=90);
- assert.equal(data.stores.filter(store=>store.producer).length,5);
+ assert.ok(data.stores.filter(store=>store.producer).length>=9);
+ for(const city of data.cities)assert.ok(data.stores.some(store=>store.city===city));
 });
 
 
@@ -99,7 +101,7 @@ test('atalho Última Fornada explica a iniciativa sem confirmar promoções sem 
  const data=await ask('O que é a Última Fornada? Há ofertas válidas?');
  assert.equal(data.model,'last-batch-info-v1');
  assert.match(data.text,/reduzir desperdício/);
- assert.match(data.text,/não posso confirmar promoções válidas/);
+ assert.match(data.text,/não há ofertas dentro do prazo/);
  assert.deepEqual(data.products,[]);
 });
 

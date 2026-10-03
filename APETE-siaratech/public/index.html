@@ -7,12 +7,14 @@
   <meta name="description" content="APETÊ — delivery local com restaurantes, padarias e produtores da região.">
   <title>APETÊ — Delivery local</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="styles.css?v=regional-catalog-v2">
+  <link rel="stylesheet" href="styles.css?v=mobile-chat-v5">
+  <link rel="stylesheet" href="navigation-dock.css?v=mobile-chat-v5">
+  <script type="module" src="navigation-dock.js?v=mobile-chat-v5"></script>
   <script defer src="offer-pricing.js?v=offer-dates-v1"></script>
   <script defer src="order-flow.js?v=checkout-v1"></script>
   <script defer src="backend-client.js?v=offer-dates-v1"></script>
   <script defer src="regional-location.js?v=geo-acquisition-v4"></script>
-  <script defer src="app.js?v=geo-acquisition-v4"></script>
+  <script defer src="app.js?v=mobile-chat-v5"></script>
 </head>
 <body>
   <div class="shell">
@@ -148,6 +150,7 @@
     </div>
   </div>
 
+  <div id="navigation-dock"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <div id="modal" class="modal" aria-hidden="true" hidden>

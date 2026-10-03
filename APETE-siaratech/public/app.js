@@ -4397,12 +4397,11 @@ function renderSabiaHistory() {
 }
 
 function sabiaPage() {
-  return `${pageHead('Sabiá', 'Converse sobre os sabores e o comércio da Serra. Recomendações consultam o catálogo do APETÊ.')}
+  return `${pageHead('Sabiá', 'Peça sugestões de comidas e produtos para sua cidade.')}
     <section class="sabia-layout">
       <article class="sabia-side">
         <span class="chip orange">Assistente do APETÊ</span><h3>O que combina com sua fome?</h3>
         <p>Uma conversa de verdade, com produtos do catálogo e valores conferidos pelo sistema.</p>
-        <label for="sabia-city">Cidade para entrega</label><select id="sabia-city" class="select" ${sabiaBusy?'disabled':''}>${REGIONAL_CITIES.map(city=>`<option ${state.city===city?'selected':''}>${esc(city)}</option>`).join('')}</select>
         <p class="note">Preparado para os nove municípios. Só sugerimos lojas com atendimento cadastrado na cidade selecionada.</p>
         <div class="sabia-suggest">
           <button class="ghost-btn strong" data-action="send-suggestion" data-text="Quero pedir almoço para duas pessoas. O que cabe em R$ 80 com a entrega?" ${sabiaBusy?'disabled':''}>Almoço para dois até R$ 80</button>
@@ -4432,6 +4431,7 @@ function sabiaPage() {
         <p class="note">A Sabiá consulta os produtos publicados pelas lojas. Alterações feitas somente no painel de demonstração deste navegador não são publicadas no catálogo.</p>
       </article>
       <article class="sabia-chat"><div class="sabia-head"><strong>Sabiá</strong><button class="ghost-btn strong" data-action="sabia-new" ${sabiaBusy?'disabled':''}>Nova conversa</button></div>
+        <div class="sabia-city-control"><label for="sabia-city">Cidade para entrega</label><select id="sabia-city" class="select" ${sabiaBusy?'disabled':''}>${REGIONAL_CITIES.map(city=>`<option ${state.city===city?'selected':''}>${esc(city)}</option>`).join('')}</select></div>
         <div id="chat-log" class="chat-log" role="log" aria-live="polite" aria-label="Conversa com a Sabiá">${renderSabiaHistory()}${sabiaBusy?'<div class="chat-bubble sabia-thinking" role="status">Sabiá está consultando e preparando sua resposta…</div>':''}</div>
         ${sabiaError?`<div class="sabia-error" role="alert"><p>${esc(sabiaError)}</p>${sabiaRetryAfter?`<small>Aguarde aproximadamente ${sabiaRetryAfter} segundo(s).</small>`:''}<button class="ghost-btn strong" data-action="sabia-retry" ${sabiaBusy?'disabled':''}>Tentar novamente</button></div>`:''}
         <form id="sabia-form" class="chat-send"><label class="sr-only" for="sabia-input">Sua mensagem para a Sabiá</label><input id="sabia-input" class="input" value="${esc(sabiaDraft)}" placeholder="Pergunte à Sabiá…" maxlength="1200" autocomplete="off" ${sabiaBusy?'disabled':''}><button class="primary-btn" type="submit" ${sabiaBusy?'disabled':''}>${sabiaBusy?'Aguarde…':'Enviar'}</button></form>
@@ -4858,6 +4858,7 @@ function renderUnsafe() {
     enterLink.setAttribute('aria-label', logged ? 'Minha conta' : 'Entrar');
   }
   $$('.side-nav a').forEach((link) => link.classList.toggle('active', link.dataset.page === visualPage));
+  window.dispatchEvent(new CustomEvent('apete:page',{detail:visualPage}));
 }
 
 function render() {
@@ -5483,6 +5484,9 @@ if(!AUTH_PAGE){
   if(location.hash!==initialHash)history.replaceState({apetePage:state.page},'',initialHash);
   else history.replaceState({apetePage:state.page},'',location.href);
 }
+window.addEventListener('apete:navigate',event=>{
+  if(typeof event.detail==='string'&&VALID_PAGES.has(event.detail))setPage(event.detail);
+});
 render();
 hydrateCatalogFromBackend();
 restoreCustomerFromBackend();

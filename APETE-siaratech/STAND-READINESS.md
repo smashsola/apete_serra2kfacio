@@ -92,3 +92,9 @@ Comprovante local: outputs/stand-qa/pedido-cliente.png, na área de trabalho do 
 - Alternância claro/escuro no header com rótulo acessível, aria-pressed e preferência local salva. Tema aplicado também ao catálogo, filtros, Sabiá, formulários e sacola.
 - Fundo em papel claro/verde profundo, bordas e sombras consistentes, melhores fotos, tipografia e composição da página inicial em duas colunas no desktop. Header mantém altura e dimensões dos botões.
 - 184 testes, build, TypeScript e sintaxe passaram. Verificados persistência após reload, catálogo e Sabiá no tema escuro em 390 px, sem transbordamento horizontal.
+
+## Quatro paletas e botões mais visíveis — 3 de outubro
+- Serra, Caju, Amora e Oceano, todas com modo claro/escuro e preferência salva. Caju é a paleta inicial; seletor no menu lateral.
+- Paletas aplicadas ao fundo, superfícies, header, sidebar, hero e ações. Vitrine com foto maior, selo da marca e destaques coloridos. Resumo regional mais compacto no desktop.
+- Bordas de Ver perfil, Escolher cidade e ações secundárias reforçadas para 2 px com cores de maior contraste.
+- 184 testes e sintaxe passaram. Quatro paletas conferidas em ambos os modos, persistência após reload e seleção no celular. Catálogo em 320 px sem overflow e borda computada de 2 px.

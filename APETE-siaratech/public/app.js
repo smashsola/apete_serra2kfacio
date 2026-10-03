@@ -4312,13 +4312,13 @@ function homePage() {
       </article>
     </section>
     <section class="home-calls">
-      <article class="call-card warm-card"><h3>Última Fornada</h3><p>Pães e refeições do dia com desconto: aproveite o que ainda está fresquinho e ajude a evitar desperdício.</p><div class="offer-grid compact-offers">${offers.slice(0,3).map(offerCard).join('')}</div></article>
+      <article class="call-card warm-card"><h3>Última Fornada</h3><p>Ofertas com prazo cadastrado para ajudar a reduzir o desperdício. Confira as condições de consumo com a loja.</p><div class="offer-grid compact-offers">${offers.slice(0,3).map(offerCard).join('')}</div></article>
       <article class="call-card merchant-tone"><span class="chip soft">Comerciantes</span><h3>Peça refeições e lanches</h3><p>Perfis com cardápio, tempo de entrega e itens em destaque.</p><button class="ghost-btn strong" data-action="go-page" data-page="estabelecimentos">Abrir estabelecimentos</button></article>
       <article class="call-card producer-tone"><span class="chip producer-alt">Produtores</span><h3>Compre direto de quem produz</h3><p>Hortaliças, cestas, mel e outros itens locais com entrega.</p><button class="ghost-btn strong" data-action="go-page" data-page="produtores">Ver produtores</button></article>
 
     </section>
-    <section style="margin-bottom:24px"><div class="section-head"><div><h3>Estabelecimentos em destaque</h3><p>Três perfis para pedir almoço, lanche ou café.</p></div><button class="section-link" data-action="go-page" data-page="estabelecimentos">Ver todos</button></div><div class="store-grid">${stores.map(storeCard).join('')}</div></section>
-    <section style="margin-bottom:24px"><div class="section-head"><div><h3>Do produtor para sua mesa</h3><p>Dois perfis com produtos frescos e itens artesanais.</p></div><button class="section-link" data-action="go-page" data-page="produtores">Abrir seção</button></div><div class="producer-grid">${producers.map(producerCard).join('')}</div></section>
+    <section style="margin-bottom:24px"><div class="section-head"><div><h3>Estabelecimentos em destaque</h3><p>Perfis para pedir almoço, lanche ou café.</p></div><button class="section-link" data-action="go-page" data-page="estabelecimentos">Ver todos</button></div><div class="store-grid">${stores.map(storeCard).join('')}</div></section>
+    <section style="margin-bottom:24px"><div class="section-head"><div><h3>Do produtor para sua mesa</h3><p>Produtos da região e itens artesanais.</p></div><button class="section-link" data-action="go-page" data-page="produtores">Abrir seção</button></div><div class="producer-grid">${producers.map(producerCard).join('')}</div></section>
     <section style="margin-bottom:24px"><div class="section-head"><div><h3>Produtos em destaque</h3><p>Escolha seu próximo favorito e adicione à sacola.</p></div><button class="section-link" data-action="go-page" data-page="cardapio">Abrir catálogo</button></div><div class="product-grid">${featured.map(productCard).join('')}</div></section>
   `;
 }
@@ -4330,8 +4330,8 @@ function storesPage() {
 }
 
 function menuFilters() {
-  const storeOptions = ['<option value="0">Todos os perfis</option>'].concat(state.stores.map((store) => `<option value="${store.id}" ${String(store.id) === state.filters.storeId ? 'selected' : ''}>${esc(store.name)}</option>`)).join('');
-  const categories = ['Todos', ...new Set(state.products.map((item) => item.cat))];
+  const storeOptions = ['<option value="0">Todos os perfis</option>'].concat(state.stores.filter(storeServesSelectedCity).map((store) => `<option value="${store.id}" ${String(store.id) === state.filters.storeId ? 'selected' : ''}>${esc(store.name)}</option>`)).join('');
+  const categories = ['Todos', ...new Set(state.products.filter(publicProductAvailable).map((item) => item.cat))];
   return `
     <section class="filter-box">
       <div class="field"><label>Buscar</label><input id="filter-query" class="input" placeholder="Ex.: baião, café, cesta" value="${esc(state.filters.query)}"></div>
@@ -4342,6 +4342,8 @@ function menuFilters() {
 }
 
 function filteredProducts() {
+  if(state.filters.storeId!=='0'&&!storeServesSelectedCity(getStore(state.filters.storeId)))state.filters.storeId='0';
+  if(state.filters.category!=='Todos'&&!state.products.some(p=>publicProductAvailable(p)&&p.cat===state.filters.category))state.filters.category='Todos';
   let items = state.products.filter(publicProductAvailable).map(product=>globalThis.APETE_OFFERS.project(product));
   if (state.filters.query) {
     const q = state.filters.query.toLowerCase();
@@ -4356,7 +4358,7 @@ function filteredProducts() {
 
 function catalogPage() {
   const items = filteredProducts();
-  return `${pageHead('Cardápio', 'Encontre comidas e produtos que atendem à cidade selecionada.')}${menuFilters()}<div class="product-grid">${items.map(productCard).join('')}</div>`;
+  return `${pageHead('Cardápio', 'Encontre comidas e produtos que atendem à cidade selecionada.')}${menuFilters()}<div class="product-grid">${items.length?items.map(productCard).join(''):'<div class="empty">Nenhum produto encontrado. Tente outro filtro ou outra busca.</div>'}</div>`;
 }
 
 function lastBatchPage() {

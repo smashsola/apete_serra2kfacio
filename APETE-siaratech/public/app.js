@@ -2918,7 +2918,7 @@ function catalogPage() {
 
 function lastBatchPage() {
   const items = state.products.filter((item) => item.lastBatch);
-  return `${pageHead('Última Fornada', 'Alimentos preparados hoje, ainda fresquinhos, oferecidos com desconto para evitar desperdício. Confira as ofertas enquanto durarem.')}<div class="product-grid">${items.map(productCard).join('')}</div>`;
+  return `${pageHead('Última Fornada', 'Produtos selecionados pelos estabelecimentos para oferecer com desconto e ajudar a reduzir desperdício.')}<p class="note">O preço e o estoque vêm do catálogo. Quando o prazo e as condições da oferta não estiverem informados, confirme com a loja antes de pedir. Os itens demonstrativos são exemplos.</p><div class="product-grid">${items.map(productCard).join('')}</div>`;
 }
 
 function producersPage() {
@@ -2976,7 +2976,7 @@ function sabiaPage() {
         </div>
         `:''}
         <p class="note">As mensagens são enviadas ao provedor de IA. Não informe senhas, documentos ou dados pessoais. A conversa desta sessão expira no servidor após seis horas.</p>
-        <p class="note">O catálogo da IA é o catálogo cadastrado no servidor. Alterações locais no painel de demonstração ainda não sincronizam com ele.</p>
+        <p class="note">A Sabiá consulta os produtos publicados pelas lojas. Alterações feitas somente no painel de demonstração deste navegador não são publicadas no catálogo.</p>
       </article>
       <article class="sabia-chat"><div class="sabia-head"><strong>Sabiá</strong><button class="ghost-btn strong" data-action="sabia-new" ${sabiaBusy?'disabled':''}>Nova conversa</button></div>
         <div id="chat-log" class="chat-log" role="log" aria-live="polite" aria-label="Conversa com a Sabiá">${renderSabiaHistory()}${sabiaBusy?'<div class="chat-bubble sabia-thinking" role="status">Sabiá está consultando e preparando sua resposta…</div>':''}</div>

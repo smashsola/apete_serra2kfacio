@@ -3,10 +3,10 @@
 ## Atualização em 2 de outubro
 
 - Sabiá ligada ao catálogo público atualizado do banco. Cada consulta e revisão de item confere preço, estoque e cidade; falha não reutiliza dados estáticos. 167 testes passaram. Detalhes em LIVE-CATALOG.md.
-- Última Fornada não afirma produção no dia sem esse dado. Prazos e condições ainda precisam ser cadastrados e aplicados pelo sistema; exemplos não são comprovação de promoções reais.
+- Última Fornada não afirma produção no dia sem esse dado. O sistema aplica início e fim das ofertas; cada loja precisa cadastrar seus prazos e condições. Exemplos não são comprovação de promoções reais.
 
 - Respostas da mentoria e perguntas adicionais em RESPOSTAS-MENTORIA.md. APETÊ não tem assinatura; o exemplo do áudio era de outra equipe.
-- Retorno de confirmação de e-mail agora remove tokens da URL e verifica o usuário no Auth antes de salvar a sessão. Cadastro solicita retorno para o endereço público. 161 testes passaram; a entrega do e-mail e o percurso completo ainda exigem uma caixa de teste acessível e a configuração correspondente de Redirect URLs no Supabase.
+- Retorno de confirmação de e-mail remove tokens da URL e verifica o usuário no Auth antes de salvar a sessão. Cadastro solicita retorno para o endereço público. Site URL e Redirect URLs estão configurados para https://apete-serra2kfacio.betaniaaa.workers.dev/. Cadastro público em caixa QA própria recebeu a confirmação: HTTP 303 para o endereço publicado e usuário confirmado no Auth. Logout efetuado, conta e caixa QA removidas. O teste de e-mail verificou o redirecionamento pela API; não repetiu o consumo da sessão pelo navegador.
 - Primeiro APK Android em Java/WebView construído; lint sem avisos e assinatura v2 verificada. Usa o site publicado e requer internet. Não está na Play Store. Nenhum aparelho conectado foi detectado; instalação e teste físico permanecem pendentes.
 - Script de instalação por USB recusa ausência, ambiguidade ou dispositivo não autorizado. Build e instruções estão em android/README.md.
 
@@ -29,7 +29,6 @@
 
 ## Ainda falta antes do estande
 
-- Corrigir Site URL e Redirect URLs no Supabase. Cadastro público enviado para uma caixa QA própria e confirmação recebida/verificada; o servidor redirecionou para http://localhost:3000. O painel está sem sessão administrativa acessível. Usar o endereço publicado nas duas configurações e repetir o retorno automático. A conta e a caixa QA foram removidas após logout.
 - Exercitar o percurso de cadastro e aprovação de um comerciante com seus dados reais; o teste de pedidos anterior usou comerciantes QA provisionados.
 - Conferir catálogo, checkout e Sabiá visualmente em um celular físico.
 - Ensaiar a Sabiá com 3 pedidos simples e conferir resposta com preço/cidade corretos.

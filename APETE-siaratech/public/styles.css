@@ -946,6 +946,7 @@ button:disabled,[aria-busy="true"]{cursor:wait;opacity:.68}
   .toast, .sidebar, .side-nav a { transition: none; }
 }
 @media(max-width:600px){
+  .section-head { flex-wrap:wrap; }
   .top-actions { width:100%; min-width:0; }
   .top-actions .location-control { flex:1 1 0; width:0; min-width:0; }
   .location-btn, #location-label { min-width:0; max-width:100%; }
@@ -957,13 +958,9 @@ button:disabled,[aria-busy="true"]{cursor:wait;opacity:.68}
 
 /* A navegação usa apenas os controles existentes no cabeçalho. */
 .menu-toggle { display:grid; flex-shrink:0; }
-.top-actions .location-btn, .top-actions .user-button, .top-actions .cart-button {
+.top-actions .location-btn, .top-actions .user-button, .top-actions .cart-button, .menu-toggle {
   transform-origin:center;
-  transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s ease;
-}
-@media(hover:hover) and (pointer:fine) {
-  .top-actions .location-btn:hover, .top-actions .user-button:hover, .top-actions .cart-button:hover,
-  .menu-toggle:hover { transform:translateY(-1px) scale(1.06); }
+  transition:box-shadow .22s ease;
 }
 @media(prefers-reduced-motion:reduce) {
   .top-actions .location-btn, .top-actions .user-button, .top-actions .cart-button, .menu-toggle { transition:none; }

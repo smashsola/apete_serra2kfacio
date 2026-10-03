@@ -4308,7 +4308,7 @@ function homePage() {
   return `
     ${pageHead('Peça sem complicação', 'Escolha seu próximo pedido entre os restaurantes, padarias e produtores da região.')}${catalogOverview()}
     <section class="hero-mini home-hero-alt">
-      <article class="hero-card">${imgTag(heroImage, 'Destaque APETÊ', 'store')}<div class="hero-copy"><h2>Escolha onde pedir hoje.</h2><p>Explore o cardápio, entre na sua conta só quando precisar comprar e acompanhe seus pedidos sem enrolação.</p><div class="hero-actions"><button class="primary-btn" data-action="go-page" data-page="cardapio">Explorar cardápio</button><button class="ghost-btn strong" data-action="go-page" data-page="estabelecimentos">Ver perfis</button></div></div></article>
+      <article class="hero-card">${imgTag(heroImage, 'Destaque APETÊ', 'store')}<div class="hero-copy"><span class="hero-eyebrow">DA SERRA PRA SUA MESA</span><h2>Escolha onde pedir hoje.</h2><p>Explore o cardápio, entre na sua conta só quando precisar comprar e acompanhe seus pedidos sem enrolação.</p><div class="hero-actions"><button class="primary-btn" data-action="go-page" data-page="cardapio">Explorar cardápio</button><button class="ghost-btn strong" data-action="go-page" data-page="estabelecimentos">Ver perfis</button></div></div></article>
       <article class="hero-panel">
         <h3>O que você encontra aqui</h3>
         <p>Três atalhos realmente úteis para começar mais rápido.</p>

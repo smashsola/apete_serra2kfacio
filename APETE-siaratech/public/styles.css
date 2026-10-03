@@ -375,9 +375,10 @@ a { color: inherit; text-decoration: none; }
 .toast {
   position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(120%); z-index: 40;
   background: #103e33; color: #fffdf8; padding: 14px 18px; border-radius: 999px; box-shadow: 0 18px 40px rgba(0,0,0,.18);
-  transition: transform .2s ease; text-align: center; max-width: calc(100vw - 24px);
+  visibility: hidden; opacity: 0; pointer-events: none;
+  transition: transform .2s ease, opacity .2s ease; text-align: center; max-width: calc(100vw - 24px);
 }
-.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
 
 @media (max-width: 1180px) {
   .hero-mini, .sabia-layout, .detail-hero, .checkout-summary { grid-template-columns: 1fr; }
@@ -903,3 +904,53 @@ button:disabled,[aria-busy="true"]{cursor:wait;opacity:.68}
 .catalog-scope button[aria-pressed="true"]{background:var(--green);color:#fff;border-color:var(--green)}
 @media(max-width:600px){.catalog-scope{margin-left:0;width:100%}.catalog-scope button{flex:1;white-space:normal}.catalog-overview{padding:16px}}
 @media(max-width:600px){.orders-sync{align-items:flex-start;flex-direction:column}}
+
+/* Conversa e navegação em telas pequenas */
+.sabia-layout > *, .sabia-chat > *, .top-actions > * { min-width: 0; }
+.sabia-city-control { display: grid; gap: 6px; margin-bottom: 14px; }
+.sabia-city-control label { font-size: 13px; font-weight: 700; }
+.sabia-city-control .select { width: 100%; min-width: 0; font-size: 16px; }
+.sabia-chat .chat-send { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: stretch; }
+.sabia-chat .chat-send .input { width: 100%; min-width: 0; }
+.sabia-chat .chat-bubble { min-width: 0; overflow-wrap: anywhere; }
+.sabia-chat .chat-log { overscroll-behavior-y: contain; }
+@media (max-width: 880px) {
+  .sidebar { width: min(320px, calc(100vw - 36px)); padding-bottom: max(18px, env(safe-area-inset-bottom)); }
+  .side-nav a { min-height: 48px; }
+  .sabia-chat { order: -1; }
+}
+@media (max-width: 600px) {
+  .topbar { gap: 9px; padding: 10px 14px; }
+  .top-left { gap: 10px; }
+  .top-left h1 { overflow: hidden; text-overflow: ellipsis; font-size: 25px; }
+  .top-actions { flex-wrap: nowrap; gap: 7px; }
+  .top-actions .user-button, .top-actions .cart-button { flex: 0 0 auto; padding: 0 10px; min-height: 42px; }
+  .location-control { min-width: 0; }
+  .location-btn { min-width: 0; min-height: 42px; padding: 0 10px; }
+  #location-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cart-text { display: none; }
+  .sabia-layout { gap: 16px; grid-template-columns: minmax(0,1fr); }
+  .sabia-chat { padding: 14px; border-radius: 18px; }
+  .sabia-chat .sabia-head { gap: 8px; margin-bottom: 10px; }
+  .sabia-chat .sabia-city-control { margin-bottom: 10px; gap: 4px; }
+  .sabia-chat .sabia-city-control .select { min-height: 42px; padding: 10px 12px; }
+  .sabia-chat .chat-log { height: clamp(220px,34dvh,360px); min-height: 220px; max-height: 360px; padding-right: 0; gap: 10px; }
+  .sabia-chat .chat-bubble { max-width: 96%; padding: 12px; font-size: 15px; line-height: 1.5; }
+  .sabia-chat .chat-send { gap: 7px; margin-top: 10px; }
+  .sabia-chat .chat-send button { padding: 10px 12px; min-height: 46px; }
+  .sabia-attribution-fixed { font-size: 11px; }
+  .sabia-side { padding: 16px; }
+  .toast { border-radius: 14px; width: max-content; bottom: max(16px,env(safe-area-inset-bottom)); font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast, .sidebar, .side-nav a { transition: none; }
+}
+@media(max-width:600px){
+  .top-actions { width:100%; min-width:0; }
+  .top-actions .location-control { flex:1 1 0; width:0; min-width:0; }
+  .location-btn, #location-label { min-width:0; max-width:100%; }
+  #content:has(.sabia-layout) > .page-head { margin-bottom:12px; }
+  #content:has(.sabia-layout) > .page-head h2 { display:none; }
+  #content:has(.sabia-layout) > .page-head p { font-size:14px; line-height:1.45; margin:0; }
+  .sabia-chat .chat-log { height:clamp(180px,30dvh,300px); min-height:180px; max-height:300px; }
+}

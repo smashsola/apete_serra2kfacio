@@ -1,0 +1,28 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@source "../components/ui";
+@source "./dock.tsx";
+.apete-dock-position{position:fixed;left:0;right:0;bottom:max(14px,env(safe-area-inset-bottom));z-index:20;pointer-events:none;display:flex;justify-content:center}
+.apete-dock-shell{display:flex;align-items:flex-end;max-width:calc(100vw - 24px);pointer-events:none}
+.apete-dock-panel{pointer-events:auto;display:flex;align-items:flex-end;gap:14px;padding:0 14px 10px;border-radius:22px;background:rgba(255,253,250,.96);border:1px solid rgba(20,62,52,.14);box-shadow:0 8px 30px rgba(8,35,28,.16);backdrop-filter:blur(16px);overflow:visible}
+.apete-dock-item{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;height:46px;flex-shrink:0;border-radius:14px;background:#eef3ee;color:#315447;text-decoration:none;outline-offset:4px}
+.apete-dock-item[aria-current=page]{background:#134a3d;color:#fff}
+.apete-dock-item:focus-visible{outline:3px solid #db8a46}
+.apete-dock-icon{display:flex;align-items:center;justify-content:center;aspect-ratio:1}
+.apete-dock-icon svg{width:100%;height:100%}
+.apete-dock-tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;translate:-50% 0;white-space:nowrap;background:#134a3d;color:white;border-radius:8px;padding:6px 9px;font-size:12px;font-weight:600}
+.apete-dock-caption{display:none}
+.apete-dock-position.is-hidden{display:none}
+.auth-screen #navigation-dock{display:none}
+.app-area{padding-bottom:100px}
+.toast{bottom:100px}
+@media(max-width:600px){
+ .apete-dock-panel{gap:8px;padding:0 10px 7px;border-radius:20px}
+ .apete-dock-item{width:48px!important;height:50px!important;background:transparent;gap:4px}
+ .apete-dock-icon{width:22px!important}
+ .apete-dock-caption{display:block;font-size:9px;font-weight:700;line-height:1.1}
+ .apete-dock-tooltip{display:none}
+ .apete-dock-position.is-typing{display:none}
+ .toast{bottom:100px}
+}
+@media(prefers-reduced-motion:reduce){.apete-dock-item,.apete-dock-position{transition:none}}

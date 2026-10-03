@@ -4,14 +4,32 @@
   "version": "0.1.0",
   "description": "APETÊ — demonstração para Siará Tech",
   "scripts": {
-    "deploy": "wrangler deploy",
+    "deploy": "npm run build:dock && wrangler deploy",
     "dev": "wrangler dev",
     "check": "node --check src/worker.js && node --check src/live-catalog.js && node --check src/sabia-core.js && node --check public/app.js && node --check public/backend-client.js && node --check public/order-flow.js && node --check public/offer-pricing.js && node --check public/regional-location.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "build:dock": "node scripts/build-dock.mjs",
+    "check:dock": "tsc --noEmit"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",
+    "@tailwindcss/postcss": "4.2.1",
+    "@types/node": "26.6.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "esbuild": "0.28.2",
+    "postcss": "8.5.28",
+    "tailwindcss": "4.2.1",
+    "typescript": "5.9.3",
     "wrangler": "^4.141.0"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "clsx": "2.1.1",
+    "framer-motion": "14.0.0",
+    "lucide-react": "1.50.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "tailwind-merge": "3.6.0"
+  }
 }

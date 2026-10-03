@@ -63,3 +63,11 @@ Comprovante local: outputs/stand-qa/pedido-cliente.png, na área de trabalho do 
 - Corrigido timeout da primeira tentativa: agora uma tentativa rápida de 2 segundos pode ser seguida por alta precisão, dentro de um prazo total de 10 segundos. O prazo anterior de 3 segundos podia encerrar a busca cedo demais.
 - Erro permanece no seletor com orientação para permissão/localização do aparelho; seleção manual continua disponível. Consulta assíncrona de permissão não substitui mensagem de busca ou falha.
 - 184 testes passaram, incluindo primeira tentativa expirada seguida de segunda tentativa bem-sucedida. Isso verifica o comportamento do app; aquisição real depende do aparelho e navegador.
+
+## Interface móvel e dock — 3 de outubro
+
+- Caixa de aviso inativa agora oculta por visibility/opacity; corrigida a faixa verde vazia que aparecia no rodapé ao rolar.
+- Sabiá: conversa primeiro em telas pequenas, cidade de entrega no próprio chat, campo de mensagem maior e botão Enviar ao lado. Sem rolagem horizontal nas larguras 320 e 390; dock some ao focar campos para liberar espaço na digitação.
+- Dock React inspirado na referência fornecida, com Framer Motion e Lucide: ícones ampliam conforme a distância do mouse (44–72 px), links reais com indicação da página atual, rótulos visíveis e tamanho de toque estável no celular. Preferência de movimento reduzido respeitada. Rodapé tem espaço para a navegação fixa.
+- Integração isolada em components/ui/dock.tsx; TypeScript e estrutura shadcn configurados. Tailwind compilado sem preflight para preservar as telas existentes. npm run build:dock recompila os arquivos publicados; npm run check:dock valida os tipos.
+- 184 testes, sintaxe e tipos passaram; navegação, digitação, largura de tela e magnificação conferidas no navegador. Prévia de frontend por servidor estático porque o runtime local do Worker não iniciou neste Windows.

@@ -6,3 +6,4 @@ supabase/.temp/
 android/.gradle/
 android/**/build/
 android/local.properties
+.wrangler/

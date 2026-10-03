@@ -10,7 +10,7 @@
   function apply() {
     root.dataset.theme = dark ? 'dark' : 'light';
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = dark ? '#211512' : '#fff8ef';
+    if (meta) meta.content = dark ? '#121c16' : '#f8f7ef';
     const toggle = document.getElementById('theme-toggle');
     if (toggle) {
       toggle.setAttribute('aria-pressed', String(dark));

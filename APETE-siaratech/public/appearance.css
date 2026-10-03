@@ -1,15 +1,15 @@
-/* One food identity: tomato red, golden yellow and warm cream. */
+/* One APETE identity: soft green, cream, white and golden yellow. */
 :root {
   color-scheme:light;
-  --bg:#fff8ef; --surface:#fffdf8; --surface-2:#fff0d8; --surface-3:#ffe0c2;
-  --text:#3e241d; --muted:#785747; --green:#8b4230; --green-soft:#a05c43;
-  --orange:#9c562b; --orange-soft:#ffe1a6; --plum:#9a392b; --plum-soft:#ffe6d9;
-  --line:#edd3bb; --header:rgba(255,248,239,.97);
-  --ambient:#f2debe; --nav:#51352b; --action:#9a4935;
-  --hero-start:#8b5841; --hero-end:#493025; --hero-shade:69,43,30;
-  --button-line:#b97853; --cta:#efb85d; --cta-text:#482a15;
-  --shadow-soft:0 4px 16px rgba(100,40,19,.055);
-  --shadow:0 14px 36px rgba(100,40,19,.12);
+  --bg:#f8f7ef; --surface:#fffefa; --surface-2:#f0f3e7; --surface-3:#e6edda;
+  --text:#263d2c; --muted:#64725c; --green:#36573e; --green-soft:#527450;
+  --orange:#896a26; --orange-soft:#f6e6af; --plum:#4c6747; --plum-soft:#e8eddc;
+  --line:#d8dfce; --header:rgba(248,247,239,.97);
+  --ambient:#e7edcf; --nav:#263e2d; --action:#416347;
+  --hero-start:#496d4a; --hero-end:#243d2c; --hero-shade:32,56,37;
+  --button-line:#8b9e77; --cta:#eac35d; --cta-text:#303921;
+  --shadow-soft:0 4px 16px rgba(39,65,37,.05);
+  --shadow:0 14px 36px rgba(39,65,37,.11);
 }
 body { background: radial-gradient(ellipse at 95% 0%, #eee9da 0, transparent 45%), var(--bg); }
 .topbar { background: var(--header); border-bottom-color: var(--line); box-shadow: 0 3px 18px rgba(100,40,19,.035); }
@@ -67,13 +67,13 @@ body { background: radial-gradient(ellipse at 95% 0%, #eee9da 0, transparent 45%
 
 :root[data-theme="dark"] {
   color-scheme:dark;
-  --bg:#211512; --surface:#31201a; --surface-2:#402b21; --surface-3:#513528;
-  --text:#fff2df; --muted:#d5b8a0; --green:#e6b397; --green-soft:#eed0b4;
-  --orange:#efb85d; --orange-soft:#594020; --plum:#ffc1ad; --plum-soft:#51302a;
-  --line:#644536; --header:rgba(33,21,18,.97);
-  --ambient:#4f2d1b; --nav:#51352b; --action:#9a4935;
-  --hero-start:#754b38; --hero-end:#402a20; --hero-shade:61,39,28;
-  --button-line:#bd8b66; --cta:#efb85d; --cta-text:#482a15;
+  --bg:#121c16; --surface:#1d2c22; --surface-2:#27382b; --surface-3:#334833;
+  --text:#f3f2df; --muted:#bac7af; --green:#c2d4ac; --green-soft:#d5dfbd;
+  --orange:#e9c86a; --orange-soft:#51472a; --plum:#cedbbc; --plum-soft:#334833;
+  --line:#40513b; --header:rgba(18,28,22,.97);
+  --ambient:#263b28; --nav:#17271d; --action:#476949;
+  --hero-start:#36583a; --hero-end:#203727; --hero-shade:24,44,29;
+  --button-line:#879c70; --cta:#e9c86a; --cta-text:#303921;
   --shadow-soft:0 5px 18px rgba(0,0,0,.12);
   --shadow:0 16px 36px rgba(0,0,0,.2);
 }
@@ -86,7 +86,7 @@ body { background: radial-gradient(ellipse at 95% 0%, #eee9da 0, transparent 45%
 [data-theme="dark"] .auth-back { background:var(--surface); }
 [data-theme="dark"] :is(.chat-bubble:not(.me),.sabia-diagnostic-result pre) { background:var(--surface-2); color:var(--text); }
 [data-theme="dark"] :is(.chip:not(.dark):not(.plum),.mini-feature,.producer-chip,.verified-badge,.micro-badge,.merchant-stage .stage-index,.merchant-stage .stage-count) { background:var(--surface-3); color:var(--green); }
-[data-theme="dark"] .chip.orange { background:#493223; color:#f3bd8c; }
+[data-theme="dark"] .chip.orange { background:var(--surface-3); color:var(--green); }
 [data-theme="dark"] :is(.catalog-scope button[aria-pressed="true"],.tab-btn.active,.merchant-tab.selected,.order-step.current) { background:var(--action); color:#fff; }
 [data-theme="dark"] :is(.note,.subtle,.price-line del,.merchant-tab,.sabia-result small) { color:var(--muted); }
 [data-theme="dark"] :is(.field label,.form-label,.merchant-stage,.merchant-eyebrow,.orders-sync,.success-dismiss) { color:var(--text); }
@@ -136,5 +136,14 @@ body,[data-theme="dark"] body { background:radial-gradient(ellipse at 95% 0%,var
 /* Keep the catalogue, forms and food accents in the same identity. */
 :is(.warm-card,.producer-tone,.produce-card,.accent-box,.filter-box,.sabia-side,.sabia-chat,.summary-card,.order-card,.feature-card,.account-box,.merchant-box,.empty) { background:var(--surface); border-color:var(--line); }
 :is(.chip.orange,.producer-chip,.producer-alt,.verified-badge,.micro-badge,.mini-feature) { background:var(--surface-2); color:var(--green); }
-.location-dot { background:var(--cta); box-shadow:0 0 0 5px rgba(239,184,93,.15); }
-.hero-eyebrow { background:rgba(239,184,93,.15); border-color:rgba(239,184,93,.5); color:#ffe4a1; }
+.location-dot { background:var(--cta); box-shadow:0 0 0 5px rgba(234,195,93,.15); }
+.hero-eyebrow { background:rgba(234,195,93,.15); border-color:rgba(234,195,93,.5); color:#ffe4a1; }
+
+/* Theme every card and utility surface, including the merchant callout. */
+:is(.call-card,.merchant-tone,.producer-tone,.sabia-mode,.sabia-result,.sabia-diagnostic,.auth-screen,.auth-form-card,.stat-card,.merchant-summary,.merchant-stat,.history-stat,.region-popover,.order-detail,.order-card,.account-box,.filter-box,.summary-card) { background:var(--surface); color:var(--text); border-color:var(--line); }
+:is(.input,.select,.textarea,.payment-option,.tab-btn,.order-step,.legal-version,.merchant-stage,.demo-view-switch,.sabia-diagnostic-result pre) { background:var(--surface-2); color:var(--text); border-color:var(--line); }
+[data-theme="dark"] :is(.call-card,.merchant-tone,.producer-tone,.sabia-mode,.auth-screen,.auth-form-card,.merchant-summary,.merchant-stat,.history-stat,.region-popover,.detail-info,.mini-product,.account-box) { background:var(--surface); color:var(--text); border-color:var(--line); }
+[data-theme="dark"] :is(.demo-view-switch,.demo-access,.live-order-badge,.demo-order-badge,.order-step.done,.sabia-result:hover,.sabia-diagnostic-result pre) { background:var(--surface-2); color:var(--green); border-color:var(--line); }
+[data-theme="dark"] .demo-view-switch button { color:var(--text); }
+[data-theme="dark"] :is(.payment-option.selected,.merchant-stage.selected) { background:var(--surface-3); border-color:var(--green); }
+[data-theme="dark"] :is(.tab-btn.active,.demo-view-switch button.active,.merchant-tab.selected,.order-step.current) { background:var(--action); color:#fff; }

@@ -20,7 +20,7 @@ Não afirmar que os concorrentes não atendem à Ibiapaba: a cobertura de cada m
 
 “Nosso diferencial proposto é combinar o recorte da Ibiapaba, a presença de pequenos produtores, a ajuda da Sabiá para escolher dentro do orçamento e a Última Fornada. A vantagem que queremos construir está no relacionamento com os comerciantes e na qualidade do catálogo regional. Só ter uma IA não garante vantagem; precisamos provar que facilita a compra e ajuda a loja a vender.”
 
-Hoje: há catálogo demonstrativo regional, Sabiá, cadastro, painel e pedidos persistidos. As lojas de demonstração são fictícias e não representam parcerias confirmadas. A Sabiá usa o catálogo demonstrativo do servidor; a sincronização completa com alterações comerciais ainda é um próximo passo. Não prometer rastreamento de entregador, cobrança integrada ou promoções ativas que ainda não existem.
+Hoje: há catálogo demonstrativo regional, Sabiá, cadastro, painel e pedidos persistidos. As lojas de demonstração são fictícias e não representam parcerias confirmadas. A Sabiá consulta o catálogo público atualizado do banco; alterações publicadas por comerciantes são lidas na próxima consulta. Alterações apenas locais no modo de apresentação não são publicadas. Não prometer rastreamento de entregador, cobrança integrada ou validade de ofertas sem datas cadastradas.
 
 ## 4. E se perguntarem sobre assinatura ou receita?
 
@@ -68,7 +68,7 @@ Proposta de piloto: 3–5 lojas e 15–20 consumidores, durante duas semanas; n�
 
 ### Como funciona a Sabiá? É só um chatbot?
 
-“Ela ajuda a escolher produtos do catálogo conforme cidade, preferência e orçamento. Os preços e totais são conferidos pelo sistema; a IA não deve inventar dados. Nesta demonstração ela consulta o catálogo demonstrativo do servidor. A sincronização com todas as mudanças das lojas ainda precisa avançar.” Não afirmar que ela já consulta os pedidos privados do cliente: essa integração ainda não foi entregue.
+“Ela ajuda a escolher produtos do catálogo conforme cidade, preferência e orçamento. Os preços e totais são conferidos pelo sistema; a IA não deve inventar dados. Ela consulta os produtos publicados no banco, incluindo preços, estoque e área atendida. O catálogo atual ainda contém lojas demonstrativas.” Não afirmar que ela já consulta os pedidos privados do cliente: essa integração ainda não foi entregue.
 
 ### Quem faz a entrega e recebe o pagamento?
 

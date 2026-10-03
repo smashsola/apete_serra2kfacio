@@ -4,6 +4,10 @@
   "main": "src/worker.js",
   "compatibility_date": "2026-09-24",
   "preview_urls": true,
+  "vars": {
+    "SUPABASE_URL": "https://inmpyytgyitqtcaococm.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_L82vbDaHqkFdqplNgi1XtA_34Pus6MH"
+  },
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",

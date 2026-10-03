@@ -5305,12 +5305,13 @@ async function logoutMerchant() {
   setPage('comerciante-entrar');
 }
 let locationRequestId=0;
-function cancelLocationRequest(){locationRequestId++;locating=false;}
+let locationFeedback='';
+function cancelLocationRequest(){locationRequestId++;locating=false;locationFeedback='';}
 async function useMyLocation() {
   if(locating)return;
   if(!navigator.geolocation)return toast('Seu navegador não oferece geolocalização.');
   const requestId=++locationRequestId;
-  locating=true;updateGeolocationControl();
+  locationFeedback='';locating=true;updateGeolocationControl();
   try{
     const {coords}=await globalThis.APETE_LOCATION.requestPosition(navigator.geolocation);
     if(requestId!==locationRequestId)return;
@@ -5322,9 +5323,10 @@ async function useMyLocation() {
     toast('Cidade sugerida: '+nearest.city+'. Você pode ajustar no seletor.','success');
   }catch(error){
     if(requestId!==locationRequestId)return;
-    if(error.code===1)toast('Localização bloqueada. Escolha a cidade manualmente ou libere a permissão no navegador.');
-    else if(error.code===3)toast('Não obtivemos a posição em 3 segundos. Escolha sua cidade para continuar.');
-    else toast('Não foi possível obter sua localização. Escolha a cidade manualmente.');
+    if(error.code===1)locationFeedback='Localização bloqueada. Libere a permissão deste site no navegador ou escolha a cidade abaixo.';
+    else if(error.code===3)locationFeedback='Seu aparelho não informou a posição. Ative a localização do aparelho ou escolha a cidade no seletor.';
+    else locationFeedback='O aparelho não forneceu uma posição precisa. Confira se a localização está ativada ou escolha sua cidade.';
+    toast(locationFeedback);
   }finally{
     if(requestId===locationRequestId){locating=false;updateGeolocationControl();}
   }
@@ -5442,10 +5444,12 @@ async function updateGeolocationControl(){
   button.hidden=false;
   button.disabled=locating;
   button.textContent=locating?'Localizando…':'Usar minha localização';
-  if(locating){note.textContent='Tentando obter a cidade por até 3 segundos. A escolha manual continua disponível.';return;}
+  if(locating){note.textContent='Buscando a cidade: tentativa rápida e, se necessário, GPS de maior precisão (até 10 segundos). Você pode escolher a cidade agora.';return;}
+  if(locationFeedback){note.textContent=locationFeedback;return;}
   if(!navigator.permissions?.query)return;
   try{
     const status=await navigator.permissions.query({name:'geolocation'});
+    if(locating||locationFeedback)return;
     if(status.state==='denied'){
       button.disabled=true;
       button.textContent='Localização bloqueada';

@@ -198,7 +198,7 @@
         p_neighborhood:customer.neighborhood||'',
         p_note:note||'',
         p_payment_method:paymentMap[payment]||payment,
-        p_items:(items||[]).map(item=>({productId:Number(item.productId),quantity:Number(item.qty)}))
+        p_items:(items||[]).map(item=>({productId:Number(item.productId),quantity:Number(item.qty),...(Number.isSafeInteger(item.expectedPrice)?{expectedPrice:item.expectedPrice}:{})}))
       }
     });
     return Array.isArray(rows)?rows[0]:rows;
@@ -207,7 +207,7 @@
   async function loadCatalog() {
     const [stores,products]=await Promise.all([
       request('/rest/v1/stores?select=id,public_id,name,category,city,address,description,hero,delivery_fee,producer,delivery,pickup,service_areas,cover,verified,active,demo,instagram,contact_phone&active=eq.true&order=public_id.asc'),
-      request('/rest/v1/products?select=id,public_id,store_id,name,description,category,price,stock,image,old_price,last_batch,preferences,serves,active,demo&active=eq.true&order=public_id.asc')
+      request('/rest/v1/products?select=id,public_id,store_id,name,description,category,price,stock,image,old_price,last_batch,offer_starts_at,offer_ends_at,preferences,serves,active,demo&active=eq.true&order=public_id.asc')
     ]);
     const publicStoreId=new Map(stores.map(store=>[store.id,Number(store.public_id)]));
     return {
@@ -224,7 +224,7 @@
         desc:product.description||'',cat:product.category||'',price:Number(product.price)||0,stock:Number(product.stock)||0,
         image:product.image||'',oldPrice:Number(product.old_price)||0,lastBatch:Boolean(product.last_batch),
         preferences:Array.isArray(product.preferences)?product.preferences:[],serves:Number.isInteger(product.serves)?product.serves:null,
-        available:Boolean(product.active),demo:Boolean(product.demo)
+        available:Boolean(product.active),demo:Boolean(product.demo),offer:{startsAt:product.offer_starts_at,endsAt:product.offer_ends_at}
       })).filter(product=>Number.isInteger(product.storeId))
     };
   }
@@ -385,6 +385,7 @@
       image:product.image||'',
       old_price:Number(product.oldPrice)||0,
       last_batch:Boolean(product.lastBatch),
+      offer_starts_at:product.offer?.startsAt||null,offer_ends_at:product.offer?.endsAt||null,
       preferences:Array.isArray(product.preferences)?product.preferences:[],
       serves:Number.isInteger(product.serves)&&product.serves>0?product.serves:null,
       active:product.available!==false
@@ -404,7 +405,7 @@
 
   async function updateMerchantProduct(productBackendId,values) {
     const body={};
-    const map={price:'price',stock:'stock',oldPrice:'old_price',lastBatch:'last_batch',active:'active'};
+    const map={price:'price',stock:'stock',oldPrice:'old_price',lastBatch:'last_batch',active:'active',offerStartsAt:'offer_starts_at',offerEndsAt:'offer_ends_at'};
     for(const [source,target] of Object.entries(map))if(values[source]!==undefined)body[target]=values[source];
     const rows=await authed('/rest/v1/products?id=eq.'+encodeURIComponent(productBackendId),{
       method:'PATCH',body,headers:{Prefer:'return=representation'}

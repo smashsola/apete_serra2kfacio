@@ -5,7 +5,7 @@ import {loadLiveCatalog} from '../src/live-catalog.js';
 const origin='https://apete.test',city='Guaraciaba do Norte';
 const env={SABIA_SESSION_SECRET:'catalog-test-secret-'.repeat(3),SUPABASE_URL:'https://catalog.example',SUPABASE_PUBLISHABLE_KEY:'sb_publishable_test'};
 const store={id:'store-uuid',public_id:201,name:'Loja atual',city,delivery_fee:500,active:true,delivery:true,pickup:true,service_areas:[city],demo:false};
-const product={id:'product-uuid',public_id:301,store_id:'store-uuid',name:'Produto atualizado',price:1700,stock:3,active:true,old_price:2000,last_batch:true,demo:false};
+const product={id:'product-uuid',public_id:301,store_id:'store-uuid',name:'Produto atualizado',price:1700,stock:3,active:true,old_price:2000,last_batch:true,offer_starts_at:new Date(Date.now()-3600000).toISOString(),offer_ends_at:new Date(Date.now()+3600000).toISOString(),demo:false};
 function catalogFetch(s=store,p=product) {return async(url,options)=>{
  assert.equal(options.headers.Authorization,'Bearer sb_publishable_test');
  const rows=String(url).includes('/stores?')?[s]:[p];
@@ -22,6 +22,8 @@ test('live catalogue price agrees with database checkout; edits and stock are re
   globalThis.fetch=catalogFetch(store,{...product,price:1900});
   assert.equal((await (await lookup(env,a)).json()).price,1900);
   globalThis.fetch=catalogFetch(store,{...product,stock:0});assert.equal((await lookup(env,a)).status,409);
+  globalThis.fetch=catalogFetch(store,{...product,offer_starts_at:new Date(Date.now()-7200000).toISOString(),offer_ends_at:new Date(Date.now()-3600000).toISOString()});
+  const expired=await (await lookup(env,a)).json();assert.equal(expired.price,2000);assert.equal(expired.total,2500);
  } finally {globalThis.fetch=original;}
 });
 test('failure and empty live catalogue never fall back to demonstration products',async()=>{

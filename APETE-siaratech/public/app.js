@@ -472,6 +472,246 @@ const STORES = [
       "Tianguá"
     ],
     "demo": true
+  },
+  {
+    "id": 101,
+    "name": "Cozinha de Viçosa · Demo",
+    "category": "Restaurante caseiro",
+    "city": "Viçosa do Ceará",
+    "address": "Endereço não cadastrado — demonstração",
+    "fee": 600,
+    "open": true,
+    "producer": false,
+    "cover": "assets/images/product-caseiro.webp",
+    "desc": "Estabelecimento fictício para demonstrar a busca e os pedidos em Viçosa do Ceará.",
+    "hero": "Exemplo demonstrativo do comércio local.",
+    "demo": true,
+    "verified": false,
+    "serviceAreas": [
+      "Viçosa do Ceará"
+    ],
+    "delivery": true,
+    "pickup": true
+  },
+  {
+    "id": 102,
+    "name": "Forno de Viçosa · Demo",
+    "category": "Padaria e café",
+    "city": "Viçosa do Ceará",
+    "address": "Endereço não cadastrado — demonstração",
+    "fee": 450,
+    "open": true,
+    "producer": false,
+    "cover": "assets/images/product-bakery.webp",
+    "desc": "Estabelecimento fictício para demonstrar a busca e os pedidos em Viçosa do Ceará.",
+    "hero": "Exemplo demonstrativo do comércio local.",
+    "demo": true,
+    "verified": false,
+    "serviceAreas": [
+      "Viçosa do Ceará"
+    ],
+    "delivery": true,
+    "pickup": true
+  },
+  {
+    "id": 103,
+    "name": "Horta de Viçosa · Demo",
+    "category": "Produtor local",
+    "city": "Viçosa do Ceará",
+    "address": "Endereço não cadastrado — demonstração",
+    "fee": 600,
+    "open": true,
+    "producer": true,
+    "cover": "assets/images/product-produce.webp",
+    "desc": "Estabelecimento fictício para demonstrar a busca e os pedidos em Viçosa do Ceará.",
+    "hero": "Exemplo demonstrativo do comércio local.",
+    "demo": true,
+    "verified": false,
+    "serviceAreas": [
+      "Viçosa do Ceará"
+    ],
+    "delivery": true,
+    "pickup": true
+  },
+  {
+    "id": 104,
+    "name": "Mesa de Carnaubal · Demo",
+    "category": "Restaurante caseiro",
+    "city": "Carnaubal",
+    "address": "Endereço não cadastrado — demonstração",
+    "fee": 600,
+    "open": true,
+    "producer": false,
+    "cover": "assets/images/product-caseiro.webp",
+    "desc": "Estabelecimento fictício para demonstrar a busca e os pedidos em Carnaubal.",
+    "hero": "Exemplo demonstrativo do comércio local.",
+    "demo": true,
+    "verified": false,
+    "serviceAreas": [
+      "Carnaubal"
+    ],
+    "delivery": true,
+    "pickup": true
+  },
+  {
+    "id": 105,
+    "name": "Pão de Carnaubal · Demo",
+    "category": "Padaria e café",
+    "city": "Carnaubal",
+    "address": "Endereço não cadastrado — demonstração",
+    "fee": 450,
+    "open": true,
+    "producer": false,
+    "cover": "assets/images/product-bakery.webp",
+    "desc": "Estabelecimento fictício para demonstrar a busca e os pedidos em Carnaubal.",
+    "hero": "Exemplo demonstrativo do comércio local.",
+    "demo": true,
+    "verified": false,
+    "serviceAreas": [
+      "Carnaubal"
+    ],
+    "delivery": true,
+    "pickup": true
+  },
+  {
+    "id": 106,
+    "name": "Roça de Carnaubal · Demo",
+    "category": "Produtor local",
+    "city": "Carnaubal",
+    "address": "Endereço não cadastrado — demonstração",
+    "fee": 600,
+    "open": true,
+    "producer": true,
+    "cover": "assets/images/product-produce.webp",
+    "desc": "Estabelecimento fictício para demonstrar a busca e os pedidos em Carnaubal.",
+    "hero": "Exemplo demonstrativo do comércio local.",
+    "demo": true,
+    "verified": false,
+    "serviceAreas": [
+      "Carnaubal"
+    ],
+    "delivery": true,
+    "pickup": true
+  },
+  {
+    "id": 107,
+    "name": "Cozinha de Croatá · Demo",
+    "category": "Restaurante caseiro",
+    "city": "Croatá",
+    "address": "Endereço não cadastrado — demonstração",
+    "fee": 600,
+    "open": true,
+    "producer": false,
+    "cover": "assets/images/product-caseiro.webp",
+    "desc": "Estabelecimento fictício para demonstrar a busca e os pedidos em Croatá.",
+    "hero": "Exemplo demonstrativo do comércio local.",
+    "demo": true,
+    "verified": false,
+    "serviceAreas": [
+      "Croatá"
+    ],
+    "delivery": true,
+    "pickup": true
+  },
+  {
+    "id": 108,
+    "name": "Café de Croatá · Demo",
+    "category": "Padaria e café",
+    "city": "Croatá",
+    "address": "Endereço não cadastrado — demonstração",
+    "fee": 450,
+    "open": true,
+    "producer": false,
+    "cover": "assets/images/product-bakery.webp",
+    "desc": "Estabelecimento fictício para demonstrar a busca e os pedidos em Croatá.",
+    "hero": "Exemplo demonstrativo do comércio local.",
+    "demo": true,
+    "verified": false,
+    "serviceAreas": [
+      "Croatá"
+    ],
+    "delivery": true,
+    "pickup": true
+  },
+  {
+    "id": 109,
+    "name": "Colheita de Croatá · Demo",
+    "category": "Produtor local",
+    "city": "Croatá",
+    "address": "Endereço não cadastrado — demonstração",
+    "fee": 600,
+    "open": true,
+    "producer": true,
+    "cover": "assets/images/product-produce.webp",
+    "desc": "Estabelecimento fictício para demonstrar a busca e os pedidos em Croatá.",
+    "hero": "Exemplo demonstrativo do comércio local.",
+    "demo": true,
+    "verified": false,
+    "serviceAreas": [
+      "Croatá"
+    ],
+    "delivery": true,
+    "pickup": true
+  },
+  {
+    "id": 110,
+    "name": "Mesa do Ipu · Demo",
+    "category": "Restaurante caseiro",
+    "city": "Ipu",
+    "address": "Endereço não cadastrado — demonstração",
+    "fee": 600,
+    "open": true,
+    "producer": false,
+    "cover": "assets/images/product-caseiro.webp",
+    "desc": "Estabelecimento fictício para demonstrar a busca e os pedidos em Ipu.",
+    "hero": "Exemplo demonstrativo do comércio local.",
+    "demo": true,
+    "verified": false,
+    "serviceAreas": [
+      "Ipu"
+    ],
+    "delivery": true,
+    "pickup": true
+  },
+  {
+    "id": 111,
+    "name": "Forno do Ipu · Demo",
+    "category": "Padaria e café",
+    "city": "Ipu",
+    "address": "Endereço não cadastrado — demonstração",
+    "fee": 450,
+    "open": true,
+    "producer": false,
+    "cover": "assets/images/product-bakery.webp",
+    "desc": "Estabelecimento fictício para demonstrar a busca e os pedidos em Ipu.",
+    "hero": "Exemplo demonstrativo do comércio local.",
+    "demo": true,
+    "verified": false,
+    "serviceAreas": [
+      "Ipu"
+    ],
+    "delivery": true,
+    "pickup": true
+  },
+  {
+    "id": 112,
+    "name": "Horta do Ipu · Demo",
+    "category": "Produtor local",
+    "city": "Ipu",
+    "address": "Endereço não cadastrado — demonstração",
+    "fee": 600,
+    "open": true,
+    "producer": true,
+    "cover": "assets/images/product-produce.webp",
+    "desc": "Estabelecimento fictício para demonstrar a busca e os pedidos em Ipu.",
+    "hero": "Exemplo demonstrativo do comércio local.",
+    "demo": true,
+    "verified": false,
+    "serviceAreas": [
+      "Ipu"
+    ],
+    "delivery": true,
+    "pickup": true
   }
 ];
 
@@ -2032,6 +2272,1201 @@ const PRODUCTS = [
     "serves": 3,
     "available": true,
     "demo": true
+  },
+  {
+    "id": 1001,
+    "storeId": 101,
+    "name": "Arroz de galinha",
+    "desc": "Arroz com frango desfiado e legumes. Porção individual demonstrativa.",
+    "cat": "Almoço",
+    "price": 2500,
+    "stock": 20,
+    "image": "assets/images/prod-galinha.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [],
+    "offer": null
+  },
+  {
+    "id": 1002,
+    "storeId": 101,
+    "name": "Carne de panela com arroz",
+    "desc": "Carne de panela com arroz, feijão e legumes. Porção individual demonstrativa.",
+    "cat": "Almoço",
+    "price": 2800,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [],
+    "offer": null
+  },
+  {
+    "id": 1003,
+    "storeId": 101,
+    "name": "Almoço vegetariano de legumes",
+    "desc": "Porção individual de arroz, feijão, legumes e salada, sem carne. Receita demonstrativa.",
+    "cat": "Vegetariano",
+    "price": 2300,
+    "stock": 20,
+    "image": "assets/images/prod-almoco-veg.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1004,
+    "storeId": 101,
+    "name": "Peixe com purê de macaxeira",
+    "desc": "Filé de peixe com purê de macaxeira e salada. Porção individual demonstrativa.",
+    "cat": "Almoço",
+    "price": 3200,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [],
+    "offer": null
+  },
+  {
+    "id": 1005,
+    "storeId": 101,
+    "name": "Suco de cajá 400 ml",
+    "desc": "Suco de cajá em copo de 400 ml. Produto demonstrativo.",
+    "cat": "Bebidas",
+    "price": 800,
+    "stock": 20,
+    "image": "assets/images/prod-caja.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [],
+    "offer": null
+  },
+  {
+    "id": 1006,
+    "storeId": 102,
+    "name": "Cuscuz com ovo",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Café da manhã",
+    "price": 1200,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1007,
+    "storeId": 102,
+    "name": "Tapioca com queijo coalho",
+    "desc": "Tapioca com queijo coalho, unidade individual. Produto demonstrativo.",
+    "cat": "Tapiocas",
+    "price": 1300,
+    "stock": 20,
+    "image": "assets/images/prod-tapioca.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1008,
+    "storeId": 102,
+    "name": "Pão de queijo — 3 unidades",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Lanches",
+    "price": 1100,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1009,
+    "storeId": 102,
+    "name": "Bolo de milho — fatia",
+    "desc": "Fatia individual de bolo de milho. Produto demonstrativo.",
+    "cat": "Bolos",
+    "price": 800,
+    "stock": 20,
+    "image": "assets/images/prod-bolo-milho.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1010,
+    "storeId": 102,
+    "name": "Café coado 200 ml",
+    "desc": "Café coado sem leite, copo de 200 ml. Produto demonstrativo.",
+    "cat": "Bebidas",
+    "price": 600,
+    "stock": 20,
+    "image": "assets/images/prod-cafe-coado.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1011,
+    "storeId": 103,
+    "name": "Cesta de hortaliças",
+    "desc": "Cesta demonstrativa com alface, tomate, cenoura e cheiro-verde.",
+    "cat": "Cestas",
+    "price": 2400,
+    "stock": 20,
+    "image": "assets/images/prod-cesta-hortalicas.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1012,
+    "storeId": 103,
+    "name": "Banana prata 1 kg",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Frutas",
+    "price": 800,
+    "stock": 20,
+    "image": "assets/images/prod-banana.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1013,
+    "storeId": 103,
+    "name": "Abóbora 1 kg",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Legumes",
+    "price": 700,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1014,
+    "storeId": 103,
+    "name": "Geleia de goiaba 250 g",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Artesanais",
+    "price": 1600,
+    "stock": 20,
+    "image": "assets/images/prod-geleia-goiaba.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1015,
+    "storeId": 103,
+    "name": "Feijão verde 500 g",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Grãos",
+    "price": 800,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1016,
+    "storeId": 104,
+    "name": "Baião vegetariano",
+    "desc": "Porção individual de arroz, feijão, legumes e salada, sem carne. Receita demonstrativa.",
+    "cat": "Vegetariano",
+    "price": 2300,
+    "stock": 20,
+    "image": "assets/images/prod-almoco-veg.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1017,
+    "storeId": 104,
+    "name": "Carne de panela com arroz",
+    "desc": "Carne de panela com arroz, feijão e legumes. Porção individual demonstrativa.",
+    "cat": "Almoço",
+    "price": 2800,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [],
+    "offer": null
+  },
+  {
+    "id": 1018,
+    "storeId": 104,
+    "name": "Almoço vegetariano de legumes",
+    "desc": "Porção individual de arroz, feijão, legumes e salada, sem carne. Receita demonstrativa.",
+    "cat": "Vegetariano",
+    "price": 2300,
+    "stock": 20,
+    "image": "assets/images/prod-almoco-veg.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1019,
+    "storeId": 104,
+    "name": "Peixe com purê de macaxeira",
+    "desc": "Filé de peixe com purê de macaxeira e salada. Porção individual demonstrativa.",
+    "cat": "Almoço",
+    "price": 3200,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [],
+    "offer": null
+  },
+  {
+    "id": 1020,
+    "storeId": 104,
+    "name": "Suco de cajá 400 ml",
+    "desc": "Suco de cajá em copo de 400 ml. Produto demonstrativo.",
+    "cat": "Bebidas",
+    "price": 800,
+    "stock": 20,
+    "image": "assets/images/prod-caja.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [],
+    "offer": null
+  },
+  {
+    "id": 1021,
+    "storeId": 105,
+    "name": "Cuscuz com ovo",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Café da manhã",
+    "price": 1200,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1022,
+    "storeId": 105,
+    "name": "Tapioca com queijo coalho",
+    "desc": "Tapioca com queijo coalho, unidade individual. Produto demonstrativo.",
+    "cat": "Tapiocas",
+    "price": 1300,
+    "stock": 20,
+    "image": "assets/images/prod-tapioca.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1023,
+    "storeId": 105,
+    "name": "Pão de queijo — 3 unidades",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Lanches",
+    "price": 1100,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1024,
+    "storeId": 105,
+    "name": "Tapioca de banana e canela",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Tapiocas",
+    "price": 1200,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1025,
+    "storeId": 105,
+    "name": "Café coado 200 ml",
+    "desc": "Café coado sem leite, copo de 200 ml. Produto demonstrativo.",
+    "cat": "Bebidas",
+    "price": 600,
+    "stock": 20,
+    "image": "assets/images/prod-cafe-coado.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1026,
+    "storeId": 106,
+    "name": "Cesta de hortaliças",
+    "desc": "Cesta demonstrativa com alface, tomate, cenoura e cheiro-verde.",
+    "cat": "Cestas",
+    "price": 2400,
+    "stock": 20,
+    "image": "assets/images/prod-cesta-hortalicas.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1027,
+    "storeId": 106,
+    "name": "Banana prata 1 kg",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Frutas",
+    "price": 800,
+    "stock": 20,
+    "image": "assets/images/prod-banana.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1028,
+    "storeId": 106,
+    "name": "Batata-doce 1 kg",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Raízes",
+    "price": 800,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1029,
+    "storeId": 106,
+    "name": "Geleia de goiaba 250 g",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Artesanais",
+    "price": 1600,
+    "stock": 20,
+    "image": "assets/images/prod-geleia-goiaba.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1030,
+    "storeId": 106,
+    "name": "Feijão verde 500 g",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Grãos",
+    "price": 800,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1031,
+    "storeId": 107,
+    "name": "Escondidinho de legumes",
+    "desc": "Porção individual de purê de macaxeira com legumes, preparada sem carne, leite ou queijo. Receita demonstrativa.",
+    "cat": "Vegetariano",
+    "price": 2500,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1032,
+    "storeId": 107,
+    "name": "Carne de panela com arroz",
+    "desc": "Carne de panela com arroz, feijão e legumes. Porção individual demonstrativa.",
+    "cat": "Almoço",
+    "price": 2800,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [],
+    "offer": null
+  },
+  {
+    "id": 1033,
+    "storeId": 107,
+    "name": "Almoço vegetariano de legumes",
+    "desc": "Porção individual de arroz, feijão, legumes e salada, sem carne. Receita demonstrativa.",
+    "cat": "Vegetariano",
+    "price": 2300,
+    "stock": 20,
+    "image": "assets/images/prod-almoco-veg.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1034,
+    "storeId": 107,
+    "name": "Peixe com purê de macaxeira",
+    "desc": "Filé de peixe com purê de macaxeira e salada. Porção individual demonstrativa.",
+    "cat": "Almoço",
+    "price": 3200,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [],
+    "offer": null
+  },
+  {
+    "id": 1035,
+    "storeId": 107,
+    "name": "Suco de cajá 400 ml",
+    "desc": "Suco de cajá em copo de 400 ml. Produto demonstrativo.",
+    "cat": "Bebidas",
+    "price": 800,
+    "stock": 20,
+    "image": "assets/images/prod-caja.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [],
+    "offer": null
+  },
+  {
+    "id": 1036,
+    "storeId": 108,
+    "name": "Cuscuz com ovo",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Café da manhã",
+    "price": 1200,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1037,
+    "storeId": 108,
+    "name": "Tapioca com queijo coalho",
+    "desc": "Tapioca com queijo coalho, unidade individual. Produto demonstrativo.",
+    "cat": "Tapiocas",
+    "price": 1300,
+    "stock": 20,
+    "image": "assets/images/prod-tapioca.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1038,
+    "storeId": 108,
+    "name": "Pão de queijo — 3 unidades",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Lanches",
+    "price": 1100,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1039,
+    "storeId": 108,
+    "name": "Sanduíche de queijo e tomate",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Lanches",
+    "price": 1400,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1040,
+    "storeId": 108,
+    "name": "Café coado 200 ml",
+    "desc": "Café coado sem leite, copo de 200 ml. Produto demonstrativo.",
+    "cat": "Bebidas",
+    "price": 600,
+    "stock": 20,
+    "image": "assets/images/prod-cafe-coado.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1041,
+    "storeId": 109,
+    "name": "Cesta de hortaliças",
+    "desc": "Cesta demonstrativa com alface, tomate, cenoura e cheiro-verde.",
+    "cat": "Cestas",
+    "price": 2400,
+    "stock": 20,
+    "image": "assets/images/prod-cesta-hortalicas.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1042,
+    "storeId": 109,
+    "name": "Banana prata 1 kg",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Frutas",
+    "price": 800,
+    "stock": 20,
+    "image": "assets/images/prod-banana.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1043,
+    "storeId": 109,
+    "name": "Tomate 1 kg",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Hortaliças",
+    "price": 900,
+    "stock": 20,
+    "image": "assets/images/prod-tomate.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1044,
+    "storeId": 109,
+    "name": "Geleia de goiaba 250 g",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Artesanais",
+    "price": 1600,
+    "stock": 20,
+    "image": "assets/images/prod-geleia-goiaba.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1045,
+    "storeId": 109,
+    "name": "Feijão verde 500 g",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Grãos",
+    "price": 800,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1046,
+    "storeId": 110,
+    "name": "Frango com cuscuz",
+    "desc": "Frango acompanhado de cuscuz de milho e salada. Porção individual demonstrativa.",
+    "cat": "Almoço",
+    "price": 2400,
+    "stock": 20,
+    "image": "assets/images/prod-galinha.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [],
+    "offer": null
+  },
+  {
+    "id": 1047,
+    "storeId": 110,
+    "name": "Carne de panela com arroz",
+    "desc": "Carne de panela com arroz, feijão e legumes. Porção individual demonstrativa.",
+    "cat": "Almoço",
+    "price": 2800,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [],
+    "offer": null
+  },
+  {
+    "id": 1048,
+    "storeId": 110,
+    "name": "Almoço vegetariano de legumes",
+    "desc": "Porção individual de arroz, feijão, legumes e salada, sem carne. Receita demonstrativa.",
+    "cat": "Vegetariano",
+    "price": 2300,
+    "stock": 20,
+    "image": "assets/images/prod-almoco-veg.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1049,
+    "storeId": 110,
+    "name": "Peixe com purê de macaxeira",
+    "desc": "Filé de peixe com purê de macaxeira e salada. Porção individual demonstrativa.",
+    "cat": "Almoço",
+    "price": 3200,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [],
+    "offer": null
+  },
+  {
+    "id": 1050,
+    "storeId": 110,
+    "name": "Suco de cajá 400 ml",
+    "desc": "Suco de cajá em copo de 400 ml. Produto demonstrativo.",
+    "cat": "Bebidas",
+    "price": 800,
+    "stock": 20,
+    "image": "assets/images/prod-caja.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [],
+    "offer": null
+  },
+  {
+    "id": 1051,
+    "storeId": 111,
+    "name": "Cuscuz com ovo",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Café da manhã",
+    "price": 1200,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1052,
+    "storeId": 111,
+    "name": "Tapioca com queijo coalho",
+    "desc": "Tapioca com queijo coalho, unidade individual. Produto demonstrativo.",
+    "cat": "Tapiocas",
+    "price": 1300,
+    "stock": 20,
+    "image": "assets/images/prod-tapioca.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1053,
+    "storeId": 111,
+    "name": "Pão de queijo — 3 unidades",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Lanches",
+    "price": 1100,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1054,
+    "storeId": 111,
+    "name": "Bolo de banana — fatia",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Bolos",
+    "price": 900,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1055,
+    "storeId": 111,
+    "name": "Café coado 200 ml",
+    "desc": "Café coado sem leite, copo de 200 ml. Produto demonstrativo.",
+    "cat": "Bebidas",
+    "price": 600,
+    "stock": 20,
+    "image": "assets/images/prod-cafe-coado.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1056,
+    "storeId": 112,
+    "name": "Cesta de hortaliças",
+    "desc": "Cesta demonstrativa com alface, tomate, cenoura e cheiro-verde.",
+    "cat": "Cestas",
+    "price": 2400,
+    "stock": 20,
+    "image": "assets/images/prod-cesta-hortalicas.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1057,
+    "storeId": 112,
+    "name": "Banana prata 1 kg",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Frutas",
+    "price": 800,
+    "stock": 20,
+    "image": "assets/images/prod-banana.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1058,
+    "storeId": 112,
+    "name": "Cenoura 1 kg",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Hortaliças",
+    "price": 800,
+    "stock": 20,
+    "image": "assets/images/prod-cenoura.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1059,
+    "storeId": 112,
+    "name": "Geleia de goiaba 250 g",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Artesanais",
+    "price": 1600,
+    "stock": 20,
+    "image": "assets/images/prod-geleia-goiaba.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1060,
+    "storeId": 112,
+    "name": "Feijão verde 500 g",
+    "desc": "Produto de exemplo. O tamanho ou a quantidade estão indicados no nome.",
+    "cat": "Grãos",
+    "price": 800,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": null,
+    "preferences": [
+      "vegano",
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1061,
+    "storeId": 1,
+    "name": "Marmita vegetariana da casa",
+    "desc": "Porção individual de arroz, feijão, legumes e salada, sem carne. Receita demonstrativa.",
+    "cat": "Vegetariano",
+    "price": 2300,
+    "stock": 20,
+    "image": "assets/images/prod-almoco-veg.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1062,
+    "storeId": 1,
+    "name": "Baião vegetariano individual",
+    "desc": "Porção individual de arroz, feijão, legumes e salada, sem carne. Receita demonstrativa.",
+    "cat": "Vegetariano",
+    "price": 2400,
+    "stock": 20,
+    "image": "assets/images/prod-almoco-veg.webp",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
+  },
+  {
+    "id": 1063,
+    "storeId": 1,
+    "name": "Escondidinho de legumes",
+    "desc": "Porção individual de purê de macaxeira com legumes, preparada sem carne, leite ou queijo. Receita demonstrativa.",
+    "cat": "Vegetariano",
+    "price": 2600,
+    "stock": 20,
+    "image": "",
+    "oldPrice": 0,
+    "lastBatch": false,
+    "demo": true,
+    "available": true,
+    "serves": 1,
+    "preferences": [
+      "vegetariano"
+    ],
+    "offer": null
   }
 ];
 
@@ -2234,6 +3669,7 @@ let selectedPayment = 'pix';
 let toastTimer;
 let locating = false;
 let checkoutDraft = null;
+let checkoutPrices=new Map();
 let modalReturnFocus = null;
 let storageWarningShown = false;
 const busyActions = new Set();
@@ -2257,7 +3693,7 @@ let sabiaDiagnosticBusy = '';
 state.city = REGIONAL_CITIES.includes(state.city) ? state.city : 'Guaraciaba do Norte';
 
 const getStore = (id) => state.stores.find((item) => item.id === Number(id));
-const getProduct = (id) => state.products.find((item) => item.id === Number(id));
+const getProduct = (id) => {const product=state.products.find(item=>item.id===Number(id));return product?globalThis.APETE_OFFERS.project(product):undefined;};
 const activeMerchantStore = () => getStore(state.merchant.storeId || 1) || state.stores[0] || STORES[0];
 const storeCategoryLabel = (store) => String(store?.category||'').trim() || (store?.producer ? 'Produtor local' : 'Estabelecimento local');
 const storeDescription = (store) => String(store?.desc||'').trim() || 'Novo estabelecimento cadastrado no APETÊ. Informações do perfil em atualização.';
@@ -2355,6 +3791,8 @@ function friendlyBackendError(error,fallback='Não foi possível concluir agora.
   if(/email not confirmed/.test(message))return 'Confirme seu e-mail antes de entrar.';
   if(/user already registered|already been registered/.test(message))return 'Esse e-mail já possui cadastro.';
   if(/authentication_required|jwt|unauthorized/.test(message))return 'Sua sessão expirou. Entre novamente.';
+  if(/price_changed/.test(message))return 'O preço mudou ou a oferta terminou. Confira o valor atualizado na sacola antes de confirmar.';
+  if(/invalid_offer_window/.test(message))return 'Informe início e fim válidos para a oferta, com término no futuro.';
   if(/insufficient_stock/.test(message))return 'Um dos produtos não tem mais essa quantidade em estoque.';
   if(/product_unavailable/.test(message))return 'Um dos produtos não está mais disponível.';
   if(/store_unavailable|delivery_unavailable|city_unavailable/.test(message))return 'Esse pedido não está disponível para a entrega selecionada.';
@@ -2733,6 +4171,7 @@ function captureCheckoutDraft() {
 }
 
 function productCard(product) {
+  product=globalThis.APETE_OFFERS.project(product);
   const store = getStore(product.storeId);
   if(!store)return '';
   return `
@@ -2741,16 +4180,17 @@ function productCard(product) {
         ${imgTag(product.image, product.name, store.producer ? 'producer' : 'food')}
         <div class="image-top-row">
           <span class="chip dark">${esc(product.cat)}</span>
-          ${product.lastBatch ? '<span class="chip plum">Oferta</span>' : ''}
+          ${product.offerActive ? '<span class="chip plum">Oferta</span>' : ''}
         </div>
       </div>
       <div class="product-body">
         <div class="store-line"><span class="store-dot"></span><small>${esc(store.name)}</small><span class="subtle">${esc(store.city)}</span></div>
         <h3>${esc(product.name)}</h3>
         <p>${esc(product.desc)}</p>
-        <div class="price-line"><strong>${money(product.price)}</strong>${product.oldPrice ? `<del>${money(product.oldPrice)}</del>` : ''}<span class="subtle">${product.stock} disponíveis</span></div>
+        ${product.offerActive?`<p class="note">Oferta até ${esc(dateTime(product.offer.endsAt))}.</p>`:''}
+        <div class="price-line"><strong>${money(product.price)}</strong>${product.offerActive ? `<del>${money(product.oldPrice)}</del>` : ''}<span class="subtle">${product.stock} disponíveis</span></div>
         <div class="product-foot">
-          ${isMerchantView() ? `<button class="profile-btn" data-action="edit-product" data-id="${product.id}">Editar produto</button><span class="chip ${product.lastBatch?'orange':'soft'}">${product.lastBatch?'Última Fornada':'No cardápio'}</span>` : `${state.page==='loja' && Number(state.storeViewId)===store.id ? `<span class="product-profile-context">${esc(store.name)} · ${esc(store.city)}</span>` : `<button class="profile-btn" data-action="goto-store" data-id="${store.id}">Ver perfil</button>`}<button class="add-btn" data-action="add-cart" data-id="${product.id}" aria-label="Adicionar à sacola">+</button>`}
+          ${isMerchantView() ? `<button class="profile-btn" data-action="edit-product" data-id="${product.id}">Editar produto</button><span class="chip ${product.offerActive?'orange':'soft'}">${product.offerActive?'Última Fornada':'No cardápio'}</span>` : `${state.page==='loja' && Number(state.storeViewId)===store.id ? `<span class="product-profile-context">${esc(store.name)} · ${esc(store.city)}</span>` : `<button class="profile-btn" data-action="goto-store" data-id="${store.id}">Ver perfil</button>`}<button class="add-btn" data-action="add-cart" data-id="${product.id}" aria-label="Adicionar à sacola">+</button>`}
         </div>
       </div>
     </article>
@@ -2758,7 +4198,8 @@ function productCard(product) {
 }
 
 function offerCard(product) {
-  return `<article class="offer-card"><div><strong>${esc(product.name)}</strong><p>${money(product.price)} ${product.oldPrice ? `<del>${money(product.oldPrice)}</del>` : ''}</p></div><button class="ghost-btn strong" data-action="add-cart" data-id="${product.id}">Pegar</button></article>`;
+  product=globalThis.APETE_OFFERS.project(product);
+  return `<article class="offer-card"><div><strong>${esc(product.name)}</strong><p>${money(product.price)} ${product.offerActive ? `<del>${money(product.oldPrice)}</del>` : ''}</p></div><button class="ghost-btn strong" data-action="add-cart" data-id="${product.id}">Pegar</button></article>`;
 }
 
 function storeCard(store) {
@@ -2848,11 +4289,13 @@ function merchantActions(order) {
   return '';
 }
 
+function storeServesSelectedCity(store){return !!store&&store.open!==false&&(store.city===state.city||store.serviceAreas?.includes(state.city));}
+function publicProductAvailable(product){return product.available!==false&&product.stock>0&&storeServesSelectedCity(getStore(product.storeId));}
 function homePage() {
-  const stores = state.stores.filter((store) => !store.producer);
-  const producers = state.stores.filter((store) => store.producer);
-  const featured = state.products.filter((product) => !product.lastBatch).slice(0, 6);
-  const offers = state.products.filter((product) => product.lastBatch).slice(0, 5);
+  const stores = state.stores.filter(store=>!store.producer&&storeServesSelectedCity(store));
+  const producers = state.stores.filter(store=>store.producer&&storeServesSelectedCity(store));
+  const featured = state.products.filter(product=>publicProductAvailable(product)&&!globalThis.APETE_OFFERS.isActive(product)).slice(0, 6);
+  const offers = state.products.filter(product=>publicProductAvailable(product)&&globalThis.APETE_OFFERS.isActive(product)).slice(0, 5);
   const heroImage = asset('cover-casa.webp');
   return `
     ${pageHead('Peça sem complicação', 'Escolha seu próximo pedido entre os restaurantes, padarias e produtores da região.')}
@@ -2881,8 +4324,8 @@ function homePage() {
 }
 
 function storesPage() {
-  const merchants = state.stores.filter((store) => !store.producer);
-  const producers = state.stores.filter((store) => store.producer);
+  const merchants = state.stores.filter(store=>!store.producer&&storeServesSelectedCity(store));
+  const producers = state.stores.filter(store=>store.producer&&storeServesSelectedCity(store));
   return `${pageHead('Estabelecimentos', 'Explore restaurantes, padaria e produtores da região.')}<section style="margin-bottom:24px"><div class="section-head"><div><h3>Comerciantes</h3><p>Restaurantes e padaria com capa própria e miniaturas dos itens.</p></div></div><div class="store-grid">${merchants.map(storeCard).join('')}</div></section><section><div class="section-head"><div><h3>Produtores locais</h3><p>Perfis em cor diferente, com lista de produtos e miniaturas.</p></div></div><div class="producer-grid">${producers.map(producerCard).join('')}</div></section>`;
 }
 
@@ -2899,7 +4342,7 @@ function menuFilters() {
 }
 
 function filteredProducts() {
-  let items = [...state.products];
+  let items = state.products.filter(publicProductAvailable).map(product=>globalThis.APETE_OFFERS.project(product));
   if (state.filters.query) {
     const q = state.filters.query.toLowerCase();
     items = items.filter((item) => `${item.name} ${item.desc}`.toLowerCase().includes(q));
@@ -2913,16 +4356,16 @@ function filteredProducts() {
 
 function catalogPage() {
   const items = filteredProducts();
-  return `${pageHead('Cardápio', 'Catálogo com filtros, botões mais legíveis e perfis dos empreendimentos.')}${menuFilters()}<div class="product-grid">${items.map(productCard).join('')}</div>`;
+  return `${pageHead('Cardápio', 'Encontre comidas e produtos que atendem à cidade selecionada.')}${menuFilters()}<div class="product-grid">${items.map(productCard).join('')}</div>`;
 }
 
 function lastBatchPage() {
-  const items = state.products.filter((item) => item.lastBatch);
-  return `${pageHead('Última Fornada', 'Produtos selecionados pelos estabelecimentos para oferecer com desconto e ajudar a reduzir desperdício.')}<p class="note">O preço e o estoque vêm do catálogo. Quando o prazo e as condições da oferta não estiverem informados, confirme com a loja antes de pedir. Os itens demonstrativos são exemplos.</p><div class="product-grid">${items.map(productCard).join('')}</div>`;
+  const items = state.products.filter(item=>publicProductAvailable(item)&&globalThis.APETE_OFFERS.isActive(item));
+  return `${pageHead('Última Fornada', 'Produtos selecionados pelos estabelecimentos para oferecer com desconto e ajudar a reduzir desperdício.')}<p class="note">Só aparecem ofertas dentro do prazo cadastrado e com estoque. Confirme as condições de conservação com a loja. Os itens demonstrativos são exemplos.</p><div class="product-grid">${items.length?items.map(productCard).join(''):'<div class="empty">Nenhuma oferta dentro do prazo no momento.</div>'}</div>`;
 }
 
 function producersPage() {
-  const items = state.stores.filter((store) => store.producer);
+  const items = state.stores.filter(store=>store.producer&&storeServesSelectedCity(store));
   return `${pageHead('Do produtor', 'Frutas, verduras e produtos feitos por quem vive e produz na região.')}<div class="producer-grid">${items.map(producerCard).join('')}</div>`;
 }
 
@@ -3177,7 +4620,7 @@ function merchantProductForm(product = null) {
       <div class="field"><label for="mp-photo">Foto do produto ${product?'(opcional: manter foto atual)':'*'}</label><input class="input" id="mp-photo" type="file" accept="image/png,image/jpeg,image/webp" ${product?'':'required'}><small class="merchant-helper">PNG, JPG ou WebP, até 5 MB. A foto fica neste navegador.</small></div>
       ${product ? `<div class="merchant-image-preview">${imgTag(product.image, product.name, store.producer?'producer':'food')}<span>Imagem atual</span></div>` : ''}
       <label class="merchant-check"><input id="mp-offer" type="checkbox" ${product?.lastBatch?'checked':''}><span>Publicar também na <strong>Última Fornada</strong></span></label>
-      <div class="field" id="mp-offer-price-field" ${product?.lastBatch?'':'hidden'}><label for="mp-offer-price">Preço especial (R$) *</label><input class="input" id="mp-offer-price" inputmode="decimal" placeholder="Ex.: 14,90" value="${product?.lastBatch?(product.price/100).toFixed(2).replace('.',','):''}"><small class="merchant-helper">O preço normal fica riscado e o desconto aparece ao cliente.</small></div>
+      <div class="field" id="mp-offer-price-field" ${product?.lastBatch?'':'hidden'}><label for="mp-offer-price">Preço especial (R$) *</label><input class="input" id="mp-offer-price" inputmode="decimal" placeholder="Ex.: 14,90" value="${product?.lastBatch?((product.discountPrice??product.price)/100).toFixed(2).replace('.',','):''}"><small class="merchant-helper">O desconto aparece apenas durante o prazo cadastrado.</small>${offerDateFields('mp',product)}</div>
       <div class="merchant-form-actions"><button class="primary-btn" type="submit">${product?'Salvar alterações':'Publicar produto'}</button>${product?'<button class="ghost-btn strong" type="button" data-action="cancel-product-edit">Cancelar edição</button>':''}</div>
     </form></section>`;
 }
@@ -3188,10 +4631,19 @@ function merchantProductsView(products) {
 }
 function merchantOffersView(products) {
   const offers = products.filter(p=>p.lastBatch);
-  return `<div class="merchant-section-heading"><div><span class="merchant-eyebrow">Ofertas do dia</span><h3>Última Fornada</h3><p>Coloque produtos do seu cardápio em oferta. Assim que salvar, o cliente vê o desconto na aba Última Fornada.</p></div></div>
-    <section class="merchant-editor"><h3>Criar oferta</h3><form id="merchant-offer-form" class="merchant-edit-form"><div class="field-grid"><div class="field"><label for="mo-product">Produto do seu cardápio *</label><select id="mo-product" class="select" required><option value="">Selecione o produto</option>${products.filter(p=>!p.lastBatch).map(p=>`<option value="${p.id}">${esc(p.name)} · ${money(p.price)}</option>`).join('')}</select></div><div class="field"><label for="mo-price">Novo preço promocional (R$) *</label><input id="mo-price" class="input" inputmode="decimal" placeholder="Ex.: 12,90" required></div></div><div class="merchant-form-actions"><button class="primary-btn" type="submit" ${products.every(p=>p.lastBatch)?'disabled':''}>Publicar na Última Fornada</button><button type="button" class="ghost-btn strong" data-action="merchant-panel-tab" data-tab="produtos">+ Novo produto</button></div></form></section>
-    <div class="merchant-section-heading below"><h3>Ofertas ativas</h3><span>${offers.length} ${offers.length===1?'item':'itens'}</span></div>
-    ${offers.length?`<div class="merchant-offers-list">${offers.map(p=>`<article class="merchant-offer-item"><div class="merchant-offer-image">${imgTag(p.image,p.name)}</div><div><strong>${esc(p.name)}</strong><p><del>${money(p.oldPrice)}</del> <b>${money(p.price)}</b></p></div><button class="ghost-btn strong" data-action="end-offer" data-id="${p.id}">Encerrar oferta</button></article>`).join('')}</div>`:'<div class="empty">Nenhuma oferta ativa. Selecione um produto do cardápio acima.</div>'}`;
+  return `<div class="merchant-section-heading"><div><span class="merchant-eyebrow">Ofertas do dia</span><h3>Última Fornada</h3><p>Coloque produtos do seu cardápio em oferta. O cliente vê o desconto na Última Fornada durante o prazo cadastrado.</p></div></div>
+    <section class="merchant-editor"><h3>Criar oferta</h3><form id="merchant-offer-form" class="merchant-edit-form"><div class="field-grid"><div class="field"><label for="mo-product">Produto do seu cardápio *</label><select id="mo-product" class="select" required><option value="">Selecione o produto</option>${products.filter(p=>!p.lastBatch).map(p=>`<option value="${p.id}">${esc(p.name)} · ${money(p.price)}</option>`).join('')}</select></div><div class="field"><label for="mo-price">Novo preço promocional (R$) *</label><input id="mo-price" class="input" inputmode="decimal" placeholder="Ex.: 12,90" required></div></div>${offerDateFields('mo')}<div class="merchant-form-actions"><button class="primary-btn" type="submit" ${products.every(p=>p.lastBatch)?'disabled':''}>Publicar na Última Fornada</button><button type="button" class="ghost-btn strong" data-action="merchant-panel-tab" data-tab="produtos">+ Novo produto</button></div></form></section>
+    <div class="merchant-section-heading below"><h3>Ofertas cadastradas</h3><span>${offers.length} ${offers.length===1?'item':'itens'}</span></div>
+    ${offers.length?`<div class="merchant-offers-list">${offers.map(p=>`<article class="merchant-offer-item"><div class="merchant-offer-image">${imgTag(p.image,p.name)}</div><div><strong>${esc(p.name)}</strong><p><del>${money(p.oldPrice)}</del> <b>${money(p.discountPrice??p.price)}</b></p><p>${globalThis.APETE_OFFERS.isActive(p)?'Dentro do prazo':'Fora do prazo ou sem datas'}${p.offer?.endsAt?' · Até '+esc(new Date(p.offer.endsAt).toLocaleString('pt-BR')):''}</p></div><button class="ghost-btn strong" data-action="end-offer" data-id="${p.id}">Encerrar oferta</button></article>`).join('')}</div>`:'<div class="empty">Nenhuma oferta ativa. Selecione um produto do cardápio acima.</div>'}`;
+}
+function offerDateFields(prefix,product=null) {
+ const local=value=>{if(!value)return '';const d=new Date(value);if(!Number.isFinite(d.getTime()))return '';return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
+ return `<div class="field-grid"><div class="field"><label for="${prefix}-offer-start">Início da oferta *</label><input class="input" id="${prefix}-offer-start" type="datetime-local" value="${local(product?.offer?.startsAt||new Date().toISOString())}"></div><div class="field"><label for="${prefix}-offer-end">Fim da oferta *</label><input class="input" id="${prefix}-offer-end" type="datetime-local" value="${local(product?.offer?.endsAt)}"></div></div><small class="merchant-helper">Horários no fuso deste aparelho. Informe quando o desconto começa e termina; confirme também as condições de consumo.</small>`;
+}
+function readOfferDates(prefix) {
+ const start=Date.parse($('#'+prefix+'-offer-start')?.value),end=Date.parse($('#'+prefix+'-offer-end')?.value);
+ if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start||end<=Date.now())return null;
+ return {startsAt:new Date(start).toISOString(),endsAt:new Date(end).toISOString()};
 }
 function parsePrice(raw) {
   const clean=String(raw||'').trim().replace(/\s|R\$/gi,'');
@@ -3219,6 +4671,8 @@ async function saveMerchantProduct(form) {
   const name=$('#mp-name')?.value.trim(),desc=$('#mp-desc')?.value.trim();
   const basePrice=parsePrice($('#mp-price')?.value),stock=Number($('#mp-stock')?.value);
   const discounted=$('#mp-offer')?.checked,offerPrice=discounted?parsePrice($('#mp-offer-price')?.value):null;
+  const offer=discounted?readOfferDates('mp'):null;
+  if(discounted&&!offer)return toast('Informe início e fim da oferta, com término no futuro.');
   const file=$('#mp-photo')?.files?.[0];
   if(!name||!desc||!basePrice||!Number.isInteger(stock)||stock<0||stock>9999)return toast('Preencha nome, descrição, preço e estoque válidos.');
   if(discounted&&(!offerPrice||offerPrice>=basePrice))return toast('O preço da oferta precisa ser menor que o preço normal.');
@@ -3230,7 +4684,7 @@ async function saveMerchantProduct(form) {
     backendId:existing?.backendId,
     storeId:store.id,name,desc,cat:$('#mp-category').value,
     price:discounted?offerPrice:basePrice,stock,image:photo,
-    oldPrice:discounted?basePrice:0,lastBatch:Boolean(discounted),
+    oldPrice:discounted?basePrice:0,lastBatch:Boolean(discounted),offer,
     preferences:existing?.preferences||[],serves:existing?.serves??null,available:true
   };
   if(state.merchant?.backend){
@@ -3254,16 +4708,18 @@ async function publishMerchantOffer() {
   if(!merchantAccess())return;
   const product=state.products.find(p=>p.id===Number($('#mo-product')?.value)&&p.storeId===activeMerchantStore().id);
   const newPrice=parsePrice($('#mo-price')?.value);
+  const offer=readOfferDates('mo');
+  if(!offer)return toast('Informe início e fim da oferta, com término no futuro.');
   if(!product||product.lastBatch||!newPrice||newPrice>=product.price)return toast('Escolha um produto e um preço menor que o valor atual.');
   if(state.merchant?.backend){
     if(!product.backendId)return toast('Produto ainda não sincronizado com o backend.');
     try{
-      await window.APETE_BACKEND.updateMerchantProduct(product.backendId,{oldPrice:product.price,price:newPrice,lastBatch:true});
+      await window.APETE_BACKEND.updateMerchantProduct(product.backendId,{oldPrice:product.price,price:newPrice,lastBatch:true,offerStartsAt:offer.startsAt,offerEndsAt:offer.endsAt});
       await hydrateCatalogFromBackend();render();toast('Oferta publicada no banco.','success');
     }catch(error){toast(friendlyBackendError(error,'Não foi possível publicar a oferta.'));}
     return;
   }
-  product.oldPrice=product.price;product.price=newPrice;product.lastBatch=true;
+  product.oldPrice=product.price;product.price=newPrice;product.lastBatch=true;product.offer=offer;delete product.discountPrice;
   save();render();toast('Oferta publicada na Última Fornada.','success');
 }
 
@@ -3275,12 +4731,12 @@ async function endMerchantOffer(id) {
   if(state.merchant?.backend){
     if(!product.backendId)return toast('Produto ainda não sincronizado com o backend.');
     try{
-      await window.APETE_BACKEND.updateMerchantProduct(product.backendId,{price:normalPrice,oldPrice:0,lastBatch:false});
+      await window.APETE_BACKEND.updateMerchantProduct(product.backendId,{price:normalPrice,oldPrice:0,lastBatch:false,offerStartsAt:null,offerEndsAt:null});
       await hydrateCatalogFromBackend();render();toast('Oferta encerrada no banco.','success');
     }catch(error){toast(friendlyBackendError(error,'Não foi possível encerrar a oferta.'));}
     return;
   }
-  product.price=normalPrice;product.oldPrice=0;product.lastBatch=false;
+  product.price=normalPrice;product.oldPrice=0;product.lastBatch=false;product.offer=null;delete product.discountPrice;
   save();render();toast('Oferta encerrada. Preço normal restaurado.','success');
 }
 function merchantPage() {
@@ -3306,7 +4762,7 @@ function merchantPage() {
   const stageList=[['pendentes','Recebidos',pending.length],['preparando','Em preparo',preparing.length],['prontos','Prontos',ready.length],['concluidos','Finalizados',concluded.length]];
   return `${state.ui.presentationMerchant?'<div class="merchant-demo-notice">Visão de apresentação · Os pedidos e produtos são salvos apenas neste navegador.</div>':''}
    <section class="merchant-cover-card ${store.producer?'producer-cover-theme':''}"><div class="merchant-cover-picture">${imgTag(store.cover,store.name,store.producer?'producer':'store')}</div><div class="merchant-cover-copy"><span class="merchant-eyebrow">PAINEL DO ${store.producer?'PRODUTOR':'COMERCIANTE'}</span><h2>${esc(store.name)}</h2><p>${esc(storeCategoryLabel(store))} · ${esc(store.city)}</p><div class="merchant-cover-actions"><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="pendentes">Ver pedidos <span>${pending.length}</span></button><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="produtos">+ Produto</button><button class="merchant-cover-action" data-action="merchant-panel-tab" data-tab="fornada">Última Fornada <span>${offerCount}</span></button></div></div></section>
-   ${state.ui.presentationMerchant?`<div class="merchant-store-select"><label for="demo-merchant-store">Trocar estabelecimento no vídeo</label><select id="demo-merchant-store" class="select">${state.stores.map(s=>`<option value="${s.id}" ${s.id===store.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>`:''}
+   ${state.ui.presentationMerchant?`<div class="merchant-store-select"><label for="demo-merchant-store">Trocar estabelecimento de demonstração</label><select id="demo-merchant-store" class="select">${state.stores.map(s=>`<option value="${s.id}" ${s.id===store.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>`:''}
    ${state.merchant?.backend?orderSyncMarkup('merchant'):''}<div class="merchant-workflow" aria-label="Etapas do pedido">${stageList.map(([key,label,count])=>`<button class="merchant-stage ${tab===key?'selected':''}" data-action="merchant-panel-tab" data-tab="${key}" aria-pressed="${tab===key}" aria-label="${label}: ${count} ${count===1?'pedido':'pedidos'}"><span class="stage-label">${label}</span>${tab===key?`<span class="stage-count">${count} ${count===1?'pedido':'pedidos'}</span>`:''}</button>`).join('')}</div>
    <div class="merchant-tabs" role="group" aria-label="Áreas do painel"><button class="merchant-tab ${['pendentes','preparando','prontos','concluidos'].includes(tab)?'selected':''}" data-action="merchant-panel-tab" data-tab="pendentes">Pedidos</button><button class="merchant-tab ${tab==='produtos'?'selected':''}" data-action="merchant-panel-tab" data-tab="produtos">Cardápio</button><button class="merchant-tab ${tab==='fornada'?'selected':''}" data-action="merchant-panel-tab" data-tab="fornada">Última Fornada</button><button class="merchant-tab ${tab==='cadastro'?'selected':''}" data-action="merchant-panel-tab" data-tab="cadastro">Meu perfil</button></div>
    <div class="merchant-main-body">${body}</div>`;
@@ -3482,6 +4938,7 @@ function renderCartModal() {
   const total = subtotal + deliveryFee;
 
   if (cartStep === 'checkout') {
+    checkoutPrices=new Map(items.map(item=>[item.product.id,item.product.price]));
     openModal('Finalizar pedido', `
       <div class="checkout-summary">
         <div class="summary-card"><h4>Entrega e pagamento</h4><div class="field-grid"><div class="field"><label>Nome</label><input id="checkout-name" class="input" autocomplete="name" value="${esc(checkoutDraft?.name??state.customer.name??'')}"></div><div class="field"><label>Telefone</label><input id="checkout-phone" class="input phone-only" inputmode="numeric" autocomplete="tel" maxlength="11" value="${esc(checkoutDraft?.phone??onlyDigits(state.customer.phone||''))}"></div><div class="field"><label>Bairro</label><input id="checkout-neighborhood" class="input" autocomplete="address-level3" value="${esc(checkoutDraft?.neighborhood??state.customer.neighborhood??'')}"></div><div class="field"><label>Endereço</label><input id="checkout-address" class="input" autocomplete="street-address" value="${esc(checkoutDraft?.address??state.customer.address??'')}"></div></div></div>
@@ -3515,7 +4972,7 @@ async function placeOrder() {
     const created=await checkoutController.submit(window.APETE_BACKEND,{
       storeId:store.id,city:state.city,mode:'delivery',
       customer:{name,phone,address,neighborhood},note,payment:selectedPayment,
-      items:items.map(item=>({productId:item.product.id,qty:item.qty}))
+      items:items.map(item=>({productId:item.product.id,qty:item.qty,expectedPrice:checkoutPrices.get(item.product.id)??item.product.price}))
     });
     state.customer={...state.customer,name,phone,address,neighborhood};
     state.ui.orderSuccessId=Number(created.public_number);
@@ -3531,6 +4988,7 @@ async function placeOrder() {
     if(state.page==='pedidos')render();
     hydrateCatalogFromBackend();
   } catch(error) {
+    if(/price_changed/.test(String(error?.message))){await hydrateCatalogFromBackend();openCartModal();}
     toast(friendlyBackendError(error,'Não foi possível registrar o pedido. Confira os dados e tente novamente.'));
   }
 }
@@ -3556,7 +5014,7 @@ async function saveCustomer() {
       state.customer={...initialState().customer,name,email,phone,address,neighborhood};
       state.ui.pendingLegalAcceptances=['terms','privacy'];
       state.ui.demoOptOut=true;save();
-      toast('Cadastro criado. Confira seu e-mail para confirmar a conta.','success');
+      toast('Cadastro criado. Confirme seu e-mail e depois volte ao APETÊ para entrar.','success');
       setPage('entrar');
       return;
     }
@@ -3916,11 +5374,11 @@ async function sendToSabia(text) {
   const clean=String(text||'').trim();
   if(!clean||sabiaBusy)return;
   sabiaBusy=true;sabiaError='';sabiaRetryAfter=0;sabiaLastQuestion=clean;sabiaDraft='';
-  if(state.page==='sabia')render();
+  if(!isMerchantView())render();
   try {
     await ensureSabiaSession();
     if(sabiaChat.at(-1)?.role==='user')sabiaChat.pop();
-    sabiaChat.push({role:'user',content:clean});if(state.page==='sabia')render();
+    sabiaChat.push({role:'user',content:clean});if(!isMerchantView())render();
     const result=await sabiaRequest('/api/sabia',{question:clean,conversationId:sabiaSession.conversationId,city:state.city,mode:'delivery',history:sabiaChat.slice(-7,-1).map(({role,content})=>({role,content}))});
     sabiaChat.push({role:'assistant',content:result.text,products:result.products||[],stores:result.stores||[]});sessionStorage.setItem('apete-sabia-history',JSON.stringify(sabiaChat.slice(-12)));
     sabiaMode='generative';sabiaStatusMessage='Conectada à '+result.provider+' · '+result.model;
@@ -3932,7 +5390,7 @@ async function runSabiaDiagnostic(provider) {
   if(!clean||sabiaBusy||sabiaDiagnosticBusy)return;
   sabiaDiagnosticBusy=provider;
   sabiaDiagnostic={provider,question:clean,loading:true};
-  if(state.page==='sabia')render();
+  if(!isMerchantView())render();
   try{
     await ensureSabiaSession();
     const result=await sabiaRequest('/api/sabia/diagnostic',{
@@ -3944,7 +5402,7 @@ async function runSabiaDiagnostic(provider) {
     sabiaDiagnostic={ok:false,provider,question:clean,loading:false,stage:'client',status:error.status||0,detail:error.message};
   }finally{
     sabiaDiagnosticBusy='';
-    if(state.page==='sabia')render();
+    if(!isMerchantView())render();
   }
 }
 async function detectSabiaMode() {
@@ -3953,7 +5411,7 @@ async function detectSabiaMode() {
     sabiaMode=status.mode;sabiaStatusMessage=status.message;
     if(state.page==='sabia')await ensureSabiaSession();
   }catch(error){sabiaMode='unavailable';sabiaStatusMessage=error.message;}
-  if(state.page==='sabia')render();
+  if(!isMerchantView())render();
 }
 async function reviewSabiaProduct(entryIndex,id) {
   const candidate=sabiaChat[Number(entryIndex)]?.products?.find(p=>p.id===Number(id));
@@ -3967,7 +5425,7 @@ async function reviewSabiaProduct(entryIndex,id) {
     if(candidate.recommendation&&qty*current.price+current.fee>candidate.budget)throw new Error('O preço mudou e ultrapassa o orçamento. Peça uma nova sugestão.');
     sabiaPendingProduct={...current,quantity:qty};
     openModal('Adicionar sugestão à sacola',`<p><strong>${esc(current.name)}</strong></p><p>${qty} unidade(s) · ${money(current.price*qty)} em produtos + ${money(current.fee)} de entrega.</p><p><strong>Total da sugestão: ${money(current.price*qty+current.fee)}</strong></p><p class="note">A sacola pode ter outros itens. Revise o total no checkout. Nenhum pedido ou pagamento será enviado agora.</p><div class="row"><button class="ghost-btn strong" data-action="close">Voltar</button><button class="primary-btn" data-action="sabia-confirm-add">Confirmar adição</button></div>`);
-  } catch(error){toast(error.message);sabiaError=error.message;if(state.page==='sabia')render();}
+  } catch(error){toast(error.message);sabiaError=error.message;if(!isMerchantView())render();}
 }
 function confirmSabiaAdd(){
   const p=sabiaPendingProduct;if(!p)return;
@@ -4080,7 +5538,7 @@ $('#regional-city-inline')?.addEventListener('change',(event)=>{
   save();
   $('#location-label').textContent=city;
   closeRegionSelector();
-  if(state.page==='sabia')render();
+  if(!isMerchantView())render();
   toast(`Cidade de entrega: ${city}`,'success');
 });
 
@@ -4206,6 +5664,14 @@ document.addEventListener('pointerdown',(event)=>{
   if(!control&&!$('#region-popover')?.hidden)closeRegionSelector();
 });
 
+let offerWindowFingerprint='';
+function refreshOfferWindows(){
+ if(document.hidden||isMerchantView()||!$('#modal')?.hidden)return;
+ const next=state.products.filter(product=>globalThis.APETE_OFFERS.isActive(product)).map(product=>product.id).join(',');
+ if(next!==offerWindowFingerprint){offerWindowFingerprint=next;render();}
+}
+setInterval(refreshOfferWindows,15000);
+window.addEventListener('focus',refreshOfferWindows);
 setInterval(refreshVisibleOrders,15000);
 window.addEventListener('focus',refreshVisibleOrders);
 window.addEventListener('online',refreshVisibleOrders);

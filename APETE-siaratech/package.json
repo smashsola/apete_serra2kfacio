@@ -6,7 +6,7 @@
   "scripts": {
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
-    "check": "node --check src/worker.js && node --check src/live-catalog.js && node --check src/sabia-core.js && node --check public/app.js && node --check public/backend-client.js && node --check public/order-flow.js",
+    "check": "node --check src/worker.js && node --check src/live-catalog.js && node --check src/sabia-core.js && node --check public/app.js && node --check public/backend-client.js && node --check public/order-flow.js && node --check public/offer-pricing.js",
     "test": "node --test test/*.test.js"
   },
   "devDependencies": {

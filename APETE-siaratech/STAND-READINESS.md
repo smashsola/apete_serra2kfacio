@@ -29,10 +29,20 @@
 
 ## Ainda falta antes do estande
 
-- Exercitar cadastro público, confirmação por e-mail e aprovação de comerciante com e-mail de teste acessível. O teste atual provisionou contas QA e não validou esse percurso.
+- Corrigir Site URL e Redirect URLs no Supabase. Cadastro público enviado para uma caixa QA própria e confirmação recebida/verificada; o servidor redirecionou para http://localhost:3000. O painel está sem sessão administrativa acessível. Usar o endereço publicado nas duas configurações e repetir o retorno automático. A conta e a caixa QA foram removidas após logout.
+- Exercitar o percurso de cadastro e aprovação de um comerciante com seus dados reais; o teste de pedidos anterior usou comerciantes QA provisionados.
 - Conferir catálogo, checkout e Sabiá visualmente em um celular físico.
 - Ensaiar a Sabiá com 3 pedidos simples e conferir resposta com preço/cidade corretos.
 - Escolher o catálogo e as contas de apresentação; manter visível quando os dados forem demonstrativos.
 - Preparar QR code do endereço público e uma demonstração curta repetível. Não depende de vídeo.
 
 Comprovante local: outputs/stand-qa/pedido-cliente.png, na área de trabalho do Codex; não contém dados de usuários reais.
+
+## Avanço em 2 de outubro
+
+- 30 lojas e 153 produtos demonstrativos nas nove cidades; 9 exemplos de produtores. Viçosa, Carnaubal, Croatá e Ipu agora têm três perfis e 15 produtos cada. Guaraciaba recebeu três refeições vegetarianas.
+- 171 testes passando. Migrações e seed exercitados em Postgres local, incluindo preço ativo, futuro e vencido e rejeição de preço antigo sem consumir estoque.
+- Pedido com preço antigo também recusado no banco publicado; pedido com preço normal conferido em transação revertida, sem vendas ou alterações persistentes de estoque.
+- Formulário de oferta criado e encerrado pela interface de demonstração, com início/fim e indicação de prazo. Nenhuma promoção fictícia permanente foi ativada.
+- Groq e Gemini responderam na publicação. Cloudflare teve um timeout de 18 segundos e respondeu na repetição em cerca de 12,7 segundos; o resultado não garante disponibilidade futura.
+- Advisor do Supabase: dois avisos de funções SECURITY DEFINER públicas autenticadas, tabela privada sem política por bloqueio deliberado e proteção de senhas vazadas desativada. [Referência das funções](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable) e [proteção de senhas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Nenhuma permissão de dados foi ampliada além das colunas de prazo protegidas pelas políticas existentes.

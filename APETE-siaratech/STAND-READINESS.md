@@ -82,3 +82,7 @@ Comprovante local: outputs/stand-qa/pedido-cliente.png, na área de trabalho do 
 - Removido o dock inferior da página e seus arquivos de execução/estilo da carga inicial. O componente fica guardado no código, sem aparecer ou alterar o rodapé.
 - Mantidos os tamanhos, espaçamentos e altura do cabeçalho existentes. Cidade, conta e sacola usam efeito leve de hover sem mudar o layout; menu de três barrinhas disponível também no desktop.
 - Chat responsivo e correção dos avisos vazios preservados. 184 testes e sintaxe passaram.
+
+## Efeito habilitado explicitamente — 3 de outubro
+- A pedido do usuário, a animação dos botões do cabeçalho funciona mesmo com preferência de movimento reduzido do sistema. Demais componentes mantêm suas preferências.
+- Conferido no navegador original: movimento reduzido ativo, botão com escala 1.14, largura base 118 px e cabeçalho 79 px. Pressão e abertura do menu verificadas em 390 px. Build e TypeScript passaram.

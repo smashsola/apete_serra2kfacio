@@ -962,8 +962,3 @@ button:disabled,[aria-busy="true"]{cursor:wait;opacity:.68}
   transform-origin:center;
   transition:box-shadow .22s ease;
 }
-@media(prefers-reduced-motion:reduce) {
-  .top-actions .location-btn, .top-actions .user-button, .top-actions .cart-button, .menu-toggle { transition:none; }
-  .top-actions .location-btn:hover, .top-actions .user-button:hover, .top-actions .cart-button:hover,
-  .menu-toggle:hover { transform:none; }
-}

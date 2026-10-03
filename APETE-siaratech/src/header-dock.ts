@@ -5,18 +5,18 @@ import { animate, type AnimationPlaybackControls } from 'framer-motion';
 const spring = { type: 'spring' as const, mass: 0.1, stiffness: 150, damping: 7 };
 const header = document.querySelector<HTMLElement>('.topbar');
 const buttons = Array.from(document.querySelectorAll<HTMLElement>('#menu-toggle, #locate, #user-button, #cart-button'));
-const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+// Header interaction animation explicitly enabled by the user, independent of OS defaults.
 const controls = new Map<HTMLElement, AnimationPlaybackControls>();
 const pressed = new Set<HTMLElement>();
 
 function move(button: HTMLElement, scale = 1, y = 0) {
   controls.get(button)?.stop();
-  controls.set(button, animate(button, { scale: reduced.matches ? 1 : scale, y: reduced.matches ? 0 : y }, spring));
+  controls.set(button, animate(button, { scale, y }, spring));
 }
 function reset() { buttons.forEach(button => { if (!pressed.has(button)) move(button); }); }
 
 header?.addEventListener('pointermove', event => {
-  if (event.pointerType !== 'mouse' || reduced.matches) return;
+  if (event.pointerType !== 'mouse') return;
   // Read all bounds before writing transforms. client coordinates also work after scrolling.
   const targets = buttons.map(button => {
     const rect = button.getBoundingClientRect();
@@ -43,4 +43,3 @@ function release() { pressed.clear(); reset(); }
 window.addEventListener('pointerup', release);
 window.addEventListener('pointercancel', release);
 window.addEventListener('blur', release);
-reduced.addEventListener('change', release);

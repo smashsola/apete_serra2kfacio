@@ -1,6 +1,6 @@
 'use strict';
 (function(root){
-  function requestPosition(geolocation,{timeoutMs=3000,setTimer=setTimeout,clearTimer=clearTimeout}={}){
+  function requestPosition(geolocation,{timeoutMs=10000,setTimer=setTimeout,clearTimer=clearTimeout}={}){
     return new Promise((resolve,reject)=>{
       let settled=false;
       const finish=(callback,value)=>{if(settled)return;settled=true;clearTimer(timer);callback(value);};
@@ -18,7 +18,7 @@
           geolocation.getCurrentPosition(position=>{
             if(settled)return;
             const accuracy=position?.coords?.accuracy;
-            if(!Number.isFinite(accuracy)||accuracy>5000){
+            if(!Number.isFinite(accuracy)||accuracy<0||accuracy>5000){
               if(!precise)retry();
               else finish(reject,{code:2});
               return;
@@ -26,12 +26,12 @@
             finish(resolve,position);
           },error=>{
             if(settled)return;
-            if(error.code===2&&!precise)retry();
+            if((error.code===2||error.code===3)&&!precise)retry();
             else finish(reject,error);
           },{enableHighAccuracy:precise,timeout,maximumAge});
         }catch(error){finish(reject,error);}
       };
-      request(false,timeoutMs,120000);
+      request(false,Math.min(2000,timeoutMs),120000);
     });
   }
   function nearestCity(coords,centers){

@@ -57,3 +57,9 @@ Comprovante local: outputs/stand-qa/pedido-cliente.png, na área de trabalho do 
 - Localização: limite total de 3 segundos, posição em cache de até dois minutos e uma tentativa de alta precisão quando a primeira resposta é imprecisa. Seleção manual permanece disponível e resultados atrasados são ignorados. Nenhuma coordenada exata é enviada ou persistida. GPS real em celular físico ainda exige conferência.
 - 183 testes passaram, incluindo repetição de fotos e demora/recusa/imprecisão do GPS. CLI Supabase bloqueada pelo Controle de Aplicativo do Windows; DML aplicado e verificado pelo conector, com SQL correspondente versionado.
 - Cloudflare: versão 0d1922b6-7849-439a-b2b0-d5080f1004c5.
+
+## Revisão de aquisição de localização — 3 de outubro
+
+- Corrigido timeout da primeira tentativa: agora uma tentativa rápida de 2 segundos pode ser seguida por alta precisão, dentro de um prazo total de 10 segundos. O prazo anterior de 3 segundos podia encerrar a busca cedo demais.
+- Erro permanece no seletor com orientação para permissão/localização do aparelho; seleção manual continua disponível. Consulta assíncrona de permissão não substitui mensagem de busca ou falha.
+- 184 testes passaram, incluindo primeira tentativa expirada seguida de segunda tentativa bem-sucedida. Isso verifica o comportamento do app; aquisição real depende do aparelho e navegador.

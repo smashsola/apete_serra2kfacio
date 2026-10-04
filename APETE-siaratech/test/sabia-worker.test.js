@@ -40,8 +40,9 @@ test('frete variável é uma estimativa inicial e não confirma o orçamento fin
  const data=await ask('quero almoço até 40 reais');
  assert.ok(data.products.length>0);
  assert.ok(data.products.every(item=>item.deliveryVariable&&item.feePerKm===100));
- assert.match(data.text,/orçamento só pode ser confirmado depois desse cálculo/);
- assert.match(data.text,/distância pela estrada/);
+ assert.match(data.text,/confirme o valor final pela distância/);
+ assert.match(data.text,/pode ultrapassar seu orçamento/);
+ assert.ok(data.text.startsWith('Estou em modo básico. Separei'));
 });
 
 test('API reserva respeita exclusão em linguagem natural',async()=>{
@@ -130,4 +131,60 @@ test('excluir pizza não transforma a exclusão em uma exigência de pizza',asyn
  const data=await ask('Quero almoço, não quero pizza, até R$ 60.',{city:'Guaraciaba do Norte'});
  assert.ok(data.products.length>0);
  assert.ok(data.products.every(p=>!/pizza/i.test(p.name)));
+});
+
+test('apenas uma opção limita recomendações mesmo sem provedor',async()=>{
+ const data=await ask('Me sugira só uma opção de lanche até R$ 30.');
+ assert.equal(data.products.length,1);
+ assert.match(data.text,/esta opção/);
+ assert.doesNotMatch(data.text,/algumas opções|3 opções/);
+ assert.ok(data.products[0].total<=3000);
+});
+
+test('duas opções limita a lista sem confundir unidades ou pessoas',async()=>{
+ const data=await ask('Me sugira duas opções de lanche.');
+ assert.equal(data.products.length,2);
+ const meal=await ask('quero almoço para 4 pessoas');
+ assert.ok(meal.products.length>0);
+ assert.ok(meal.products.every(item=>item.quantity*item.serves>=4));
+});
+
+test('frase da IA sobrevive à validação e apenas uma opção é imposta pelo servidor',async()=>{
+ const env={...baseEnv,AI:{async run(){return {response:JSON.stringify({
+  intent:{topic:'snack',action:'recommend',confidence:1},
+  message:'Escolhi uma opção prática para seu lanche.',
+  recommendations:[{productId:8},{productId:7},{productId:10}]
+ })};}}};
+ const data=await ask('Me sugira só uma opção de lanche.',{env});
+ assert.equal(data.provider,'cloudflare');
+ assert.equal(data.products.length,1);
+ assert.ok(data.text.startsWith('Escolhi uma opção prática para seu lanche.'));
+ assert.doesNotMatch(data.text,/algumas opções/);
+});
+
+test('resposta sem produtos não recebe aviso de frete',async()=>{
+ const data=await ask('qual o mais pedido?');
+ assert.equal(data.products.length,0);
+ assert.doesNotMatch(data.text,/frete|orçamento só pode|confirme o valor final/);
+});
+
+test('outra opção mantém o lanche e evita o produto já apresentado',async()=>{
+ const first=await ask('Me sugira só uma opção de lanche.');
+ const second=await ask('Me sugira outra opção de lanche.',{history:[
+  {role:'user',content:'Me sugira só uma opção de lanche.'},
+  {role:'assistant',content:first.text}
+ ]});
+ assert.equal(second.products.length,1);
+ assert.ok(second.products.every(item=>!first.products.some(prior=>prior.id===item.id)));
+});
+
+test('pergunta sobre entrega conserva a loja e distingue taxa inicial de valor final',async()=>{
+ const first=await ask('quero tapioca com queijo coalho');
+ const data=await ask('e a entrega?',{history:[
+  {role:'user',content:'quero tapioca com queijo coalho'},
+  {role:'assistant',content:first.text}
+ ]});
+ assert.match(data.text,/Forno & Afeto/);
+ assert.match(data.text,/começa em R\$ 5,00/);
+ assert.match(data.text,/distância pela estrada/);
 });

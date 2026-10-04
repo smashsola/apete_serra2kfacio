@@ -245,7 +245,13 @@ function safeExplanation(value,items,groundDescription=false){
   return normalizedWords(remaining).length>0;
  }).join(' ').trim();
 }
-function validatedRecommendations(text,catalog,intent={}){
+function recommendationLimit(query){
+ if(/\b(?:outra opcao|outra sugestao|outra alternativa)\b/.test(normalizedText(query)))return 1;
+ const match=normalizedText(query).match(/\b(uma unica|uma|um|1|duas|dois|2|tres|3)\s+(?:outras?\s+)?(?:opco(?:es|ao)|opcao|sugesto(?:es|ao)|sugestao|alternativas?)\b/);
+ if(!match)return 3;
+ return /^(uma unica|uma|um|1)$/.test(match[1])?1:/^(duas|dois|2)$/.test(match[1])?2:3;
+}
+function validatedRecommendations(text,catalog,intent={},limit=3){
  // Ground provider output instead of rejecting a healthy provider only because
  // it formatted the response differently. Commercial truth remains server-side.
  let data=null;
@@ -287,10 +293,11 @@ function validatedRecommendations(text,catalog,intent={}){
    :null;
   if(meal&&drink)picked.splice(0,picked.length,{...meal},{...drink});
  }
- picked.message=data&&typeof data.message==='string'
-  ?safeExplanation(data.message,picked)
-  :safeExplanation(text,picked);
- return picked.slice(0,3);
+ const selected=picked.slice(0,limit);
+ selected.message=data&&typeof data.message==='string'
+  ?safeExplanation(data.message,selected)
+  :safeExplanation(text,selected);
+ return selected;
 }
 function catalogAnswer(options,mode,constraints,basic=false,another=false){
  const prefix=basic?'Estou em modo básico. ':'';
@@ -303,7 +310,9 @@ function catalogAnswer(options,mode,constraints,basic=false,another=false){
   return (index+1)+'. '+item.name+' — '+quantityText+', '+delivery+'; total de R$ '+money(total)+'.'+(!basic&&item.reason?' '+item.reason:'');
  });
  const budgetNote=constraints.budget!==null&&constraints.budgetScope==='products'?' O limite considera só o produto; a entrega está discriminada à parte.':'';
- let intro=basic?'Estas são opções individuais, para escolher uma.':(options.message||'Encontrei algumas opções que combinam com o pedido.');
+ const defaultIntro=options.length===1?'Separei esta opção para você.':'Separei '+options.length+' opções para você escolher.';
+ let intro=options.message||defaultIntro;
+ if(options.length===1&&/\b(?:algumas|varias|estas|essas)\b.*\bopcoes\b/.test(normalizedText(intro)))intro=defaultIntro;
  if(constraints.intent?.withDrink){
   const sameStore=options.length>=2&&options[0].storeId===options[1].storeId;
   if(options.length>=2){
@@ -588,7 +597,7 @@ function semanticFactAnswer(city,mode,query,semantic,constraints,prior=[]){
   const storeIds=priorRecommendedStoreIds(city,mode,prior);
   if(!storeIds.length)return {text:'De qual estabelecimento ou produto você quer saber a taxa de entrega?',provider:'rules',model:'catalog-facts-v2',productIds:[]};
   const stores=storeIds.map(id=>byStore.get(id)).filter(Boolean);
-  return {text:stores.map(store=>'A taxa de entrega da '+store.name+' é '+money(store.fee)+'.').join(' '),provider:'rules',model:'catalog-facts-v2',productIds:[]};
+  return {text:stores.map(store=>store.feePerKm?'A entrega da '+store.name+' começa em '+money(store.fee)+'. O valor final depende da distância pela estrada; confirme com a loja.':'A taxa de entrega da '+store.name+' é '+money(store.fee)+'.').join(' '),provider:'rules',model:'catalog-facts-v2',productIds:[]};
  }
  if(!all.length)return {text:'Não encontrei produto disponível para comparar nesta cidade e modalidade.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
  const ranked=summary(city,mode,query,constraints);
@@ -622,14 +631,14 @@ function semanticFactAnswer(city,mode,query,semantic,constraints,prior=[]){
  }
  return null;
 }
-function semanticChatAnswer(){
- return {text:'Oi! Posso te ajudar a encontrar algo do catálogo, comparar opções ou montar um pedido.',productIds:[]};
+function semanticChatAnswer(data){
+ return {text:safeExplanation(data?.message||'',[])||'Posso te ajudar a encontrar comidas e produtos da Serra. Me diga o que você quer e quanto pretende gastar.',productIds:[]};
 }
 function semanticListAnswer(city,mode,query,constraints,prior){
  let catalog=alternativeCatalog(summary(city,mode,query,constraints),constraints.intent,prior);
  if(!catalog.length)return null;
- const options=catalog.slice(0,3);
- options.message='Encontrei '+catalog.length+' '+(catalog.length===1?'opção compatível':'opções compatíveis')+' com o que você pediu.';
+ const options=catalog.slice(0,constraints.optionLimit||3);
+ options.message=options.length===1?'Separei esta opção para você.':'Separei '+options.length+' opções compatíveis com o que você pediu.';
  return catalogAnswer(options,mode,constraints,false,Boolean(constraints.intent?.another));
 }
 function componentIntent(base,component){
@@ -700,7 +709,7 @@ function reserveAnswer(catalog,mode,query,prior,constraints){
  const intent=constraints.intent||currentIntent(query);
  const ranked=alternativeCatalog(catalog,intent,prior).map(item=>({item,score:intentScore(item,intent,query)}))
   .filter(({score})=>score>0).sort((a,b)=>b.score-a.score||a.item.id-b.item.id).map(({item})=>item);
- let options=ranked.slice(0,3);
+ let options=ranked.slice(0,constraints.optionLimit||3);
  if(intent.withDrink){
   const meal=ranked.find(item=>['Regional','Caseiro','Vegetariano'].includes(item.category));
   const drink=meal
@@ -887,7 +896,7 @@ async function generateSemantic(env,messages,city,mode,query,prior,baseConstrain
     console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
     return {...answer,text:'Não encontrei produto compatível com sua intenção, cidade, modalidade e restrições atuais.',productIds:[]};
    }
-   const options=validatedRecommendations(answer.text,catalog,intent);
+   const options=validatedRecommendations(answer.text,catalog,intent,constraints.optionLimit||3);
    console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
    return {...answer,...catalogAnswer(options,mode,constraints,false,Boolean(intent.another))};
   }catch(error){
@@ -955,7 +964,7 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
  if(immediateSemantic.action==='chat')return response({text:'Oi! Posso te ajudar a encontrar algo do catálogo, comparar opções ou montar um pedido.',provider:'rules',model:'conversation-v1',products:[],stores:[],demo:CATALOG.demo!==false});
  const vagueHealth=immediateSemantic.action==='clarify'&&(!immediateSemantic.preferences?.length)&&(immediateSemantic.modifiers?.includes('healthy')||/\b(?:dieta|regime)\b/.test(normalizedText(body.question)));
  if(vagueHealth)return response({text:'Posso considerar uma preferência ou restrição cadastrada, como vegetariano ou vegano. O catálogo não classifica produtos como “saudáveis”, “fitness” ou bons para emagrecimento sem esse dado explícito.',provider:'rules',model:'health-guard-v1',products:[],stores:[],demo:CATALOG.demo!==false});
- const prior=messagesFor(body),baseConstraints=conversationConstraints(body.question,prior),fallbackIntent=conversationIntent(body.question,prior);
+ const prior=messagesFor(body),baseConstraints={...conversationConstraints(body.question,prior),optionLimit:recommendationLimit(body.question)},fallbackIntent=conversationIntent(body.question,prior);
  const available=availableCatalog(body.city,body.mode),fallbackSemantic=semanticFallbackIntent(body.question,prior);
  const semanticMessages=[{role:'system',content:semanticContext(body.city,body.mode,baseConstraints,available,fallbackSemantic)},...prior,{role:'user',content:body.question.trim()}];
  let answer;
@@ -972,9 +981,9 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
   const quantity=recommendationQuantities?.[id];
   return quantity?{...info,recommendation:true,quantity,servesTotal:Number.isInteger(info.serves)?info.serves*quantity:null,subtotal:info.price*quantity,total:info.price*quantity+info.fee}:info;
  }).filter(item=>item&&item.available);
- if(body.mode==='delivery'&&available.some(item=>byStore.get(item.storeId)?.feePerKm)){
+ if(body.mode==='delivery'&&products.some(item=>item.deliveryVariable)){
   publicAnswer.text=publicAnswer.text.replace(/total(?! inicial)/gi,'total inicial');
-  publicAnswer.text='Os valores de frete são iniciais. O valor final depende da distância pela estrada combinada com a loja; o orçamento só pode ser confirmado depois desse cálculo. '+publicAnswer.text;
+  publicAnswer.text+='\nFrete estimado: confirme o valor final pela distância com a loja.'+(baseConstraints.budget!==null&&baseConstraints.budgetScope!=='products'?' O total pode ultrapassar seu orçamento.':'');
  }
  return response({...publicAnswer,products,stores:[],demo:CATALOG.demo!==false});
 }

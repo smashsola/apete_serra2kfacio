@@ -245,3 +245,13 @@ test('preço de esse sem referência pede o produto em vez de escolher um aleat�
  assert.deepEqual(data.products,[]);
  assert.match(data.text,/Qual produto/);
 });
+
+test('consultar preço no meio da conversa não apaga o orçamento das alternativas',async()=>{
+ const first=await ask('Me sugira uma opção de lanche até R$ 20.');
+ const history=[{role:'user',content:'Me sugira uma opção de lanche até R$ 20.'},{role:'assistant',content:first.text}];
+ const price=await ask('quanto fica esse?',{history});
+ history.push({role:'user',content:'quanto fica esse?'},{role:'assistant',content:price.text});
+ const data=await ask('quero algo diferente',{history});
+ assert.equal(data.products.length,1);
+ assert.ok(data.products[0].total<=2000);
+});

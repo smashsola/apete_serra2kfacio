@@ -66,7 +66,9 @@ function conversationConstraints(question,prior){
  for(const rawText of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
   const text=latestIntentText(rawText);
   const next=requestConstraints(text);
-  const followup=isSearchModifier(text,next)||isAlternativeFollowup(text);
+  const semantic=localSemanticIntent(text);
+  const contextualFact=semantic.action==='fact'&&['price','delivery_fee'].includes(semantic.fact)&&(semantic.topic==='catalog'||/\b(?:esse|essa|isso|ele|ela)\b/.test(text));
+  const followup=isSearchModifier(text,next)||isAlternativeFollowup(text)||contextualFact;
   if(!followup){budget=null;budgetScope='total';}
   if(next.budgetChanged)budget=next.budget;
   if(next.budgetScope!==null)budgetScope=next.budgetScope;

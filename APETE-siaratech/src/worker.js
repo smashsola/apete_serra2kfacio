@@ -575,17 +575,18 @@ function semanticTermMatch(item,terms){
  });
 }
 function priorRecommendedStoreIds(city,mode,prior=[]){
- const ids=[];
- for(const message of prior){
+ for(const message of [...prior].reverse()){
   if(message.role!=='assistant')continue;
+  const ids=[];
   const text=normalizedText(message.content);
   for(const product of CATALOG.products){
    if(!text.includes(normalizedText(product.name)))continue;
    const info=productInfo(product,city,mode);
    if(info?.available)ids.push(info.storeId);
   }
+  if(ids.length)return [...new Set(ids)];
  }
- return [...new Set(ids)];
+ return [];
 }
 function semanticFactAnswer(city,mode,query,semantic,constraints,prior=[]){
  if(semantic.action!=='fact')return null;

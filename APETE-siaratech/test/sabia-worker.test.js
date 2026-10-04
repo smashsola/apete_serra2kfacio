@@ -188,3 +188,16 @@ test('pergunta sobre entrega conserva a loja e distingue taxa inicial de valor f
  assert.match(data.text,/começa em R\$ 5,00/);
  assert.match(data.text,/distância pela estrada/);
 });
+
+test('frete acompanha a última sugestão sem incluir lojas de sugestões anteriores',async()=>{
+ const first=await ask('quero tapioca com queijo coalho');
+ const second=await ask('quero cachorro-quente completo');
+ const data=await ask('e a entrega?',{history:[
+  {role:'user',content:'quero tapioca com queijo coalho'},
+  {role:'assistant',content:first.text},
+  {role:'user',content:'quero cachorro-quente completo'},
+  {role:'assistant',content:second.text}
+ ]});
+ assert.match(data.text,/Chapa do Norte/);
+ assert.doesNotMatch(data.text,/Forno & Afeto/);
+});

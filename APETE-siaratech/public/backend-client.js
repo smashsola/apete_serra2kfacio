@@ -82,7 +82,7 @@
       if(type==='privacy')legalMeta.legal_privacy_version=LEGAL_VERSIONS.privacy;
       if(type==='merchant_terms')legalMeta.legal_merchant_terms_version=LEGAL_VERSIONS.merchant_terms;
     }
-    const redirect='https://apete-serra2kfacio.betaniaaa.workers.dev/';
+    const redirect='https://apete-serra.betaniaaa.workers.dev/';
     const data=await request('/auth/v1/signup?redirect_to='+encodeURIComponent(redirect),{
       method:'POST',
       body:{email,password,data:{full_name:name,phone,...legalMeta}}

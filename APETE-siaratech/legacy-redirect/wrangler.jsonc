@@ -1,0 +1,6 @@
+{
+  "name": "apete-serra2kfacio",
+  "main": "worker.js",
+  "compatibility_date": "2026-09-24",
+  "workers_dev": true
+}

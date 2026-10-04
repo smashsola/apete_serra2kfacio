@@ -1,5 +1,12 @@
 # Preparação do estande — Siará Tech, dia 9
 
+## Endereço público — 4 de outubro
+
+- Endereço atual: https://apete-serra.betaniaaa.workers.dev/.
+- O endereço anterior redireciona permanentemente para o novo, preservando caminhos e parâmetros. Links e QR codes existentes continuam abrindo o APETÊ.
+- Site URL e Redirect URLs do Supabase incluem o endereço novo; o cadastro retorna para ele.
+- O Worker foi renomeado preservando os segredos da Sabiá. Para publicar o site, use `wrangler.jsonc`; o projeto `legacy-redirect` mantém apenas o redirecionamento antigo.
+
 ## Atualização em 2 de outubro
 
 - Sabiá ligada ao catálogo público atualizado do banco. Cada consulta e revisão de item confere preço, estoque e cidade; falha não reutiliza dados estáticos. 167 testes passaram. Detalhes em LIVE-CATALOG.md.

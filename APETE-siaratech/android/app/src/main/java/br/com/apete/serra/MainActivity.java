@@ -20,7 +20,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    private static final String SITE = "https://apete-serra2kfacio.betaniaaa.workers.dev/";
+    private static final String SITE = "https://apete-serra.betaniaaa.workers.dev/";
     private WebView web;
     private LinearLayout errorPanel;
     private ProgressBar progress;

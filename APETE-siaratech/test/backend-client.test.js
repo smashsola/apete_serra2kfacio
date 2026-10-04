@@ -158,7 +158,7 @@ test('signup anônimo envia Authorization com a chave publicável',async()=>{
   globalThis.fetch=async(url,options)=>{
     const target=new URL(url);
     assert.equal(target.pathname,'/auth/v1/signup');
-    assert.equal(target.searchParams.get('redirect_to'),'https://apete-serra2kfacio.betaniaaa.workers.dev/');
+    assert.equal(target.searchParams.get('redirect_to'),'https://apete-serra.betaniaaa.workers.dev/');
     auth=options.headers.Authorization;
     sent=JSON.parse(options.body);
     return response({user:{id:'new-user',email:'novo@apete.test'},session:null});

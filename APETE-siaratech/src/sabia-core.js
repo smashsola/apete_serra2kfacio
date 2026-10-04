@@ -84,7 +84,7 @@ export function localIntent(current,previous=null){
  else if(/mais barato|menor preco|mais em conta/.test(clean))fact='cheapest';
  else if(/mais caro|maior preco/.test(clean))fact='most_expensive';
  else if(/mais pedido|mais vendido|mais popular/.test(clean))fact='most_ordered';
- else if(/\bpreco\b|\bquanto custa\b/.test(clean))fact='price';
+ else if(/\bpreco\b|\bquanto (?:custa|fica|sai)\b|\bqual (?:e )?(?:o )?valor\b/.test(clean))fact='price';
  else if(!alternative&&!listing&&/\b(?:tem|ha|existe|disponiv|vende|vendem|oferece|oferecem)\b/.test(clean))fact='availability';
  const affirmative=isAffirmative(clean);
  let action=conversational?'chat':fact!=='none'?'fact':switching?'switch':alternative?'alternative':constraintOnlyReset?'refine':listing?'list':affirmative&&components.length===0?'confirm':'recommend';

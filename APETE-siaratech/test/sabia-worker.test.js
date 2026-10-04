@@ -201,3 +201,47 @@ test('frete acompanha a última sugestão sem incluir lojas de sugestões anteri
  assert.match(data.text,/Chapa do Norte/);
  assert.doesNotMatch(data.text,/Forno & Afeto/);
 });
+
+test('quanto fica esse consulta só o último produto recomendado',async()=>{
+ const first=await ask('quero tapioca com queijo coalho');
+ const data=await ask('quanto fica esse?',{history:[
+  {role:'user',content:'quero tapioca com queijo coalho'},
+  {role:'assistant',content:first.text}
+ ]});
+ assert.deepEqual(data.products.map(item=>item.id),first.products.map(item=>item.id));
+ assert.match(data.text,/Tapioca com queijo coalho/);
+ assert.match(data.text,/13,00/);
+});
+
+test('frete de loja citada tem prioridade sobre a loja do histórico',async()=>{
+ const first=await ask('quero tapioca com queijo coalho');
+ const data=await ask('qual a taxa de entrega da Chapa do Norte?',{history:[
+  {role:'user',content:'quero tapioca com queijo coalho'},
+  {role:'assistant',content:first.text}
+ ]});
+ assert.match(data.text,/Chapa do Norte/);
+ assert.doesNotMatch(data.text,/Forno & Afeto/);
+});
+
+test('continuação diferente preserva o pedido de uma única opção',async()=>{
+ const first=await ask('Me sugira uma opção de lanche até R$ 30.');
+ const data=await ask('quero algo diferente',{history:[
+  {role:'user',content:'Me sugira uma opção de lanche até R$ 30.'},
+  {role:'assistant',content:first.text}
+ ]});
+ assert.equal(data.products.length,1);
+ assert.ok(data.products[0].total<=3000);
+});
+
+test('agradecimento é respondido sem reiniciar a conversa ou oferecer produtos',async()=>{
+ const data=await ask('valeu');
+ assert.match(data.text,/Por nada/);
+ assert.doesNotMatch(data.text,/Oi!/);
+ assert.deepEqual(data.products,[]);
+});
+
+test('preço de esse sem referência pede o produto em vez de escolher um aleatório',async()=>{
+ const data=await ask('quanto fica esse?');
+ assert.deepEqual(data.products,[]);
+ assert.match(data.text,/Qual produto/);
+});

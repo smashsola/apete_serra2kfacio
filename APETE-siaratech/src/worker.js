@@ -245,10 +245,21 @@ function safeExplanation(value,items,groundDescription=false){
   return normalizedWords(remaining).length>0;
  }).join(' ').trim();
 }
-function recommendationLimit(query){
+function recommendationLimit(query,prior=[]){
  if(/\b(?:outra opcao|outra sugestao|outra alternativa)\b/.test(normalizedText(query)))return 1;
  const match=normalizedText(query).match(/\b(uma unica|uma|um|1|duas|dois|2|tres|3)\s+(?:outras?\s+)?(?:opco(?:es|ao)|opcao|sugesto(?:es|ao)|sugestao|alternativas?)\b/);
- if(!match)return 3;
+ if(!match){
+  const followup=localSemanticIntent(query);
+  if(['alternative','refine','confirm'].includes(followup.action)||followup.topic==='catalog'&&followup.action==='recommend'){
+   for(const message of [...prior].reverse()){
+    if(message.role!=='user')continue;
+    const previous=localSemanticIntent(message.content);
+    if(/\b(?:uma|um|1|duas|dois|2|tres|3)\s+(?:unica\s+)?(?:opcao|opcoes|sugestao|sugestoes|alternativas?)\b/.test(normalizedText(message.content)))return recommendationLimit(message.content);
+    if(previous.topic!=='catalog'&&!previous.keepPreviousContext)break;
+   }
+  }
+  return 3;
+ }
  return /^(uma unica|uma|um|1)$/.test(match[1])?1:/^(duas|dois|2)$/.test(match[1])?2:3;
 }
 function validatedRecommendations(text,catalog,intent={},limit=3){
@@ -574,7 +585,7 @@ function semanticTermMatch(item,terms){
   return wanted.length&&wanted.every(target=>words.some(word=>word.startsWith(target)||target.startsWith(word)));
  });
 }
-function priorRecommendedStoreIds(city,mode,prior=[]){
+function priorRecommendedProducts(city,mode,prior=[]){
  for(const message of [...prior].reverse()){
   if(message.role!=='assistant')continue;
   const ids=[];
@@ -582,11 +593,14 @@ function priorRecommendedStoreIds(city,mode,prior=[]){
   for(const product of CATALOG.products){
    if(!text.includes(normalizedText(product.name)))continue;
    const info=productInfo(product,city,mode);
-   if(info?.available)ids.push(info.storeId);
+   if(info?.available)ids.push(info);
   }
-  if(ids.length)return [...new Set(ids)];
+  if(ids.length)return ids.sort((a,b)=>text.indexOf(normalizedText(a.name))-text.indexOf(normalizedText(b.name)));
  }
  return [];
+}
+function priorRecommendedStoreIds(city,mode,prior=[]){
+ return [...new Set(priorRecommendedProducts(city,mode,prior).map(item=>item.storeId))];
 }
 function semanticFactAnswer(city,mode,query,semantic,constraints,prior=[]){
  if(semantic.action!=='fact')return null;
@@ -595,7 +609,8 @@ function semanticFactAnswer(city,mode,query,semantic,constraints,prior=[]){
  if(semantic.fact==='most_ordered')return {text:'O catálogo demonstrativo ainda não registra quantidade de pedidos ou vendas, então não dá para afirmar qual item é o mais pedido, vendido ou popular.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
  if(semantic.fact==='delivery_fee'){
   if(mode==='pickup')return {text:'Na modalidade de retirada não há taxa de entrega.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
-  const storeIds=priorRecommendedStoreIds(city,mode,prior);
+  const namedStores=CATALOG.stores.filter(store=>normalizedText(query).includes(normalizedText(store.name))&&all.some(item=>item.storeId===store.id));
+  const storeIds=namedStores.length?namedStores.map(store=>store.id):priorRecommendedStoreIds(city,mode,prior);
   if(!storeIds.length)return {text:'De qual estabelecimento ou produto você quer saber a taxa de entrega?',provider:'rules',model:'catalog-facts-v2',productIds:[]};
   const stores=storeIds.map(id=>byStore.get(id)).filter(Boolean);
   return {text:stores.map(store=>store.feePerKm?'A entrega da '+store.name+' começa em '+money(store.fee)+'. O valor final depende da distância pela estrada; confirme com a loja.':'A taxa de entrega da '+store.name+' é '+money(store.fee)+'.').join(' '),provider:'rules',model:'catalog-facts-v2',productIds:[]};
@@ -613,12 +628,15 @@ function semanticFactAnswer(city,mode,query,semantic,constraints,prior=[]){
    if(semantic.preferences.includes('vegano'))return {text:'Não encontrei item cadastrado como vegano para esta cidade e modalidade. Prefiro não presumir que um produto seja vegano sem essa informação no catálogo.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
    return {text:'Não encontrei esse item cadastrado como disponível para esta cidade e modalidade.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
   }
-  const picks=scoped.slice(0,3);
+  const picks=scoped.slice(0,constraints.optionLimit||3);
   return {text:'Encontrei '+scoped.length+' '+(scoped.length===1?'opção compatível':'opções compatíveis')+' no catálogo para esta cidade e modalidade.',provider:'rules',model:'catalog-facts-v2',productIds:picks.map(item=>item.id)};
  }
  if(semantic.fact==='price'){
-  if(!scoped.length)return {text:'Não encontrei esse item cadastrado para consultar o preço.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
-  const picks=scoped.slice(0,3);
+  const pointsBack=/\b(?:esse|essa|esses|essas|isso|ele|ela)\b/.test(normalizedText(query));
+  const referenced=pointsBack?priorRecommendedProducts(city,mode,prior):[];
+  if(pointsBack&&!referenced.length)return {text:'Qual produto você quer consultar? Pode me dizer o nome.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
+  const picks=(referenced.length?referenced.map(item=>all.find(product=>product.id===item.id)).filter(Boolean):scoped).slice(0,constraints.optionLimit||3);
+  if(!picks.length)return {text:'Não encontrei esse item cadastrado para consultar o preço. Qual produto você quer consultar?',provider:'rules',model:'catalog-facts-v2',productIds:[]};
   const parts=picks.map(item=>item.name+': '+money(Math.round(Number(item.priceReais)*100))+(mode==='pickup'?' na retirada':'; total com entrega '+money(Math.round(Number(item.totalReais)*100))));
   return {text:parts.join('. ')+'.',provider:'rules',model:'catalog-facts-v2',productIds:picks.map(item=>item.id)};
  }
@@ -962,12 +980,12 @@ async function route(req,env){const url=new URL(req.url);const path=url.pathname
   return response({text:'A Última Fornada ajuda estabelecimentos a oferecer itens do fim da produção com desconto e reduzir desperdício. As ofertas têm início e fim cadastrados; o desconto só vale dentro desse prazo. '+(products.length?'Encontrei ofertas dentro do prazo para sua cidade.':'No momento, não há ofertas dentro do prazo para sua cidade.')+' Confira as condições de consumo com a loja; itens demonstrativos são exemplos.',provider:'rules',model:'last-batch-info-v1',products,stores:[],demo:CATALOG.demo!==false});
  }
  const immediateSemantic=localSemanticIntent(body.question);
- if(immediateSemantic.action==='chat')return response({text:'Oi! Posso te ajudar a encontrar algo do catálogo, comparar opções ou montar um pedido.',provider:'rules',model:'conversation-v1',products:[],stores:[],demo:CATALOG.demo!==false});
+ if(immediateSemantic.action==='chat')return response({text:/\b(?:valeu|obrigad[oa])\b/.test(normalizedText(body.question))?'Por nada! Se quiser, posso buscar outra opção ou tirar uma dúvida sobre o pedido.':'Oi! O que você está com vontade de comer? Se tiver um valor em mente, me diga também.',provider:'rules',model:'conversation-v1',products:[],stores:[],demo:CATALOG.demo!==false});
  const vagueHealth=immediateSemantic.action==='clarify'&&(!immediateSemantic.preferences?.length)&&(immediateSemantic.modifiers?.includes('healthy')||/\b(?:dieta|regime)\b/.test(normalizedText(body.question)));
  if(vagueHealth)return response({text:'Posso considerar uma preferência ou restrição cadastrada, como vegetariano ou vegano. O catálogo não classifica produtos como “saudáveis”, “fitness” ou bons para emagrecimento sem esse dado explícito.',provider:'rules',model:'health-guard-v1',products:[],stores:[],demo:CATALOG.demo!==false});
- const prior=messagesFor(body),baseConstraints={...conversationConstraints(body.question,prior),optionLimit:recommendationLimit(body.question)},fallbackIntent=conversationIntent(body.question,prior);
+ const prior=messagesFor(body),baseConstraints={...conversationConstraints(body.question,prior),optionLimit:recommendationLimit(body.question,prior)},fallbackIntent=conversationIntent(body.question,prior);
  const available=availableCatalog(body.city,body.mode),fallbackSemantic=semanticFallbackIntent(body.question,prior);
- const semanticMessages=[{role:'system',content:semanticContext(body.city,body.mode,baseConstraints,available,fallbackSemantic)},...prior,{role:'user',content:body.question.trim()}];
+ const semanticMessages=[{role:'system',content:semanticContext(body.city,body.mode,baseConstraints,available,fallbackSemantic)+'\nTom de conversa: escreva português simples, acolhedor e direto, sem saudar novamente a cada resposta. Acompanhe a última escolha quando o usuário disser esse, essa ou quanto fica. Para um pedido vago, faça uma única pergunta útil sobre o tipo de comida ou orçamento, sem um questionário. Não pressione para comprar. Não prometa pedidos, entregas ou ações que você não executou. Quando não houver opção compatível, explique o limite e pergunte qual filtro a pessoa aceita mudar, sem relaxar restrições por conta própria. Na mensagem e nos motivos, evite repetir os valores que o servidor já apresenta.'},...prior,{role:'user',content:body.question.trim()}];
  let answer;
  try{
   answer=await generateSemantic(env,semanticMessages,body.city,body.mode,body.question,prior,baseConstraints,fallbackIntent);

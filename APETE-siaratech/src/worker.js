@@ -29,8 +29,8 @@ function authorizedOrigin(req,url){
 function canServe(store,city,mode){return mode==='pickup'?store.city===city&&store.pickup===true:store.delivery===true&&store.serviceAreas.includes(city);}
 function centsPrice(p){if(p.pricingSource==='database')return p.price;if(p.lastBatch&&p.oldPrice>p.price){let a=Date.parse(p.offer?.startsAt),b=Date.parse(p.offer?.endsAt),now=Date.now();if(!Number.isFinite(a)||!Number.isFinite(b)||now<a||now>=b)return p.oldPrice;}return p.price;}
 function productInfo(p,city,mode){let s=byStore.get(p.storeId);if(!s||!canServe(s,city,mode))return null;let fee=mode==='pickup'?0:s.fee, price=centsPrice(p);return {id:p.id,storeId:s.id,name:p.name,description:p.desc,category:p.cat,price,stock:p.stock,available:p.available!==false&&s.open===true&&p.stock>0,image:p.image,storeName:s.name,city:s.city,serviceAreas:s.serviceAreas,fee,deliveryVariable:mode==='delivery'&&Boolean(s.feePerKm),feePerKm:s.feePerKm||0,total:price+fee,serves:p.serves,preferences:p.preferences||[],demo:p.demo===true,offerValid:globalThis.APETE_OFFERS.isActive(p),offerEndsAt:globalThis.APETE_OFFERS.isActive(p)?p.offer.endsAt:null,discountCents:globalThis.APETE_OFFERS.isActive(p)?p.oldPrice-price:0};}
-async function postBody(req){let raw=await req.text();if(raw.length>5000)throw {code:'size',message:'Mensagem muito grande.',status:413};let data;try{data=JSON.parse(raw);}catch{throw {code:'json',message:'Formato inválido.',status:400};}if(!data||Array.isArray(data)||typeof data!=='object')throw {code:'json',message:'Dados inválidos.',status:400};return data;}
-function messagesFor(body){const previous=Array.isArray(body.history)?body.history:[];return previous.slice(-6).filter(m=>m&&['user','assistant'].includes(m.role)&&typeof m.content==='string').map(m=>({role:m.role,content:m.content.slice(0,750)}));}
+async function postBody(req){let raw=await req.text();if(raw.length>32000)throw {code:'size',message:'Mensagem muito grande.',status:413};let data;try{data=JSON.parse(raw);}catch{throw {code:'json',message:'Formato inválido.',status:400};}if(!data||Array.isArray(data)||typeof data!=='object')throw {code:'json',message:'Dados inválidos.',status:400};return data;}
+function messagesFor(body){const previous=Array.isArray(body.history)?body.history:[];return previous.slice(-32).filter(m=>m&&['user','assistant'].includes(m.role)&&typeof m.content==='string').map(m=>({role:m.role,content:m.content.slice(0,750)}));}
 function normalizedWords(text){return String(text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/\W+/).filter(word=>word.length>=3);}
 function normalizedText(text){return String(text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function requestConstraints(text){
@@ -62,19 +62,22 @@ function requestConstraints(text){
  return {budget,budgetChanged,budgetScope,excluded:[...new Set(excluded)],meal:/\b(almoco|refeicao|pratos?|jantar|comida)\b/.test(clean)};
 }
 function conversationConstraints(question,prior){
- let budget=null,budgetScope='total';
+ let budget=null,budgetScope='total',excluded=[],previous=null;
  for(const rawText of [...prior.filter(message=>message.role==='user').map(message=>message.content),question]){
-  const text=latestIntentText(rawText);
-  const next=requestConstraints(text);
-  const semantic=localSemanticIntent(text);
-  const contextualFact=semantic.action==='fact'&&['price','delivery_fee'].includes(semantic.fact)&&(semantic.topic==='catalog'||/\b(?:esse|essa|isso|ele|ela)\b/.test(text));
-  const followup=isSearchModifier(text,next)||isAlternativeFollowup(text)||contextualFact;
-  if(!followup){budget=null;budgetScope='total';}
+  const text=latestIntentText(rawText),next=requestConstraints(text);
+  const semantic=localSemanticIntent(rawText,previous);
+  if(semantic.action==='chat')continue;
+  const followup=semantic.keepPreviousContext||isSearchModifier(text,next)||isAlternativeFollowup(text)
+   ||Boolean(previous&&semantic.topic===previous.topic&&semantic.action!=='switch');
+  if(!followup){budget=null;budgetScope='total';excluded=[];}
   if(next.budgetChanged)budget=next.budget;
   if(next.budgetScope!==null)budgetScope=next.budgetScope;
+  excluded=[...new Set([...excluded,...next.excluded])];
+  previous=semantic;
  }
  const current=requestConstraints(latestIntentText(question));
- return {...current,budget,budgetScope};
+ const semantic=semanticFallbackIntent(question,prior);
+ return {...current,budget,budgetScope,excluded,followup:semantic.keepPreviousContext};
 }
 function isAlternativeFollowup(text){
  const clean=normalizedText(text);
@@ -324,7 +327,8 @@ function catalogAnswer(options,mode,constraints,basic=false,another=false){
  });
  const budgetNote=constraints.budget!==null&&constraints.budgetScope==='products'?' O limite considera só o produto; a entrega está discriminada à parte.':'';
  const defaultIntro=options.length===1?'Separei esta opção para você.':'Separei '+options.length+' opções para você escolher.';
- let intro=options.message||defaultIntro;
+ let intro=constraints.followup?defaultIntro:options.message||defaultIntro;
+ if(constraints.budgetChanged&&constraints.budget===null)intro='Retirei só o limite de preço e mantive os demais filtros do pedido.';
  if(options.length===1&&/\b(?:algumas|varias|estas|essas)\b.*\bopcoes\b/.test(normalizedText(intro)))intro=defaultIntro;
  if(constraints.intent?.withDrink){
   const sameStore=options.length>=2&&options[0].storeId===options[1].storeId;
@@ -551,7 +555,7 @@ function semanticIntentFromAssistant(text){
 function semanticFallbackIntent(question,prior){
  let intent=null;
  for(const message of prior){
-  if(message.role==='user')intent=localSemanticIntent(message.content,intent);
+  if(message.role==='user'){const next=localSemanticIntent(message.content,intent);if(next.action!=='chat')intent=next;}
   else if(message.role==='assistant'){
    const inferred=semanticIntentFromAssistant(message.content);
    if(inferred&&(!intent||intent.topic==='catalog'||intent.confidence<0.5))intent={...inferred,preferences:intent?.preferences?.length?intent.preferences:inferred.preferences,modifiers:intent?.modifiers?.length?intent.modifiers:inferred.modifiers};
@@ -645,10 +649,10 @@ function semanticFactAnswer(city,mode,query,semantic,constraints,prior=[]){
  if(semantic.fact==='cheapest'||semantic.fact==='most_expensive'){
   if(!scoped.length&&hasSemanticScope)return {text:'Não encontrei opção compatível com esse filtro para comparar.',provider:'rules',model:'catalog-facts-v2',productIds:[]};
   const pool=scoped.length?scoped:all;
-  const sorted=[...pool].sort((a,b)=>Number(a.priceReais)-Number(b.priceReais)||a.id-b.id);
+  const sorted=[...pool].sort((a,b)=>Number(a.priceReais)*itemQuantity(a)-Number(b.priceReais)*itemQuantity(b)||a.id-b.id);
   const item=semantic.fact==='most_expensive'?sorted.at(-1):sorted[0];
-  const price=Math.round(Number(item.priceReais)*100),total=Math.round(Number(item.totalReais)*100);
-  return {text:'Pelo preço do produto, a opção '+(semantic.fact==='most_expensive'?'mais cara':'mais barata')+' disponível é '+item.name+': '+money(price)+'. '+(mode==='pickup'?'Na retirada não há taxa de entrega.':'Com a entrega cadastrada, o total fica '+money(total)+'.'),provider:'rules',model:'catalog-facts-v2',productIds:[item.id]};
+  const price=Math.round(Number(item.priceReais)*100)*itemQuantity(item),total=Math.round(Number(item.totalReais)*100);
+  return {text:'Pelo preço do produto, a opção '+(semantic.fact==='most_expensive'?'mais cara':'mais barata')+' disponível é '+item.name+(itemQuantity(item)>1?' ('+itemQuantity(item)+' unidades)':'')+': '+money(price)+'. '+(mode==='pickup'?'Na retirada não há taxa de entrega.':'Com a entrega cadastrada, o total fica '+money(total)+'.'),provider:'rules',model:'catalog-facts-v2',productIds:[item.id],recommendationQuantities:{[item.id]:itemQuantity(item)}};
  }
  return null;
 }
@@ -789,15 +793,7 @@ function sabiaContext(city,mode,constraints,catalog){
 function reserveSemanticAnswer(city,mode,query,prior,baseConstraints,fallbackIntent){
  const semantic=semanticFallbackIntent(query,prior),intent=semanticToLegacy(semantic,fallbackIntent);
  if(semantic.confidence<CONFIDENCE.low&&!['chat','fact'].includes(semantic.action))return {text:'Não entendi bem o que você quis dizer. Pode repetir de outro jeito?',provider:'reserve',model:'deterministic-v3',productIds:[]};
- const currentHard=requestConstraints(query),carryContext=semantic.keepPreviousContext||['alternative','refine','confirm'].includes(semantic.action);
- const historyHard=carryContext?conversationConstraints('tem mais opções',prior):null;
- const carriedExcluded=carryContext?prior.filter(message=>message.role==='user').flatMap(message=>requestConstraints(message.content).excluded):[];
- const hard={...baseConstraints};
- if(carryContext&&historyHard){
-  if(!currentHard.budgetChanged&&hard.budget===null)hard.budget=historyHard.budget;
-  if(currentHard.budgetScope===null)hard.budgetScope=historyHard.budgetScope;
- }
- const constraints={...hard,excluded:[...new Set([...(hard.excluded||[]),...carriedExcluded,...(semantic.exclusions||[]).flatMap(value=>normalizedWords(value))])],intent};
+ const constraints={...baseConstraints,excluded:[...new Set([...(baseConstraints.excluded||[]),...(semantic.exclusions||[]).flatMap(value=>normalizedWords(value))])],intent};
  if(semantic.action==='chat')return {text:'Oi! Posso te ajudar a encontrar algo do catálogo, comparar opções ou montar um pedido.',provider:'reserve',model:'deterministic-v2',productIds:[]};
  if(semantic.action==='clarify')return {text:'Pode me dizer qual tipo de produto, preferência ou restrição você quer considerar?',provider:'reserve',model:'deterministic-v2',productIds:[]};
  const fact=semanticFactAnswer(city,mode,query,semantic,constraints,prior);
@@ -852,17 +848,16 @@ async function generateSemantic(env,messages,city,mode,query,prior,baseConstrain
     console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
     return {...answer,text:'Não entendi bem o que você quis dizer. Pode repetir de outro jeito?',productIds:[]};
    }
+   // The model can rank and explain; explicit local constraints remain authoritative.
+   if(fallbackSemantic.confidence>=CONFIDENCE.medium&&(fallbackSemantic.keepPreviousContext||currentSemantic.confidence>=CONFIDENCE.high)){
+    semantic={...semantic,topic:fallbackSemantic.topic,components:[...fallbackSemantic.components],
+     serves:fallbackSemantic.serves,preferences:[...fallbackSemantic.preferences],modifiers:[...fallbackSemantic.modifiers],
+     exclusions:[...fallbackSemantic.exclusions],keepPreviousContext:fallbackSemantic.keepPreviousContext,
+     action:fallbackSemantic.action,fact:fallbackSemantic.fact};
+   }
    const intent=semanticToLegacy(semantic,fallbackIntent);
    const semanticExcluded=(semantic.exclusions||[]).flatMap(value=>normalizedWords(value));
-   const currentHard=requestConstraints(query),carryContext=semantic.keepPreviousContext||['alternative','refine','confirm'].includes(semantic.action);
-   const historyHard=carryContext?conversationConstraints('tem mais opções',prior):null;
-   const carriedExcluded=carryContext?prior.filter(message=>message.role==='user').flatMap(message=>requestConstraints(message.content).excluded):[];
-   const hard={...baseConstraints};
-   if(carryContext&&historyHard){
-    if(!currentHard.budgetChanged&&hard.budget===null)hard.budget=historyHard.budget;
-    if(currentHard.budgetScope===null)hard.budgetScope=historyHard.budgetScope;
-   }
-   const constraints={...hard,excluded:[...new Set([...(hard.excluded||[]),...carriedExcluded,...semanticExcluded])],intent};
+   const constraints={...baseConstraints,excluded:[...new Set([...(baseConstraints.excluded||[]),...semanticExcluded])],intent};
    if(semantic.action==='chat'){
     console.info('sabia_provider_success',{provider:answer.provider,model:answer.model});
     return {...answer,...semanticChatAnswer(data)};

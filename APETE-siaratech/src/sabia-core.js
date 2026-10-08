@@ -58,7 +58,7 @@ export function localIntent(current,previous=null){
   /\bnao\s+(?:quero|gosto|curto)(?:\s+de)?\s+(?:o\s+|a\s+|os\s+|as\s+)?([a-z][a-z0-9-]{2,})/g,
   /\b(?:evita|evite|evitar|tira|tire|tirar|retira|retire|retirar|exclui|excluir)\s+(?:o\s+|a\s+|os\s+|as\s+)?([a-z][a-z0-9-]{2,})/g
  ]){
-  for(const match of clean.matchAll(pattern))exclusions.push(match[1]);
+  for(const match of clean.matchAll(pattern))if(!['limite','teto','orcamento','entrega','frete','taxa','contar','incluir','considerar'].includes(match[1]))exclusions.push(match[1]);
  }
  const peopleWords={um:1,uma:1,dois:2,duas:2,tres:3,quatro:4,cinco:5,seis:6,sete:7,oito:8,nove:9,dez:10};
  const servesMatch=clean.match(/\b(?:para|pra)\s+(\d{1,2}|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)\s+(?:pessoas?|gente)\b/)||clean.match(/\bsomos\s+(\d{1,2}|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)\b/);
@@ -100,7 +100,7 @@ export function localIntent(current,previous=null){
   components=previous.components||components;
   if(!preferences.length)preferences=[...(previous.preferences||[])];
   if(!modifiers.length)modifiers.push(...(previous.modifiers||[]));
-  if(!exclusions.length)exclusions.push(...(previous.exclusions||[]));
+  exclusions.push(...(previous.exclusions||[]));
  }
  const resolvedServes=serves||(inherited&&Number.isInteger(previous?.serves)?previous.serves:null);
  const confidence=conversational||fact!=='none'?0.9:components.length||preferences.length||modifiers.length||exclusions.length||resolvedServes?0.82:inherited?0.62:0.18;

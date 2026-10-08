@@ -255,3 +255,52 @@ test('consultar preço no meio da conversa não apaga o orçamento das alternati
  assert.equal(data.products.length,1);
  assert.ok(data.products[0].total<=2000);
 });
+
+
+test('sequência da apresentação preserva orçamento, pessoas e exclusões',async()=>{
+ const history=[
+  {role:'user',content:'quero almoço'},
+  {role:'assistant',content:'Qual o seu orçamento?'},
+  {role:'user',content:'até 80 reais'},
+  {role:'assistant',content:'Separei opções.'},
+  {role:'user',content:'para 2 pessoas'},
+  {role:'assistant',content:'Separei porções para duas pessoas.'}
+ ];
+ const data=await ask('sem queijo',{history});
+ assert.ok(data.products.length>0);
+ for(const item of data.products){
+  assert.ok(item.quantity*item.serves>=2);
+  assert.ok(item.total<=8000);
+  assert.doesNotMatch(item.name+' '+item.description,/queijo/i);
+ }
+ const comparison=await ask('qual o mais barato?',{history:[...history,{role:'user',content:'sem queijo'},{role:'assistant',content:data.text}]});
+ assert.ok(comparison.products.length>0);
+ assert.ok(comparison.products.every(item=>item.total<=8000&&item.quantity*item.serves>=2));
+});
+
+test('IA não pode trocar o assunto nem retirar exclusão ao remover orçamento',async()=>{
+ const env={...baseEnv,AI:{async run(){return {response:JSON.stringify({
+  intent:{topic:'dessert',action:'recommend',exclusions:[],serves:1,confidence:1},
+  message:'Tirado o sem queijo!',recommendations:[{productId:31}]
+ })};}}};
+ const history=[{role:'user',content:'quero almoço para 2 pessoas sem queijo até 80 reais'}];
+ const data=await ask('esquece o limite',{history,env});
+ assert.equal(data.provider,'cloudflare');
+ assert.ok(data.products.length>0);
+ assert.match(data.text,/Retirei só o limite de preço/);
+ assert.doesNotMatch(data.text,/Tirado o sem queijo/);
+ for(const item of data.products){assert.ok(item.quantity*item.serves>=2);assert.doesNotMatch(item.name+' '+item.description,/queijo/i);}
+});
+
+test('histórico longo mantém o limite original nas alternativas',async()=>{
+ const history=[{role:'user',content:'quero almoço até 80 reais sem queijo'}];
+ for(let i=0;i<7;i++)history.push({role:'assistant',content:'Pode ajustar a quantidade.'},{role:'user',content:'para 2 pessoas'});
+ const data=await ask('qual o mais barato?',{history});
+ assert.ok(data.products.length>0);
+ assert.ok(data.products.every(item=>item.total<=8000&&item.quantity*item.serves>=2));
+});
+
+test('mudança de assunto limpa restrições anteriores e aceita queijo no novo pedido',async()=>{
+ const data=await ask('agora quero tapioca com queijo',{history:[{role:'user',content:'quero almoço sem queijo até 5 reais'}]});
+ assert.ok(data.products.some(item=>/tapioca.*queijo/i.test(item.name)));
+});

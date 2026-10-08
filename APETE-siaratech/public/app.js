@@ -5410,9 +5410,9 @@ async function sendToSabia(text) {
     await ensureSabiaSession();
     if(sabiaChat.at(-1)?.role==='user')sabiaChat.pop();
     sabiaChat.push({role:'user',content:clean});if(!isMerchantView())render();
-    const result=await sabiaRequest('/api/sabia',{question:clean,conversationId:sabiaSession.conversationId,city:state.city,mode:'delivery',history:sabiaChat.slice(-7,-1).map(({role,content})=>({role,content}))});
-    sabiaChat.push({role:'assistant',content:result.text,products:result.products||[],stores:result.stores||[]});sessionStorage.setItem('apete-sabia-history',JSON.stringify(sabiaChat.slice(-12)));
-    sabiaMode='generative';sabiaStatusMessage='Conectada à '+result.provider+' · '+result.model;
+    const result=await sabiaRequest('/api/sabia',{question:clean,conversationId:sabiaSession.conversationId,city:state.city,mode:'delivery',history:sabiaChat.slice(-33,-1).map(({role,content})=>({role,content:content.slice(0,750)}))});
+    sabiaChat.push({role:'assistant',content:result.text,products:result.products||[],stores:result.stores||[]});sessionStorage.setItem('apete-sabia-history',JSON.stringify(sabiaChat.slice(-36)));
+    sabiaMode=result.provider==='reserve'?'basic':'generative';sabiaStatusMessage=result.provider==='reserve'?'Modo básico: filtros e valores conferidos pelo sistema.':result.provider==='rules'?'Resposta conferida no catálogo.':'Conectada à '+result.provider+' · '+result.model;
   } catch(error) {sabiaError=error.message;sabiaRetryAfter=error.retryAfter||0;sabiaDraft=clean;if(error.status===401)sabiaSession=null;}
   finally {sabiaBusy=false;if(state.page==='sabia'){render();$('#sabia-input')?.focus({preventScroll:true});}}
 }
